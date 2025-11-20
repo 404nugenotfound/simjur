@@ -11,7 +11,7 @@ module.exports = {
         orbitron: ['Orbitron', 'sans-serif'],
       },
       backgroundImage: {
-        'gradient': 'linear-gradient(to bottom left, #123150 12%, #278C67 100%)',
+        'gradient': 'linear-gradient(to bottom right, #123150 12%, #278C67 100%)',
        }
     },
   },

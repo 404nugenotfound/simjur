@@ -2,8 +2,12 @@ import React from "react";
 import Logo from "./assets/LogoName2.svg";
 import Illustration from "./assets/Illustration.svg";
 import "./App.css";
+import { useNavigate } from "react-router-dom";
+import IconTest from "./pages/IconTest";
 
 function App() {
+  const navigate = useNavigate();
+
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
       <div className="w-full h-screen bg-white overflow-hidden shadow-2xl flex">
@@ -55,7 +59,10 @@ function App() {
                 placeholder="Password"
               />
               <div className="mr-32 flex justify-center">
-                <button className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold hover:bg-gray-200 transition">
+                <button
+                  className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold hover:bg-gray-200 transition"
+                  onClick={() => navigate("/user")}
+                >
                   Login
                 </button>
               </div>
@@ -64,6 +71,7 @@ function App() {
             <p className="absolute bottom-5 right-10 text-sm text-gray-200 font-semibold">
               © 2025 SIMJUR
             </p>
+            return <IconTest />;
           </div>
         </div>
       </div>
