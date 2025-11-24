@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import FormPengajuan from "./FormPengajuan";
 
 type Kegiatan = {
   id: number;
@@ -7,12 +8,12 @@ type Kegiatan = {
 };
 
 const PengajuanKegiatan: React.FC = () => {
+  const [mode, setMode] = useState<"list" | "form">("list");
   const [data, setData] = useState<Kegiatan[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
 
-  // Simulasi API
   useEffect(() => {
     const fakeData: Kegiatan[] = [
       { id: 1, judul: "Pelatihan Ormawa", status: "pending" },
@@ -24,19 +25,38 @@ const PengajuanKegiatan: React.FC = () => {
 
   const filtered = data.filter((item) => {
     const matching = filter === "all" ? true : item.status === filter;
-
     const searching = item.judul.toLowerCase().includes(search.toLowerCase());
-
     return matching && searching;
   });
 
+  {
+    /* Form View */
+  }
+  if (mode === "form") {
+    return (
+      <div className="p-6">
+        <button
+          onClick={() => setMode("list")}
+          className="mb-4 px-4 py-2 bg-gray-600 text-white rounded"
+        >
+          ← Kembali
+        </button>
+
+        <FormPengajuan />
+      </div>
+    );
+  }
+
+  {
+    /* Tabel */
+  }
   return (
     <div className="p-6">
-      <h1 className="text-2xl font-bold text-black mb-4">PENGAJUAN KEGIATAN</h1>
+      <h1 className="text-2xl text-black font-bebas mb-4">
+        PENGAJUAN KEGIATAN
+      </h1>
 
-      {/* Bagian Filter + Search + Tambah */}
       <div className="flex items-center gap-3 mb-4">
-
         <input
           type="text"
           placeholder="Telusuri"
@@ -45,15 +65,17 @@ const PengajuanKegiatan: React.FC = () => {
           onChange={(e) => setSearch(e.target.value)}
         />
 
-        <button className="px-4 py-2 bg-blue-600 text-white rounded">
+        <button
+          onClick={() => setMode("form")}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
           Tambah
         </button>
       </div>
 
-      {/* Tabel */}
       <div className="border rounded-lg overflow-hidden">
         <table className="w-full text-left">
-          <thead className="bg-green-300">
+          <thead className="bg-green-700">
             <tr>
               <th className="p-3">NO</th>
               <th className="p-3">Judul Kegiatan</th>
@@ -65,13 +87,13 @@ const PengajuanKegiatan: React.FC = () => {
           <tbody>
             {filtered.length === 0 ? (
               <tr>
-                <td colSpan={4} className="p-4 text-center text-gray-500">
+                <td colSpan={4} className="p-4 text-center text-black">
                   Tidak ada data
                 </td>
               </tr>
             ) : (
               filtered.map((item, index) => (
-                <tr key={item.id} className="border-b">
+                <tr key={item.id} className="border-b text-black">
                   <td className="p-3">{index + 1}</td>
                   <td className="p-3">{item.judul}</td>
                   <td className="p-3 capitalize">{item.status}</td>
@@ -85,8 +107,7 @@ const PengajuanKegiatan: React.FC = () => {
         </table>
       </div>
 
-      {/* Pagination */}
-      <div className="flex items-center justify-end gap-2 mt-3">
+      <div className="flex items-center justify-end text-black gap-2 mt-3">
         <button
           className="px-2 py-1 border rounded"
           onClick={() => setPage(page - 1)}

@@ -9,7 +9,7 @@ const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
         <div className="flex  items-start gap-1  mb-16">
         <img src={Logo} alt="SIMJUR" className="w-[80px]" />
         <h1 className="text-xl font-orbitron font-extrabold tracking-[0.5rem] mb-10 mt-6">SIMJUR</h1>
-        </div>
+        </div>  
 
         <nav className="space-y-4">
           <a href="#" className="flex items-center gap-3 text-lg">
