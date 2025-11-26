@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from "react";
 import FormPengajuan from "./FormPengajuan";
+import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
 type Kegiatan = {
   id: number;
@@ -35,13 +36,17 @@ const PengajuanKegiatan: React.FC = () => {
   if (mode === "form") {
     return (
       <div className="p-6">
-        <button
-          onClick={() => setMode("list")}
-          className="mb-4 px-4 py-2 bg-gray-600 text-white rounded"
-        >
-          ← Kembali
-        </button>
-
+        <div className="flex justify-end">
+          <button
+            onClick={() => setMode("list")}
+            className="mt-12 mb-6 mr-[4.2rem] px-4 py-[0.35rem] bg-[#4957B5] 
+            text-white rounded font-poppins font-medium tracking-[0.05em]
+            hover:bg-gray-700 transition
+            "
+          >
+            ← Kembali
+          </button>
+        </div>
         <FormPengajuan />
       </div>
     );
@@ -52,78 +57,87 @@ const PengajuanKegiatan: React.FC = () => {
   }
   return (
     <div className="p-6">
-      <h1 className="text-2xl text-black font-bebas mb-4">
+      <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-[-0.5rem] mb-20">
         PENGAJUAN KEGIATAN
       </h1>
+      <div className="border border-[#D1D1D1] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.10)] p-6">
+        {/* Bagian Filter + Search + Tambah */}
+        <div className="flex items-center gap-3 mb-4 font-poppins">
+          {/* container input + icon */}
+          <div className="relative flex-1 mr-[20rem]">
+            <input
+              type="text"
+              placeholder="Telusuri Kegiatan ..."
+              className="p-2 pl-4 pr-10 border rounded-3xl w-full text-sm font-medium"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+            />
+            <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-8 text-gray-400 stroke-[2.3]" />
+          </div>
+          <button
+            onClick={() => setMode("form")}
+            className="px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium tracking-[0.05em]"
+          >
+            Tambah
+          </button>
+        </div>
 
-      <div className="flex items-center gap-3 mb-4">
-        <input
-          type="text"
-          placeholder="Telusuri"
-          className="p-2 border rounded flex-1"
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-
-        <button
-          onClick={() => setMode("form")}
-          className="px-4 py-2 bg-blue-600 text-white rounded"
-        >
-          Tambah
-        </button>
-      </div>
-
-      <div className="border rounded-lg overflow-hidden">
-        <table className="w-full text-left">
-          <thead className="bg-green-700">
-            <tr>
-              <th className="p-3">NO</th>
-              <th className="p-3">Judul Kegiatan</th>
-              <th className="p-3">Status</th>
-              <th className="p-3">Action</th>
-            </tr>
-          </thead>
-
-          <tbody>
-            {filtered.length === 0 ? (
+        {/* Tabel */}
+        <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
+          <table className="w-full text-left">
+            <thead className="bg-[#86BE9E] tracking-[0.1em]">
               <tr>
-                <td colSpan={4} className="p-4 text-center text-black">
-                  Tidak ada data
-                </td>
+                <th className="px-4 p-3">No</th>
+                <th className="px-4 p-3">Judul Kegiatan</th>
+                <th className="px-4 p-3">Status</th>
+                <th className="px-4 p-3">Action</th>
               </tr>
-            ) : (
-              filtered.map((item, index) => (
-                <tr key={item.id} className="border-b text-black">
-                  <td className="p-3">{index + 1}</td>
-                  <td className="p-3">{item.judul}</td>
-                  <td className="p-3 capitalize">{item.status}</td>
-                  <td className="p-3">
-                    <button className="text-blue-600">Detail</button>
+            </thead>
+
+            <tbody>
+              {filtered.length === 0 ? (
+                <tr>
+                  <td colSpan={4} className="p-4 text-center text-gray-500">
+                    Tidak ada data
                   </td>
                 </tr>
-              ))
-            )}
-          </tbody>
-        </table>
-      </div>
+              ) : (
+                filtered.map((item, index) => (
+                  <tr key={item.id} className="border-b text-[#696868]">
+                    <td className="p-3">{index + 1}</td>
+                    <td className="p-3">{item.judul}</td>
+                    <td className="p-3 capitalize">{item.status}</td>
+                    <td className="p-3">
+                      <button className="text-blue-600">Detail</button>
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
 
-      <div className="flex items-center justify-end text-black gap-2 mt-3">
-        <button
-          className="px-2 py-1 border rounded"
-          onClick={() => setPage(page - 1)}
-          disabled={page === 1}
-        >
-          {"<"}
-        </button>
+        {/* Pagination */}
+        <div className="flex items-center justify-end text-black gap-2 mt-3 mr-3.5 font-poppins font-semibold">
+          <button
+            className="px-2 py-1 border rounded border-[C4C3C3] shadow-[0_4px_12px_rgba(0,0,0,0.20)] "
+            onClick={() => setPage(page - 1)}
+            disabled={page === 1}
+          >
+            {"<"}
+          </button>
 
-        <span className="px-3 py-1 border rounded">{page}</span>
+          <span className="px-3 py-1 border rounded border-[C4C3C3] shadow-[0_4px_12px_rgba(0,0,0,0.20)]">
+            {page}
+          </span>
 
-        <button
-          className="px-2 py-1 border rounded"
-          onClick={() => setPage(page + 1)}
-        >
-          {">"}
-        </button>
+          <button
+            className="px-2 py-1 border rounded border-[C4C3C3] shadow-[0_4px_12px_rgba(0,0,0,0.20)]"
+            onClick={() => setPage(page + 1)}
+          >
+            {">"}
+          </button>
+        </div>
       </div>
     </div>
   );

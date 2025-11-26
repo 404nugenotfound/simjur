@@ -91,23 +91,24 @@ export default function FormPengajuan() {
   };
 
   return (
-    <div className="flex justify-center w-full">
+    <div className="p-6">
+    {/* Form */}
+       <h2 className="text-3xl font-bebas mb-20 tracking-[0.4rem] ml-[-1rem] mt-[-8.5rem] text-black">
+          TAMBAH DATA PENGAJUAN TOR
+        </h2>
+        
+    <div className="flex justify-center w-full mt-[5.1rem]">  
       {/* Card Container */}
       <div className="bg-white shadow-md border rounded-xl p-6 w-[900px]">
         {/* Title */}
-        <h2 className="text-2xl font-semibold mb-6 tracking-wide">
-          TAMBAH DATA PENGAJUAN TOR
-        </h2>
-
-        {/* Form */}
-        <div className="space-y-4">
+        <div className="space-y-5 pb-[1rem] font-poppins">
           <div>
-            <label className="block text-black font-medium mb-1">
+            <label className="block text-black font-semibold mb-1">
               Nama Kegiatan
             </label>
             <input
               type="text"
-              className="border rounded-lg w-full p-2 text-black"
+              className="appearance-none border border-black rounded-lg w-full p-2 text-black"
               placeholder="Masukkan nama kegiatan..."
               value={namaKegiatan}
               onChange={(e) => setNamaKegiatan(e.target.value)}
@@ -116,12 +117,12 @@ export default function FormPengajuan() {
 
           <div className="grid grid-cols-2 gap-4">
             <div>
-              <label className="block text-black font-medium mb-1">
+              <label className="block text-black font-semibold mb-1">
                 Tanggal Pengajuan
               </label>
               <input
                 type="date"
-                className="border rounded-lg w-full p-2 text-black"
+                className="appearance-none border border-black rounded-lg w-full p-2 text-gray-400 uppercase font-medium"
                 value={tanggalPengajuan}
                 onChange={(e) => setTanggalPengajuan(e.target.value)}
                 aria-label="Tanggal Pengajuan"
@@ -129,18 +130,18 @@ export default function FormPengajuan() {
             </div>
 
             <div>
-              <label className="block text-black font-medium mb-1">
+              <label className="block text-black font-semibold mb-1">
                 Penanggung Jawab
               </label>
               <div className="flex gap-2">
                 <input
                   type="text"
-                  className="border rounded-lg flex-1 p-2 text-black"
+                  className="appearance-none border border-black rounded-lg flex-1 p-2 text-black"
                   placeholder="Nama penanggung jawab..."
                   value={penanggungJawab}
                   onChange={(e) => setPenanggungJawab(e.target.value)}
                 />
-                <button className="px-4 py-2 bg-gray-300 rounded-lg">
+                <button className="appearance-none border border-black px-4 py-2 bg-[#D5D5D5] rounded-lg text-black text-opacity-60 font-semibold">
                   TOR
                 </button>
               </div>
@@ -148,11 +149,11 @@ export default function FormPengajuan() {
           </div>
 
           <div>
-            <label className="block text-black font-medium mb-1">
+            <label className="block text-black font-semibold mb-1">
               Deskripsi
             </label>
             <textarea
-              className="border rounded-lg w-full p-3 h-36 resize-none text-black"
+              className="appearance-none border border-black rounded-lg w-full p-3 h-36 resize-none text-black"
               placeholder="Tuliskan deskripsi kegiatan..."
               value={deskripsi}
               onChange={(e) => setDeskripsi(e.target.value)}
@@ -160,13 +161,14 @@ export default function FormPengajuan() {
           </div>
 
           {/* Dana */}
-          <div>
-            <label className="block text-black font-medium mb-1">
+          <div className="flex items-end gap-4">
+          <div className="flex-1">
+            <label className="block text-black font-semibold mb-1">
               Total Dana Dibutuhkan
             </label>
             <input
               type="text"
-              className="border rounded-lg w-full p-2 text-black"
+              className="appearance-none border border-black rounded-lg w-[20rem] p-2 text-black"
               placeholder="Rp 0"
               value={dana}
               onChange={handleDanaChange}
@@ -174,16 +176,18 @@ export default function FormPengajuan() {
           </div>
 
           {/* Submit */}
-          <div className="flex justify-end">
+          <div className="">
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition"
+              className="px-6 py-2 bg-[#4957B5] text-white rounded-lg hover:bg-gray-700 transition"
             >
               Simpan dan Generate
             </button>
           </div>
+          </div>
         </div>
       </div>
+    </div>
     </div>
   );
 }
