@@ -36,10 +36,11 @@ const PengajuanKegiatan: React.FC = () => {
   if (mode === "form") {
     return (
       <div className="p-6">
-        <div className="flex justify-end">
+        <div className="relative max-w-[900px] w-full mx-24 mt-28">
           <button
             onClick={() => setMode("list")}
-            className="mt-12 mb-6 mr-[4.2rem] px-4 py-[0.35rem] bg-[#4957B5] 
+            className="fixed right-20 top-30 z-50 
+             mt-[-3rem] px-4 py-[0.35rem] bg-[#4957B5] 
             text-white rounded font-poppins font-medium tracking-[0.05em]
             hover:bg-gray-700 transition
             "

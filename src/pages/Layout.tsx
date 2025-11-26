@@ -92,42 +92,40 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {open && <span>Dashboard</span>}
           </a>
 
-          <div className=" w-[calc(100%+2.7rem)] ml-[-1.25rem]">
             <a
               onClick={() => handleMenuClick("/User#")}
               href="#"
-              className={`flex items-center gap-3 text-lg px-9 py-3 transition-all cursor-pointer
+              className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
               ${!open && "justify-center"}
               hover:bg-black/20`}
               >
               <DocumentTextIcon className="w-6 h-6 min-w-[24px]" />
               {open && <span>Pengajuan Kegiatan</span>}
             </a>
-          </div>
         </nav>
       </aside>
 
       {/* Right Side Content */}
       <div className="relative flex-1 flex flex-col cursor-pointer select-none min-h-screen">
-        <header className="flex items-center justify-between px-6 py-3 bg-white shadow">
+        <header className="flex items-center justify-between bg-white shadow">
           <div></div>
           <div
             className="
             relative flex items-center gap-3 cursor-pointer 
-            px-3 py-2 rounded-xl 
+            px-5 py-5 
             border border-transparent 
             hover:border-gray-300 hover:bg-gray-100 transition
             "
             onClick={() => setOpenDropdown(!openDropdown)}
           >
             {/* Separator */}
-            <div className="absolute left-[-1.5rem]  w-[2px] inset-y-[-0.8rem] bg-gray-300"></div>
+            <div className="absolute left-[-0.2rem] top-0 bottom-0 w-[2px] bg-gray-300"></div>
 
             {/* Foto */}
-            <img src={Profile} alt="user" className="w-10 h-10 rounded-full" />
+            <img src={Profile} alt="user" className="w-10 h-10 ml-2 rounded-full" />
 
             {/* Nama */}
-            <span className="font-semibold text-black max-w-[200px] pl-2   truncate">
+            <span className="font-semibold text-black max-w-[200px] pl-1 truncate">
               MUHAMMAD RANGGA FABIANO
             </span>
           </div>

@@ -97,9 +97,9 @@ export default function FormPengajuan() {
           TAMBAH DATA PENGAJUAN TOR
         </h2>
         
-    <div className="flex justify-center w-full mt-[5.1rem]">  
+    <div className="flex w-full mt-[5.1rem]">  
       {/* Card Container */}
-      <div className="bg-white shadow-md border rounded-xl p-6 w-[900px]">
+      <div className="bg-white shadow-md border rounded-xl p-6 w-full max-w-[1270px]">
         {/* Title */}
         <div className="space-y-5 pb-[1rem] font-poppins">
           <div>
