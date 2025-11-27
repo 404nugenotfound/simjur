@@ -5,6 +5,7 @@ import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import UserPage from "./pages/UserPage";
+import Dashboard from "./pages/Dashboard";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -16,6 +17,7 @@ root.render(
       <Routes>
         <Route path="/" element={<App />} /> {/* Halaman Login */}
         <Route path="/user" element={<UserPage />} />{" "}
+        <Route path="/dashboard" element={<Dashboard />} />
         {/* Halaman Setelah Login */}
       </Routes>
     </BrowserRouter>

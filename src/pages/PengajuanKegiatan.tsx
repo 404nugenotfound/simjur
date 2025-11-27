@@ -2,14 +2,19 @@ import React, { useState, useEffect } from "react";
 import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 
+
 type Kegiatan = {
   id: number;
   judul: string;
   status: "pending" | "disetujui" | "ditolak";
 };
 
-const PengajuanKegiatan: React.FC = () => {
-  const [mode, setMode] = useState<"list" | "form">("list");
+type PengajuanProps = {
+  mode: "list" | "form";
+  setMode: (m: "list" | "form") => void;
+};
+
+const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const [data, setData] = useState<Kegiatan[]>([]);
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -36,11 +41,11 @@ const PengajuanKegiatan: React.FC = () => {
   if (mode === "form") {
     return (
       <div className="p-6">
-        <div className="relative max-w-[900px] w-full mx-24 mt-28">
+        <div className="flex justify-end w-full mt-[4rem] mb-6 px-14">
           <button
             onClick={() => setMode("list")}
-            className="fixed right-20 top-30 z-50 
-             mt-[-3rem] px-4 py-[0.35rem] bg-[#4957B5] 
+            className="
+            px-4 py-[0.35rem] bg-[#4957B5] 
             text-white rounded font-poppins font-medium tracking-[0.05em]
             hover:bg-gray-700 transition
             "
@@ -58,7 +63,7 @@ const PengajuanKegiatan: React.FC = () => {
   }
   return (
     <div className="p-6">
-      <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-[-0.5rem] mb-20">
+      <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-14">
         PENGAJUAN KEGIATAN
       </h1>
       <div className="border border-[#D1D1D1] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.10)] p-6">

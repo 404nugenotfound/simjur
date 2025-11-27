@@ -9,9 +9,19 @@ import {
   Bars3Icon,
 } from "@heroicons/react/24/outline";
 
-export default function Layout({ children }: { children: React.ReactNode }) {
+type LayoutProps = {
+  children:
+    | React.ReactNode
+    | ((
+        mode: "list" | "form",
+        setMode: (m: "list" | "form") => void
+      ) => React.ReactNode);
+};
+
+export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
 
+  const [mode, setMode] = useState<"list" | "form">("list");
   const [open, setOpen] = useState(true);
   const [openDropdown, setOpenDropdown] = useState(false);
 
@@ -82,8 +92,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
         {/* Navigation */}
         <nav className={`space-y-3 ml-[-1rem] pl-5`}>
           <a
-            onClick={() => handleMenuClick("/User#")}
-            href="#"
+            onClick={() => handleMenuClick("/dashboard")}
             className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
             ${!open && "justify-center"}
             hover:bg-black/20`}
@@ -92,16 +101,18 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             {open && <span>Dashboard</span>}
           </a>
 
-            <a
-              onClick={() => handleMenuClick("/User#")}
-              href="#"
-              className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
+          <a
+            onClick={() => {
+              navigate("/user?tab=pengajuan");
+              setMode("list");
+            }}
+            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
               ${!open && "justify-center"}
               hover:bg-black/20`}
-              >
-              <DocumentTextIcon className="w-6 h-6 min-w-[24px]" />
-              {open && <span>Pengajuan Kegiatan</span>}
-            </a>
+          >
+            <DocumentTextIcon className="w-6 h-6 min-w-[24px]" />
+            {open && <span>Pengajuan Kegiatan</span>}
+          </a>
         </nav>
       </aside>
 
@@ -122,7 +133,11 @@ export default function Layout({ children }: { children: React.ReactNode }) {
             <div className="absolute left-[-0.2rem] top-0 bottom-0 w-[2px] bg-gray-300"></div>
 
             {/* Foto */}
-            <img src={Profile} alt="user" className="w-10 h-10 ml-2 rounded-full" />
+            <img
+              src={Profile}
+              alt="user"
+              className="w-10 h-10 ml-2 rounded-full"
+            />
 
             {/* Nama */}
             <span className="font-semibold text-black max-w-[200px] pl-1 truncate">
@@ -131,7 +146,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           </div>
         </header>
 
-        <main className="p-6">{children}</main>
+        <main className="p-6">
+          {typeof children === "function" ? children(mode, setMode) : children}
+        </main>
       </div>
       {openDropdown && (
         <div

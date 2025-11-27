@@ -3,7 +3,6 @@ import Logo from "./assets/LogoName2.svg";
 import Illustration from "./assets/Illustration.svg";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
-import IconTest from "./pages/IconTest";
 
 function App() {
   const navigate = useNavigate();
@@ -44,7 +43,7 @@ function App() {
               </h1>
 
               <p className="text-xl font-poppins text-gray-200 tracking-wider">
-                Pengajuan & Laporan Kegiatan{" "}
+                Pengajuan & Laporan Kegiatan
                 <span className="font-semibold">Jurusan</span>
               </p>
             </div>
@@ -71,7 +70,6 @@ function App() {
             <p className="absolute bottom-5 right-10 text-sm text-gray-200 font-semibold">
               © 2025 SIMJUR
             </p>
-            return <IconTest />;
           </div>
         </div>
       </div>
