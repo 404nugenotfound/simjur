@@ -1,10 +1,19 @@
-import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
-import { PieChart, Pie, Tooltip, Cell } from "recharts";
+import {
+  PieChart,
+  Pie,
+  Tooltip,
+  Cell,
+  ResponsiveContainer,
+  Legend,
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+} from "recharts";
 
 export default function Dashboard() {
-  const navigate = useNavigate();
-
   // Dummy Stats
   const stats = [
     { label: "Total Pengajuan TOR", value: 12 },
@@ -14,75 +23,86 @@ export default function Dashboard() {
 
   // Dummy Chart Data
   const chartData = [
-    { name: "Bekerja Part-time", value: 30 },
-    { name: "Orang Tua/Wali", value: 60 },
-    { name: "Sponsor", value: 10 },
+    { name: "Total Pengajuan TOR", value: 12 },
+    { name: "Total LPJ Disetujui", value: 5 },
+    { name: "Kegiatan Selesai Tahun Ini", value: 4 },
   ];
 
-  const COLORS = ["#ff7373", "#4caf50", "#6ca0ff"];
+  const COLORS = ["#FF6B6B", "#4CAF50", "#3B82F6"];
 
   return (
-    <div className="bg-gray-900 min-h-screen">
-      <div className="text-white">
+    <div className="bg-gray-900 h-screen text-white">
+      <Layout>
+        <div className="p-6 h-full overflow-y-auto space-y-8">
+          {/* Title */}
+          <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem]">
+            DASHBOARD PENGAJUAN KEGIATAN
+          </h1>
 
-        <Layout>
-            <div className="p-6">
-
-              <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-14">
-                DASHBOARD PENGAJUAN KEGIATAN
-              </h1>
-
-              {/* Stats Section */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 ">
-                {stats.map((item, i) => (
-                  <div
-                    key={i}
-                    className="border border-[#D1D1D1] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.10)] p-4 text-center font-poppins text-gray-900"
-                  >
-                    <p className="font-medium">{item.label}</p>
-                    <p className="text-3xl font-semibold mt-3">{item.value}</p>
-                  </div>
-                ))}
+          {/* Statistik Section */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {stats.map((item, i) => (
+              <div
+                key={i}
+                className="border border-[#D1D1D1] bg-white rounded-xl shadow-md p-5 text-center font-poppins text-black"
+              >
+                <p className="font-medium">{item.label}</p>
+                <p className="text-3xl font-semibold mt-3">{item.value}</p>
               </div>
+            ))}
+          </div>
 
-              {/* Chart Section */}
-              <div className="border mt-6 p-6 rounded-xl border-[#D1D1D1] shadow-[0_4px_12px_rgba(0,0,0,0.10)] text-black ">
-                <h2 className="text-lg font-medium font-poppins mb-4">
-                  Grafik Realisasi Dana Jurusan
-                </h2>
+          {/* Chart Section 1 */}
+          <div className="border bg-white rounded-xl p-6 shadow-md text-black">
+            <h2 className="text-lg font-medium font-poppins mb-5">
+              Grafik Realisasi Dana Jurusan
+            </h2>
 
-                <div className="flex flex-col md:flex-row items-center justify-center gap-6">
-                  <PieChart width={350} height={300}>
-                    <Pie
-                      dataKey="value"
-                      data={chartData}
-                      fill="#8884d8"
-                      label
-                    >
-                      {chartData.map((entry, index) => (
-                        <Cell key={index} fill={COLORS[index]} />
-                      ))}
-                    </Pie>
-                    <Tooltip />
-                  </PieChart>
-
-                  {/* Legend */}
-                  <ul className="text-sm">
-                    {chartData.map((d, i) => (
-                      <li key={i} className="flex items-center gap-2">
-                        <span
-                          className="w-4 h-4 rounded block"
-                          style={{ background: COLORS[i] }}
-                        ></span>
-                        {d.name}
-                      </li>
+            {/* Pie Chart */}
+            <div className="w-full h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie dataKey="value" data={chartData} outerRadius={90} label>
+                    {chartData.map((entry, index) => (
+                      <Cell key={index} fill={COLORS[index]} />
                     ))}
-                  </ul>
-                </div>
-              </div>
+                  </Pie>
+                  <Tooltip />
+                  <Legend />
+                </PieChart>
+              </ResponsiveContainer>
             </div>
-        </Layout>
-      </div>
+          </div>
+
+          {/* Chart Section 2*/}
+          <div className="border bg-white rounded-xl p-6 shadow-md text-black">
+            <h2 className="text-lg font-medium font-poppins mb-5">
+              Grafik Realisasi Dana Jurusan
+            </h2>
+
+            {/* Bar Chart */}
+            <div className="w-full h-72">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart
+                  data={chartData}
+                  margin={{ top: 20, right: 30, left: 20, bottom: 5 }}
+                >
+                  <CartesianGrid strokeDasharray="3 3" />
+                  <XAxis dataKey="name" />
+                  <YAxis />
+                  <Tooltip />
+                  <Legend />
+                  <Bar dataKey="value">
+                    {chartData.map((entry, index) => (
+                      <Cell key={index} fill={COLORS[index]} />
+                    ))}
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+        </div>
+      </Layout>
     </div>
   );
 }

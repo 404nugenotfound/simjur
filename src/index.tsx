@@ -6,6 +6,8 @@ import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import UserPage from "./pages/UserPage";
 import Dashboard from "./pages/Dashboard";
+import DaftarKegiatan from "./pages/DaftarKegiatan";
+import Detail from "./pages/Detail";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -18,7 +20,10 @@ root.render(
         <Route path="/" element={<App />} /> {/* Halaman Login */}
         <Route path="/user" element={<UserPage />} />{" "}
         <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/daftar" element={<DaftarKegiatan />} />
+        <Route path="/detail" element={<Detail />} />
         {/* Halaman Setelah Login */}
+
       </Routes>
     </BrowserRouter>
   </React.StrictMode>

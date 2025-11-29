@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
 import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
+import { Navigate, useNavigate } from "react-router-dom";
 
 
 type Kegiatan = {
@@ -19,6 +20,8 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const navigate = useNavigate();
+
 
   useEffect(() => {
     const fakeData: Kegiatan[] = [
@@ -41,7 +44,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   if (mode === "form") {
     return (
       <div className="p-6">
-        <div className="flex justify-end w-full mt-[4rem] mb-6 px-14">
+        <div className="flex justify-end w-full mt-[5.5rem] mb-2 px-14">
           <button
             onClick={() => setMode("list")}
             className="
@@ -63,7 +66,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   }
   return (
     <div className="p-6">
-      <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-14">
+      <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
         PENGAJUAN KEGIATAN
       </h1>
       <div className="border border-[#D1D1D1] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.10)] p-6">
@@ -114,7 +117,12 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                     <td className="p-3">{item.judul}</td>
                     <td className="p-3 capitalize">{item.status}</td>
                     <td className="p-3">
-                      <button className="text-blue-600">Detail</button>
+                      <button
+                onClick={() => navigate("/detail")}
+                className="px-3 py-1 bg-blue-500 text-white rounded-md"
+              >
+                Detail
+              </button>
                     </td>
                   </tr>
                 ))

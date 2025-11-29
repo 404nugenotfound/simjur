@@ -2,12 +2,14 @@ import Logo from "../assets/LogoWhite.svg";
 import Profile from "../assets/2X.svg";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import {ChevronDownIcon}  from "@heroicons/react/24/outline";
 
 import {
   ChartBarIcon,
   DocumentTextIcon,
+  ClipboardDocumentListIcon,
   Bars3Icon,
-} from "@heroicons/react/24/outline";
+} from "@heroicons/react/24/solid";
 
 type LayoutProps = {
   children:
@@ -24,8 +26,11 @@ export default function Layout({ children }: LayoutProps) {
   const [mode, setMode] = useState<"list" | "form">("list");
   const [open, setOpen] = useState(true);
   const [openDropdown, setOpenDropdown] = useState(false);
-
   const dropdownRef = useRef<HTMLDivElement | null>(null);
+  const [openKegiatanDropdown, setOpenKegiatanDropdown] = useState(false);
+  const kegiatanRef = useRef<HTMLDivElement | null>(null);
+  const userName = "MUHAMMAD RANGGA FABIANO";
+
 
   const handleMenuClick = (path: string) => {
     if (!open) setOpen(true);
@@ -40,6 +45,13 @@ export default function Layout({ children }: LayoutProps) {
         !dropdownRef.current.contains(e.target as Node)
       ) {
         setOpenDropdown(false);
+      }
+
+      if (
+        kegiatanRef.current &&
+        !kegiatanRef.current.contains(e.target as Node)
+      ) {
+        setOpenKegiatanDropdown(false);
       }
     };
 
@@ -113,6 +125,56 @@ export default function Layout({ children }: LayoutProps) {
             <DocumentTextIcon className="w-6 h-6 min-w-[24px]" />
             {open && <span>Pengajuan Kegiatan</span>}
           </a>
+          <div className="relative" ref={kegiatanRef}>
+          <button
+            onClick={() => {
+              if (!open) {
+                setOpen(true);
+                return;
+              }
+              setOpenKegiatanDropdown(!openKegiatanDropdown);
+            }}
+            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
+      ${!open && "justify-center"}
+      hover:bg-black/20 w-full`}
+          >
+            <ClipboardDocumentListIcon className="w-6 h-6 min-w-[24px]" />
+            {open && (
+              <span className="flex items-center gap-12">
+                Daftar Kegiatan
+                <ChevronDownIcon
+                  strokeWidth={2.5}
+                  className={`w-5 h-5 transition-transform ${
+                    openKegiatanDropdown ? "rotate-180" : ""
+                  }`}
+                />
+              </span>
+            )}
+          </button>
+
+          {open && openKegiatanDropdown && (
+            <div
+              className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white
+        shadow-lg rounded-md py-2 w-full z-50 border border-white/10"
+            >
+              <button
+                onClick={() => navigate("/daftar")}
+                className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 w-full"
+              >
+                <DocumentTextIcon className="w-5 h-5" />
+                Pengajuan TOR
+              </button>
+
+              <button
+                onClick={() => navigate("/PengajuanLPJ")}
+                className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 w-full"
+              >
+                <DocumentTextIcon className="w-5 h-5" />
+                Pengajuan LPJ
+              </button>
+            </div>
+          )}
+          </div>
         </nav>
       </aside>
 
@@ -141,8 +203,8 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Nama */}
             <span className="font-semibold text-black max-w-[200px] pl-1 truncate">
-              MUHAMMAD RANGGA FABIANO
-            </span>
+            {userName}
+          </span>
           </div>
         </header>
 
@@ -150,6 +212,7 @@ export default function Layout({ children }: LayoutProps) {
           {typeof children === "function" ? children(mode, setMode) : children}
         </main>
       </div>
+
       {openDropdown && (
         <div
           ref={dropdownRef}
