@@ -176,7 +176,7 @@ export default function FormPengajuan() {
           </div>
 
           {/* Submit */}
-          <div className="">
+          <div className="font-medium">
             <button
               onClick={handleSubmit}
               className="px-6 py-2 bg-[#4957B5] text-white rounded-lg hover:bg-gray-700 transition"

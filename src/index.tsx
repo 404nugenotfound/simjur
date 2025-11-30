@@ -8,6 +8,9 @@ import UserPage from "./pages/UserPage";
 import Dashboard from "./pages/Dashboard";
 import DaftarKegiatan from "./pages/DaftarKegiatan";
 import Detail from "./pages/Detail";
+import DaftarKegiatanLPJ from "./pages/DaftarKegiatanLPJ";
+import { DashboardProvider } from "./context/DashboardContext"; // ⬅ tambahan
+import KelolaDashboard from "./pages/KelolaDashboard";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -15,21 +18,20 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <BrowserRouter>
-      <Routes>
-        <Route path="/" element={<App />} /> {/* Halaman Login */}
-        <Route path="/user" element={<UserPage />} />{" "}
-        <Route path="/dashboard" element={<Dashboard />} />
-        <Route path="/daftar" element={<DaftarKegiatan />} />
-        <Route path="/detail" element={<Detail />} />
-        {/* Halaman Setelah Login */}
-
-      </Routes>
-    </BrowserRouter>
+    <DashboardProvider>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/" element={<App />} />
+          <Route path="/user" element={<UserPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+          <Route path="/daftar" element={<DaftarKegiatan />} />
+          <Route path="/detail" element={<Detail />} />
+          <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
+          <Route path="/kelola" element={<KelolaDashboard />} />
+        </Routes>
+      </BrowserRouter>
+    </DashboardProvider>
   </React.StrictMode>
 );
 
-// If you want to start measuring performance in your app, pass a function
-// to log results (for example: reportWebVitals(console.log))
-// or send to an analytics endpoint. Learn more: https://bit.ly/CRA-vitals
 reportWebVitals();

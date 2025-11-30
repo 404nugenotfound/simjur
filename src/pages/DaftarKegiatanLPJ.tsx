@@ -12,7 +12,7 @@ type Kegiatan = {
   tanggal: string;
 };
 
-const DaftarKegiatan: React.FC = () => {
+const DaftarKegiatanLPJ: React.FC = () => {
   const [mode, setMode] = useState<"list" | "form" | "upload">("list");
   const [data, setData] = useState<Kegiatan[]>([]);
   const [search, setSearch] = useState("");
@@ -43,7 +43,7 @@ const DaftarKegiatan: React.FC = () => {
     <Layout>
       <div className="p-6">
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-[0.8rem] mb-12">
-          DAFTAR KEGIATAN TOR
+          DAFTAR KEGIATAN LPJ
         </h1>
         <div className="border border-[#D1D1D1] rounded-xl shadow-[0_4px_12px_rgba(0,0,0,0.10)] p-6">
           {/* Bagian Filter + Search + Tambah */}
@@ -128,6 +128,6 @@ const DaftarKegiatan: React.FC = () => {
     </Layout>
        );
     };
- export default DaftarKegiatan;
+ export default DaftarKegiatanLPJ;
 
   

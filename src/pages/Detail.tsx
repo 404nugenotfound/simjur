@@ -1,12 +1,7 @@
 // src/pages/UploadTor.tsx
-import React, {
-  useState,
-  DragEvent,
-  ChangeEvent,
-  useMemo,
-} from "react";
+import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useActivities } from "../context/ActivitiesContext"; 
+import { useActivities } from "../context/ActivitiesContext";
 import Layout from "./Layout";
 
 type TabKey = "detail" | "approval" | "submit" | "catatan";
@@ -15,18 +10,17 @@ interface UploadTorProps {
   mode?: "TOR" | "LPJ";
 }
 
-
 const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
   const { id } = useParams<{ id: string }>();
   const saved = JSON.parse(localStorage.getItem("pengajuan") || "[]");
 
   // cari activity yang dipilih
- const activity = useMemo(() => {
-  if (!id) return null;
+  const activity = useMemo(() => {
+    if (!id) return null;
 
-  const saved = JSON.parse(localStorage.getItem("pengajuan") || "[]");
-  return saved.find((a: any) => String(a.id) === id) || null;
-}, [id]);
+    const saved = JSON.parse(localStorage.getItem("pengajuan") || "[]");
+    return saved.find((a: any) => String(a.id) === id) || null;
+  }, [id]);
 
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
 
@@ -54,20 +48,19 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
   };
 
   // detail diambil dari activity atau fallback
- const detailData = {
-  nama: activity?.namaKegiatan ?? "–",
-  tanggal: activity?.tanggalPengajuan ?? "–",
-  pj: activity?.penanggungJawab ?? "–",
-  deskripsi: activity?.deskripsi ?? "–",
-  dana: activity?.dana ?? "–",
-  catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
-};
+  const detailData = {
+    nama: activity?.namaKegiatan ?? "–",
+    tanggal: activity?.tanggalPengajuan ?? "–",
+    pj: activity?.penanggungJawab ?? "–",
+    deskripsi: activity?.deskripsi ?? "–",
+    dana: activity?.dana ?? "–",
+    catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
+  };
 
   // 3 catatan role (simpan lokal dulu – nanti bisa dihubungkan ke backend/context)
   const [noteAdmin, setNoteAdmin] = useState("");
   const [noteSekretariat, setNoteSekretariat] = useState("");
   const [noteKajur, setNoteKajur] = useState("");
-  
 
   const handleSaveNotes = () => {
     console.log("Catatan disimpan:", {
@@ -86,20 +79,19 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
           <h1 className="text-3xl tracking-[0.4rem] text-black font-bebas">
             PENGAJUAN {mode}
           </h1>
-          <div className="flex justify-end w-full mt-[3.5rem] mb-4 px-14">
-        <button
-            type="button"
-            onClick={() => window.history.back()}
-            className=" 
+          <div className="flex justify-end w-full mt-[3rem] mb-6 px-14">
+            <button
+              type="button"
+              onClick={() => window.history.back()}
+              className=" 
             px-4 py-[0.35rem]  mr-[-3.2rem] bg-[#4957B5] 
             text-white rounded font-poppins font-medium tracking-[0.05em]
             hover:bg-gray-700 transition"
-          >
-           ← Kembali 
-          </button>
-</div>
+            >
+              ← Kembali
+            </button>
+          </div>
         </div>
-
 
         {/* Tabs container */}
         <div className="bg-white rounded-xl shadow mb-6 overflow-hidden font-poppins">
@@ -185,36 +177,38 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
             {activeTab === "approval" && (
               <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
                 <h2 className="font-semibold mb-4">Approval Status</h2>
-                <table className="w-full text-sm">
-                  <thead>
-                    <tr className="bg-green-500 text-white">
-                      <th className="p-2 text-left">Code</th>
-                      <th className="p-2 text-left">Tanggal</th>
-                      <th className="p-2 text-left">Description</th>
-                      <th className="p-2 text-left">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="bg-green-50">
-                      <td className="p-2 font-semibold">Approval 1</td>
-                      <td className="p-2">{detailData.tanggal}</td>
-                      <td className="p-2">ACC dari Administrasi</td>
-                      <td className="p-2">Pending</td>
-                    </tr>
-                    <tr className="bg-gray-100">
-                      <td className="p-2 font-semibold">Approval 2</td>
-                      <td className="p-2">{detailData.tanggal}</td>
-                      <td className="p-2">ACC dari Sekjur</td>
-                      <td className="p-2">Pending</td>
-                    </tr>
-                    <tr className="bg-gray-100">
-                      <td className="p-2 font-semibold">Approval 3</td>
-                      <td className="p-2">{detailData.tanggal}</td>
-                      <td className="p-2">ACC dari Kajur</td>
-                      <td className="p-2">Pending</td>
-                    </tr>
-                  </tbody>
-                </table>
+                <div className="overflow-hidden rounded-xl border border-sm">
+                  <table className="w-full text-sm text-gray-500">
+                    <thead>
+                      <tr className="bg-[#86BE9E] text-white">
+                        <th className="p-2 text-center">Code</th>
+                        <th className=" text-center">Tanggal</th>
+                        <th className=" text-center">Description</th>
+                        <th className="text-center">Status</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      <tr className="bg-gray-50 text-center">
+                        <td className="p-2 font-semibold">Approval 1</td>
+                        <td className="p-2">{detailData.tanggal}</td>
+                        <td className="p-2">ACC dari Administrasi</td>
+                        <td className="p-2">Pending</td>
+                      </tr>
+                      <tr className="bg-gray-100 text-center">
+                        <td className="p-2 font-semibold">Approval 2</td>
+                        <td className="p-2">{detailData.tanggal}</td>
+                        <td className="p-2">ACC dari Sekjur</td>
+                        <td className="p-2">Pending</td>
+                      </tr>
+                      <tr className="bg-gray-50 text-center">
+                        <td className="p-2 font-semibold">Approval 3</td>
+                        <td className="p-2">{detailData.tanggal}</td>
+                        <td className="p-2">ACC dari Kajur</td>
+                        <td className="p-2"></td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
               </div>
             )}
 
@@ -256,7 +250,7 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                       accept=".pdf,.doc,.docx"
                       className="hidden"
                       onChange={handleFileChange}
-                      aria-label="Tsana kntl"
+                      aria-label="hehe"
                     />
                   </div>
                 )}
@@ -288,43 +282,46 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
             {activeTab === "catatan" && (
               <div className="bg-gray-50 rounded-xl p-6 shadow-inner space-y-4">
                 <h2 className="font-semibold mb-2">Catatan</h2>
-                {/* Catatan Admin */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-1">
-                    Catatan Admin
-                  </p>
-                  <textarea
-                    className="w-full border rounded-lg p-3 min-h-[80px]"
-                    value={noteAdmin}
-                    placeholder="Catatan dari admin..."
-                    readOnly
-                  />
-                </div>
 
-                {/* Catatan Sekretariat */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-1">
-                    Catatan Sekretariat
-                  </p>
-                  <textarea
-                    className="w-full border rounded-lg p-3 min-h-[80px]"
-                    value={noteSekretariat}
-                    placeholder="Catatan dari sekretariat..."
-                    readOnly
-                  />
-                </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {/* Catatan Admin */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-1">
+                      Catatan Admin
+                    </p>
+                    <textarea
+                      className="w-full border rounded-lg p-3 min-h-80"
+                      value={noteAdmin}
+                      placeholder="Catatan dari admin..."
+                      readOnly
+                    />
+                  </div>
 
-                {/* Catatan Ketua Jurusan */}
-                <div>
-                  <p className="text-xs font-semibold text-gray-600 mb-1">
-                    Catatan Ketua Jurusan
-                  </p>
-                  <textarea
-                    className="w-full border rounded-lg p-3 min-h-[80px]"
-                    value={noteKajur}
-                    placeholder="Catatan dari ketua jurusan..."
-                    readOnly
-                  />
+                  {/* Catatan Sekretariat */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-1">
+                      Catatan Sekretariat
+                    </p>
+                    <textarea
+                      className="w-full border rounded-lg p-3 min-h-80"
+                      value={noteSekretariat}
+                      placeholder="Catatan dari sekretariat..."
+                      readOnly
+                    />
+                  </div>
+
+                  {/* Catatan Kajur */}
+                  <div>
+                    <p className="text-xs font-semibold text-gray-600 mb-1">
+                      Catatan Ketua Jurusan
+                    </p>
+                    <textarea
+                      className="w-full border rounded-lg p-3 min-h-80"
+                      value={noteKajur}
+                      placeholder="Catatan dari ketua jurusan..."
+                      readOnly
+                    />
+                  </div>
                 </div>
               </div>
             )}

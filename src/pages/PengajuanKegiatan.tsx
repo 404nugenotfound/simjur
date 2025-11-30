@@ -3,11 +3,10 @@ import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
 
-
 type Kegiatan = {
   id: number;
   judul: string;
-  status: "pending" | "disetujui" | "ditolak";
+  tanggal: string;
 };
 
 type PengajuanProps = {
@@ -22,18 +21,17 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const [page, setPage] = useState(1);
   const navigate = useNavigate();
 
-
   useEffect(() => {
     const fakeData: Kegiatan[] = [
-      { id: 1, judul: "Pelatihan Ormawa", status: "pending" },
-      { id: 2, judul: "Seminar Nasional", status: "disetujui" },
-      { id: 3, judul: "Kunjungan Industri", status: "ditolak" },
+      { id: 1, judul: "Pelatihan Ormawa", tanggal: "12-12-2023" },
+      { id: 2, judul: "Seminar Nasional", tanggal: "15-12-2023" },
+      { id: 3, judul: "Kunjungan Industri", tanggal: "20-12-2023" },
     ];
     setData(fakeData);
   }, []);
 
   const filtered = data.filter((item) => {
-    const matching = filter === "all" ? true : item.status === filter;
+    const matching = filter === "all" ? true : item.judul === filter;
     const searching = item.judul.toLowerCase().includes(search.toLowerCase());
     return matching && searching;
   });
@@ -77,7 +75,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
             <input
               type="text"
               placeholder="Telusuri Kegiatan ..."
-              className="p-2 pl-4 pr-10 border rounded-3xl w-full text-sm font-medium"
+              className="p-2 pl-4 pr-10 border rounded-3xl w-full text-sm text-black font-medium"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
             />
@@ -94,11 +92,11 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         {/* Tabel */}
         <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
           <table className="w-full text-left">
-            <thead className="bg-[#86BE9E] tracking-[0.1em]">
+            <thead className="bg-[#86BE9E] tracking-[0.1em] text-center">
               <tr>
                 <th className="px-4 p-3">No</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>
-                <th className="px-4 p-3">Status</th>
+                <th className="px-4 p-3">Tanggal</th>
                 <th className="px-4 p-3">Action</th>
               </tr>
             </thead>
@@ -112,17 +110,33 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                 </tr>
               ) : (
                 filtered.map((item, index) => (
-                  <tr key={item.id} className="border-b text-[#696868]">
+                  <tr
+                    key={item.id}
+                    className="border-b text-[#696868] text-center"
+                  >
                     <td className="p-3">{index + 1}</td>
                     <td className="p-3">{item.judul}</td>
-                    <td className="p-3 capitalize">{item.status}</td>
+                    <td className="p-3">{item.tanggal}</td>
                     <td className="p-3">
                       <button
-                onClick={() => navigate("/detail")}
-                className="px-3 py-1 bg-blue-500 text-white rounded-md"
-              >
-                Detail
-              </button>
+                        onClick={() => navigate("/detail")}
+                        className="px-3 py-1 bg-blue-500 text-white rounded-md mr-6"
+                      >
+                        TOR
+                      </button>
+
+                      <button
+                        onClick={() => navigate("/detail")}
+                        className="px-3 py-1 bg-blue-500 text-white rounded-md mr-6"
+                      >
+                        LPJ
+                      </button>
+                      <button
+                        onClick={() => navigate("/detail")}
+                        className="px-3 py-1 bg-[#9C1818] text-white rounded-md"
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))

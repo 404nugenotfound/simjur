@@ -2,12 +2,15 @@ import Logo from "../assets/LogoWhite.svg";
 import Profile from "../assets/2X.svg";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
-import {ChevronDownIcon}  from "@heroicons/react/24/outline";
+import { ChevronDownIcon } from "@heroicons/react/24/outline";
 
 import {
   ChartBarIcon,
   DocumentTextIcon,
   ClipboardDocumentListIcon,
+  DocumentArrowUpIcon,
+  DocumentArrowDownIcon,
+  Cog6ToothIcon,
   Bars3Icon,
 } from "@heroicons/react/24/solid";
 
@@ -20,6 +23,8 @@ type LayoutProps = {
       ) => React.ReactNode);
 };
 
+export const userName = "MUHAMMAD RANGGA FABIANO";
+
 export default function Layout({ children }: LayoutProps) {
   const navigate = useNavigate();
 
@@ -30,7 +35,6 @@ export default function Layout({ children }: LayoutProps) {
   const [openKegiatanDropdown, setOpenKegiatanDropdown] = useState(false);
   const kegiatanRef = useRef<HTMLDivElement | null>(null);
   const userName = "MUHAMMAD RANGGA FABIANO";
-
 
   const handleMenuClick = (path: string) => {
     if (!open) setOpen(true);
@@ -58,6 +62,7 @@ export default function Layout({ children }: LayoutProps) {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+  
 
   return (
     <div className="flex min-h-screen bg-gray-100">
@@ -114,6 +119,16 @@ export default function Layout({ children }: LayoutProps) {
           </a>
 
           <a
+            onClick={() => handleMenuClick("/kelola")}
+            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
+            ${!open && "justify-center"}
+            hover:bg-black/20`}
+          >
+            <Cog6ToothIcon className="w-6 h-6 min-w-[24px] " />
+            {open && <span>Kelola Dashboard</span>}
+          </a>
+
+          <a
             onClick={() => {
               navigate("/user?tab=pengajuan");
               setMode("list");
@@ -126,54 +141,54 @@ export default function Layout({ children }: LayoutProps) {
             {open && <span>Pengajuan Kegiatan</span>}
           </a>
           <div className="relative" ref={kegiatanRef}>
-          <button
-            onClick={() => {
-              if (!open) {
-                setOpen(true);
-                return;
-              }
-              setOpenKegiatanDropdown(!openKegiatanDropdown);
-            }}
-            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
-      ${!open && "justify-center"}
-      hover:bg-black/20 w-full`}
-          >
-            <ClipboardDocumentListIcon className="w-6 h-6 min-w-[24px]" />
-            {open && (
-              <span className="flex items-center gap-12">
-                Daftar Kegiatan
-                <ChevronDownIcon
-                  strokeWidth={2.5}
-                  className={`w-5 h-5 transition-transform ${
-                    openKegiatanDropdown ? "rotate-180" : ""
-                  }`}
-                />
-              </span>
-            )}
-          </button>
-
-          {open && openKegiatanDropdown && (
-            <div
-              className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white
-        shadow-lg rounded-md py-2 w-full z-50 border border-white/10"
+            <button
+              onClick={() => {
+                if (!open) {
+                  setOpen(true);
+                  return;
+                }
+                setOpenKegiatanDropdown(!openKegiatanDropdown);
+              }}
+              className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
+              ${!open && "justify-center"}
+              hover:bg-black/20 w-full`}
             >
-              <button
-                onClick={() => navigate("/daftar")}
-                className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 w-full"
-              >
-                <DocumentTextIcon className="w-5 h-5" />
-                Pengajuan TOR
-              </button>
+              <ClipboardDocumentListIcon className="w-6 h-6 min-w-[24px]" />
+              {open && (
+                <span className="flex items-center gap-12">
+                  Daftar Kegiatan
+                  <ChevronDownIcon
+                    strokeWidth={2.5}
+                    className={`w-5 h-5 transition-transform ${
+                      openKegiatanDropdown ? "rotate-180" : ""
+                    }`}
+                  />
+                </span>
+              )}
+            </button>
 
-              <button
-                onClick={() => navigate("/PengajuanLPJ")}
-                className="flex items-center gap-2 px-4 py-2 hover:bg-white/10 w-full"
+            {open && openKegiatanDropdown && (
+              <div
+                className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white
+                           shadow-lg rounded-md py-2 w-full z-50 border border-white/10"
               >
-                <DocumentTextIcon className="w-5 h-5" />
-                Pengajuan LPJ
-              </button>
-            </div>
-          )}
+                <button
+                  onClick={() => navigate("/daftar")}
+                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+                >
+                  <DocumentArrowUpIcon className="w-5 h-5" />
+                  Pengajuan TOR
+                </button>
+
+                <button
+                  onClick={() => navigate("/daftar-LPJ")}
+                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+                >
+                  <DocumentArrowDownIcon className="w-5 h-5" />
+                  Pengajuan LPJ
+                </button>
+              </div>
+            )}
           </div>
         </nav>
       </aside>
@@ -192,7 +207,7 @@ export default function Layout({ children }: LayoutProps) {
             onClick={() => setOpenDropdown(!openDropdown)}
           >
             {/* Separator */}
-            <div className="absolute left-[-0.2rem] top-0 bottom-0 w-[2px] bg-gray-300"></div>
+            <div className="absolute left-[-0.2rem] top-[-1px] bottom-[-1px] w-[2px] bg-gray-300"></div>
 
             {/* Foto */}
             <img
@@ -203,8 +218,8 @@ export default function Layout({ children }: LayoutProps) {
 
             {/* Nama */}
             <span className="font-semibold text-black max-w-[200px] pl-1 truncate">
-            {userName}
-          </span>
+              {userName}
+            </span>
           </div>
         </header>
 
