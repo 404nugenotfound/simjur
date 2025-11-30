@@ -9,8 +9,9 @@ import Dashboard from "./pages/Dashboard";
 import DaftarKegiatan from "./pages/DaftarKegiatan";
 import Detail from "./pages/Detail";
 import DaftarKegiatanLPJ from "./pages/DaftarKegiatanLPJ";
-import { DashboardProvider } from "./context/DashboardContext"; // ⬅ tambahan
 import KelolaDashboard from "./pages/KelolaDashboard";
+import { DashboardProvider } from "./context/DashboardContext";
+
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -21,13 +22,18 @@ root.render(
     <DashboardProvider>
       <BrowserRouter>
         <Routes>
+          {/* Pagina tanpa layout (ex: login) */}
           <Route path="/" element={<App />} />
-          <Route path="/user" element={<UserPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/daftar" element={<DaftarKegiatan />} />
-          <Route path="/detail" element={<Detail />} />
-          <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
-          <Route path="/kelola" element={<KelolaDashboard />} />
+
+          {/* Semua halaman dalam layout */}
+          <Route>
+            <Route path="/dashboard" element={<Dashboard />} />
+            <Route path="/user" element={<UserPage />} />
+            <Route path="/daftar" element={<DaftarKegiatan />} />
+            <Route path="/detail" element={<Detail />} />
+            <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
+            <Route path="/kelola" element={<KelolaDashboard />} />
+          </Route>
         </Routes>
       </BrowserRouter>
     </DashboardProvider>

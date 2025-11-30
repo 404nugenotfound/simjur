@@ -3,7 +3,7 @@ import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
-import { userName } from "../pages/Layout";
+import { userName } from "../components/Headerbar";
 
 type Kegiatan = {
   id: number;

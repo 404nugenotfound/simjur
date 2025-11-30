@@ -1,0 +1,41 @@
+import Profile from "../assets/2X.svg";
+import { useState } from "react";
+import UserDropdown from "./UserDropdown";
+
+export const userName = "MUHAMMAD RANGGA FABIANO";
+
+export default function HeaderBar() {
+  const [openDropdown, setOpenDropdown] = useState(false);
+
+  return (
+    <header className="flex items-center justify-end bg-white shadow relative">
+       <div></div>
+          <div
+            className="
+            relative flex items-center gap-3 cursor-pointer 
+            px-5 py-5 
+            border border-transparent 
+            hover:border-gray-300 hover:bg-gray-100 transition
+            "
+            onClick={() => setOpenDropdown(!openDropdown)}
+          >
+            {/* Separator */}
+            <div className="absolute left-[-0.2rem] top-[-1px] bottom-[-1px] w-[2px] bg-gray-300"></div>
+
+            {/* Foto */}
+            <img
+              src={Profile}
+              alt="user"
+              className="w-10 h-10 ml-2 rounded-full"
+            />
+
+            {/* Nama */}
+            <span className="font-semibold text-black max-w-[200px] pl-1 truncate">
+              {userName}
+            </span>
+          </div>
+
+      {openDropdown && <UserDropdown close={() => setOpenDropdown(false)} />}
+    </header>
+  );
+}
