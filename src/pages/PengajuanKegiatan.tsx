@@ -42,15 +42,14 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   }
   if (mode === "form") {
     return (
-      <div className="p-8">
-        <div className="flex justify-end w-full mt-[5.5rem] mb-2 px-14">
+      <div className="p-6">
+        <div className="flex justify-end w-full mt-[8rem] px-20">
           <button
             onClick={() => setMode("list")}
             className="
             px-4 py-[0.35rem] bg-[#4957B5] 
             text-white rounded font-poppins font-medium tracking-[0.05em]
-            hover:bg-gray-700 transition
-            "
+            hover:bg-gray-700 transition"
           >
             ← Kembali
           </button>

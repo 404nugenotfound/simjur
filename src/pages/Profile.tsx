@@ -4,7 +4,6 @@ import ProfilePic from "../assets/2X.svg";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-
 export default function Profile() {
   const [name, setName] = useState(userName);
   const [email, setEmail] = useState("rangga@example.com");
@@ -18,8 +17,8 @@ export default function Profile() {
   return (
     <Layout hideHeader>
       {() => (
-        <div className="p-12">
-          <h1 className="text-3xl mb-5 tracking-[0.4rem] font-bebas mb-10">
+        <div className="p-16 py-12">
+          <h1 className="text-3xl mb-8 tracking-[0.4rem] font-bebas">
             Profil Pengguna
           </h1>
 
@@ -106,13 +105,15 @@ export default function Profile() {
                   aria-label="-"
                 />
 
-                <div className="font-medium">
-                  <button className="px-4 py-2 rounded bg-blue-600 text-white mt-4">
+                <div className="font-medium grid grid-cols-2 mt-4 gap-4">
+                  <button 
+                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-start"
+                  >
                     Ganti Password
                   </button>
 
                   <button
-                    className="px-4 py-2 ml-[7.9rem] rounded bg-blue-600 text-white mt-4"
+                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-end"
                     onClick={() => {
                       navigate("/user");
                     }}

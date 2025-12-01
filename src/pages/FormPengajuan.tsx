@@ -91,13 +91,13 @@ export default function FormPengajuan() {
   };
 
   return (
-    <div className="p-12">
+    <div className="px-12 pt-8 pb-8">
     {/* Form */}
-       <h2 className="text-3xl font-bebas mb-20 tracking-[0.4rem] ml-[-1rem] mt-[-8.5rem] text-black">
+       <h2 className="text-3xl font-bebas mb-24 tracking-[0.4rem] ml-[-1rem] mt-[-9.7rem] text-black">
           TAMBAH DATA PENGAJUAN TOR
         </h2>
         
-    <div className="flex justify-center w-full mt-20 px-6">  
+    <div className="flex justify-center w-full px-6">  
       {/* Card Container */}
       <div className="bg-white shadow-md border rounded-xl p-6 w-full max-w-6xl">
         {/* Title */}
