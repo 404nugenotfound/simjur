@@ -1,14 +1,16 @@
 import Sidebar from "../components/Sidebar";
 import HeaderBar from "../components/Headerbar";
+import Footer from "../components/Footer";
 import { useState } from "react";
 
 type LayoutProps = {
+  hideHeader?: boolean;
   children:
     | React.ReactNode
     | ((mode: "list" | "form", setMode: (m: "list" | "form") => void) => React.ReactNode);
 };
 
-export default function Layout({ children }: LayoutProps) {
+export default function Layout({ children, hideHeader }: LayoutProps) {
   const [mode, setMode] = useState<"list" | "form">("list");
 
   return (
@@ -16,10 +18,11 @@ export default function Layout({ children }: LayoutProps) {
       <Sidebar setMode={setMode} />
 
       <div className="flex-1 flex flex-col">
-        <HeaderBar />
-        <main className="p-6 overflow-y-auto flex-1">
+        {!hideHeader && <HeaderBar />}
+        <main className="overflow-y-auto flex-1">
           {typeof children === "function" ? children(mode, setMode) : children}
         </main>
+        <Footer />
       </div>
     </div>
   );

@@ -41,7 +41,7 @@ const DaftarKegiatanLPJ: React.FC = () => {
   }
   return (
     <Layout>
-      <div className="p-6">
+      <div className="p-12">
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-[0.8rem] mb-12">
           DAFTAR KEGIATAN LPJ
         </h1>

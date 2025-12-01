@@ -27,7 +27,7 @@ export default function Dashboard() {
   return (
     <div className="text-white">
       <Layout>
-        <div className="p-6 h-full overflow-y-auto space-y-8">
+        <div className="p-12 h-full overflow-y-auto space-y-8">
           <h1 className="text-3xl text-black font-bebas tracking-[0.4rem]">
             DASHBOARD PENGAJUAN KEGIATAN
           </h1>

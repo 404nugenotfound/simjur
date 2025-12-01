@@ -30,7 +30,7 @@ export default function HeaderBar() {
             />
 
             {/* Nama */}
-            <span className="font-semibold text-black max-w-[200px] pl-1 truncate">
+            <span className="font-semibold font-poppins text-black max-w-[200px] pl-1 truncate">
               {userName}
             </span>
           </div>

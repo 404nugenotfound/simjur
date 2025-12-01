@@ -11,6 +11,8 @@ import Detail from "./pages/Detail";
 import DaftarKegiatanLPJ from "./pages/DaftarKegiatanLPJ";
 import KelolaDashboard from "./pages/KelolaDashboard";
 import { DashboardProvider } from "./context/DashboardContext";
+import Profile from "./pages/Profile";
+import Footer from "./components/Footer";
 
 
 const root = ReactDOM.createRoot(
@@ -33,6 +35,7 @@ root.render(
             <Route path="/detail" element={<Detail />} />
             <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
             <Route path="/kelola" element={<KelolaDashboard />} />
+            <Route path="/profile" element={<Profile />} />
           </Route>
         </Routes>
       </BrowserRouter>

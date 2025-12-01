@@ -32,7 +32,7 @@ export default function KelolaDashboard() {
 
   return (
     <Layout>
-      <div className="p-6">
+      <div className="p-12">
         <h1 className="text-3xl font-bebas mb-12 tracking-[0.4rem] ml-[-1rem] text-black">Kelola Kegiatan</h1>
 
         <div className="font-poppins">

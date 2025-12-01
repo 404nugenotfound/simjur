@@ -91,7 +91,7 @@ export default function FormPengajuan() {
   };
 
   return (
-    <div className="p-6">
+    <div className="p-12">
     {/* Form */}
        <h2 className="text-3xl font-bebas mb-20 tracking-[0.4rem] ml-[-1rem] mt-[-8.5rem] text-black">
           TAMBAH DATA PENGAJUAN TOR

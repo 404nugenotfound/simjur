@@ -73,7 +73,7 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
 
   return (
     <Layout>
-      <div className="p-8">
+      <div className="p-12">
         {/* Header */}
         <div className="mb-4 ml-[-1.2rem]">
           <h1 className="text-3xl tracking-[0.4rem] text-black font-bebas">

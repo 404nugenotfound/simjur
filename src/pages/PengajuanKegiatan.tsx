@@ -41,7 +41,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   }
   if (mode === "form") {
     return (
-      <div className="p-6">
+      <div className="p-8">
         <div className="flex justify-end w-full mt-[5.5rem] mb-2 px-14">
           <button
             onClick={() => setMode("list")}
@@ -63,7 +63,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     /* Tabel */
   }
   return (
-    <div className="p-6">
+    <div className="p-12">
       <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
         PENGAJUAN KEGIATAN
       </h1>
