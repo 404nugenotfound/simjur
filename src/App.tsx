@@ -60,7 +60,7 @@ function App() {
               <div className="mr-32 flex justify-center">
                 <button
                   className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold hover:bg-gray-200 transition"
-                  onClick={() => navigate("/user")}
+                  onClick={() => navigate("/dashboard")}
                 >
                   Login
                 </button>

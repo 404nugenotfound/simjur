@@ -100,7 +100,7 @@ export default function Sidebar({ setMode }: { setMode: (m: "list" | "form") => 
 
           <a
             onClick={() => {
-              navigate("/user?tab=pengajuan");
+              navigate("/pengajuan");
               setMode("list");
             }}
             className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer

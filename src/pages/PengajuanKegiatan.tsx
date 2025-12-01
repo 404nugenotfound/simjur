@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
+import Layout from "./Layout";
 
 type Kegiatan = {
   id: number;
@@ -92,7 +93,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         {/* Tabel */}
         <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
           <table className="w-full text-left">
-            <thead className="bg-[#86BE9E] tracking-[0.1em] text-center">
+            <thead className="bg-[#86BE9E] tracking-[0.1em] text-center text-white font-semibold">
               <tr>
                 <th className="px-4 p-3">No</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>

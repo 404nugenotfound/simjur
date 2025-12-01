@@ -4,7 +4,7 @@ import "./index.css";
 import App from "./App";
 import reportWebVitals from "./reportWebVitals";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import UserPage from "./pages/UserPage";
+import UserPage from "./context/PengajuanContext";
 import Dashboard from "./pages/Dashboard";
 import DaftarKegiatan from "./pages/DaftarKegiatan";
 import Detail from "./pages/Detail";
@@ -12,7 +12,9 @@ import DaftarKegiatanLPJ from "./pages/DaftarKegiatanLPJ";
 import KelolaDashboard from "./pages/KelolaDashboard";
 import { DashboardProvider } from "./context/DashboardContext";
 import Profile from "./pages/Profile";
-import Footer from "./components/Footer";
+import PengajuanKegiatan from "./pages/PengajuanKegiatan";
+import Layout from "./pages/Layout";
+import PengajuanContext from "./context/PengajuanContext";
 
 
 const root = ReactDOM.createRoot(
@@ -31,6 +33,7 @@ root.render(
           <Route>
             <Route path="/dashboard" element={<Dashboard />} />
             <Route path="/user" element={<UserPage />} />
+            <Route path="/pengajuan" element={<PengajuanContext />} />
             <Route path="/daftar" element={<DaftarKegiatan />} />
             <Route path="/detail" element={<Detail />} />
             <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />

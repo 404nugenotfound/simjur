@@ -1,7 +1,6 @@
 // src/pages/UploadTor.tsx
 import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { useActivities } from "../context/ActivitiesContext";
 import Layout from "./Layout";
 
 type TabKey = "detail" | "approval" | "submit" | "catatan";
