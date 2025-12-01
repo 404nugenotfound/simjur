@@ -326,10 +326,6 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
             )}
           </div>
         </div>
-
-        <p className="mt-4 text-xs text-gray-500">
-          © SIMJUR {new Date().getFullYear()}
-        </p>
       </div>
     </Layout>
   );

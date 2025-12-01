@@ -63,8 +63,8 @@ const DaftarKegiatan: React.FC = () => {
           {/* Tabel */}
           <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
             <table className="w-full text-left">
-              <thead className="bg-[#86BE9E] text-white tracking-[0.1em]">
-                <tr className="text-center">
+              <thead className="bg-[#86BE9E] text-white tracking-[0.1em] font-semibold">
+                <tr className="text-center [&>th]:font-semibold">
                 <th className="px-4 p-3">No</th>
                 <th className="px-4 p-3">Nama</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>

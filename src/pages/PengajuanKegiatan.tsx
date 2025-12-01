@@ -93,7 +93,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
           <table className="w-full text-left">
             <thead className="bg-[#86BE9E] tracking-[0.1em] text-center text-white font-semibold">
-              <tr>
+              <tr className="[&>th]:font-semibold">
                 <th className="px-4 p-3">No</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>
                 <th className="px-4 p-3">Tanggal</th>
@@ -120,20 +120,20 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                     <td className="p-3">
                       <button
                         onClick={() => navigate("/detail")}
-                        className="px-3 py-1 bg-blue-500 text-white rounded-md mr-6"
+                        className="px-5 py-1 bg-[#83CBA2] text-white rounded-md mr-6"
                       >
                         TOR
                       </button>
 
                       <button
                         onClick={() => navigate("/detail")}
-                        className="px-3 py-1 bg-blue-500 text-white rounded-md mr-6"
+                        className="px-5 py-1 bg-[#8FC5A6] text-white rounded-md mr-6"
                       >
                         LPJ
                       </button>
                       <button
                         onClick={() => navigate("/detail")}
-                        className="px-3 py-1 bg-[#9C1818] text-white rounded-md"
+                        className="px-5 py-1 bg-[#9C1818] text-white rounded-md"
                       >
                         Delete
                       </button>
