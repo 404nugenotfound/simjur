@@ -37,6 +37,15 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     return matching && searching;
   });
 
+  const handleDelete = (id: number) => {
+    if (!window.confirm("Yakin mo hapus data ini?")) return;
+
+    const updated = data.filter((item) => item.id !== id);
+    setData(updated);
+
+    localStorage.setItem("kegiatan", JSON.stringify(updated));
+  };
+
   {
     /* Form View */
   }
@@ -119,21 +128,38 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                     <td className="p-3">{item.tanggal}</td>
                     <td className="p-3">
                       <button
-                        onClick={() => navigate("/detail")}
-                        className="px-5 py-1 bg-[#83CBA2] text-white rounded-md mr-6"
+                        onClick={() =>
+                          navigate("/detail", {
+                            state: {
+                              type: "TOR",
+                              judul: item.judul,
+                              tanggal: item.tanggal,
+                            },
+                          })
+                        }
+                        className="px-5 py-1 bg-[#6B7EF4] text-white rounded-md mr-6"
                       >
                         TOR
                       </button>
 
                       <button
-                        onClick={() => navigate("/detail")}
-                        className="px-5 py-1 bg-[#8FC5A6] text-white rounded-md mr-6"
+                        onClick={() =>
+                          navigate("/detail", {
+                            state: {
+                              type: "LPJ",
+                              judul: item.judul,
+                              tanggal: item.tanggal,
+                            },
+                          })
+                        }
+                        disabled={true}
+                        className="px-5 py-1 bg-[#d1d5db] text-[#7b7b7b] cursor-not-allowed opacity-60 rounded-md mr-6"
                       >
                         LPJ
                       </button>
                       <button
-                        onClick={() => navigate("/detail")}
-                        className="px-5 py-1 bg-[#9C1818] text-white rounded-md"
+                        onClick={() => handleDelete(item.id)}
+                        className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
                       >
                         Delete
                       </button>

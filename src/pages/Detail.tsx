@@ -2,6 +2,8 @@
 import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "./Layout";
+import { userName } from "../components/Headerbar";
+import { useLocation } from "react-router-dom";
 
 type TabKey = "detail" | "approval" | "submit" | "catatan";
 
@@ -11,15 +13,21 @@ interface UploadTorProps {
 
 const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
   const { id } = useParams<{ id: string }>();
-  const saved = JSON.parse(localStorage.getItem("pengajuan") || "[]");
+  const saved = JSON.parse(localStorage.getItem("kegiatan") || "[]");
+  const location = useLocation();
 
-  // cari activity yang dipilih
   const activity = useMemo(() => {
-    if (!id) return null;
+    if (location.state) return location.state;
+    return saved.find((x) => String(x.id) === String(id)) || null;
+  }, [id, location.state]);
 
-    const saved = JSON.parse(localStorage.getItem("pengajuan") || "[]");
-    return saved.find((a: any) => String(a.id) === id) || null;
-  }, [id]);
+  const detailData = {
+    nama: activity?.namaKegiatan ?? activity?.judul ?? "–",
+    tanggal: activity?.tanggalPengajuan ?? activity?.tanggal ?? "–",
+    deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
+    dana: activity?.dana ?? "Belum Dilampirkan.",
+    catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
+  };
 
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
 
@@ -44,16 +52,6 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
     const selected = e.target.files?.[0];
     if (selected) setFile(selected);
-  };
-
-  // detail diambil dari activity atau fallback
-  const detailData = {
-    nama: activity?.namaKegiatan ?? "–",
-    tanggal: activity?.tanggalPengajuan ?? "–",
-    pj: activity?.penanggungJawab ?? "–",
-    deskripsi: activity?.deskripsi ?? "–",
-    dana: activity?.dana ?? "–",
-    catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
   };
 
   // 3 catatan role (simpan lokal dulu – nanti bisa dihubungkan ke backend/context)
@@ -155,7 +153,7 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                   </div>
                   <div>
                     <p className="text-gray-500">Penanggung Jawab</p>
-                    <p className="font-medium">{detailData.pj}</p>
+                    <p className="font-medium">{userName}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Total Dana</p>
@@ -289,8 +287,8 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                       Catatan Admin
                     </p>
                     <textarea
-                      className="w-full border rounded-lg p-3 min-h-80"
-                      value={noteAdmin}
+                      className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
+                      value={noteAdmin || detailData.catatanPengaju}
                       placeholder="Catatan dari admin..."
                       readOnly
                     />
@@ -302,8 +300,8 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                       Catatan Sekretariat
                     </p>
                     <textarea
-                      className="w-full border rounded-lg p-3 min-h-80"
-                      value={noteSekretariat}
+                      className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
+                      value={noteSekretariat || detailData.catatanPengaju}
                       placeholder="Catatan dari sekretariat..."
                       readOnly
                     />
@@ -315,8 +313,8 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                       Catatan Ketua Jurusan
                     </p>
                     <textarea
-                      className="w-full border rounded-lg p-3 min-h-80"
-                      value={noteKajur}
+                      className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
+                      value={noteKajur || detailData.catatanPengaju}
                       placeholder="Catatan dari ketua jurusan..."
                       readOnly
                     />

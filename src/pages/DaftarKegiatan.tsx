@@ -7,7 +7,7 @@ import { userName } from "../components/Headerbar";
 
 type Kegiatan = {
   id: number;
-  nama: string
+  nama: string;
   judul: string;
   tanggal: string;
 };
@@ -22,9 +22,24 @@ const DaftarKegiatan: React.FC = () => {
 
   useEffect(() => {
     const fakeData: Kegiatan[] = [
-      { id: 1, nama: userName, judul: "Pelatihan Ormawa",tanggal:"12-12-2023" },
-      { id: 2, nama: userName, judul: "Seminar Nasional",tanggal:"15-12-2023" },
-      { id: 3, nama: userName, judul: "Kunjungan Industri",tanggal:"20-12-2023" },
+      {
+        id: 1,
+        nama: userName,
+        judul: "Pelatihan Ormawa",
+        tanggal: "12-12-2023",
+      },
+      {
+        id: 2,
+        nama: userName,
+        judul: "Seminar Nasional",
+        tanggal: "15-12-2023",
+      },
+      {
+        id: 3,
+        nama: userName,
+        judul: "Kunjungan Industri",
+        tanggal: "20-12-2023",
+      },
     ];
     setData(fakeData);
   }, []);
@@ -34,7 +49,6 @@ const DaftarKegiatan: React.FC = () => {
     const searching = item.judul.toLowerCase().includes(search.toLowerCase());
     return matching && searching;
   });
- 
 
   {
     /* Tabel */
@@ -65,11 +79,11 @@ const DaftarKegiatan: React.FC = () => {
             <table className="w-full text-left">
               <thead className="bg-[#86BE9E] text-white tracking-[0.1em] font-semibold">
                 <tr className="text-center [&>th]:font-semibold">
-                <th className="px-4 p-3">No</th>
-                <th className="px-4 p-3">Nama</th>
-                <th className="px-4 p-3">Judul Kegiatan</th>
-                <th className="px-4 p-3">Tanggal</th>
-                <th className="px-4 p-3">Action</th>
+                  <th className="px-4 p-3">No</th>
+                  <th className="px-4 p-3">Nama</th>
+                  <th className="px-4 p-3">Judul Kegiatan</th>
+                  <th className="px-4 p-3">Tanggal</th>
+                  <th className="px-4 p-3">Action</th>
                 </tr>
               </thead>
 
@@ -82,15 +96,26 @@ const DaftarKegiatan: React.FC = () => {
                   </tr>
                 ) : (
                   filtered.map((item, index) => (
-                    <tr key={item.id} className="border-b text-[#696868] text-center">
-                    <td className="p-3">{index + 1}</td>
-                    <td className="p-3">{item.nama}</td>
-                    <td className="p-3">{item.judul}</td>
-                    <td className="p-3">{item.tanggal}</td>
-                    <td className="p-3">
+                    <tr
+                      key={item.id}
+                      className="border-b text-[#696868] text-center"
+                    >
+                      <td className="p-3">{index + 1}</td>
+                      <td className="p-3">{item.nama}</td>
+                      <td className="p-3">{item.judul}</td>
+                      <td className="p-3">{item.tanggal}</td>
+                      <td className="p-3">
                         <button
-                          onClick={() => navigate("/detail")}
-                          className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                          onClick={() =>
+                            navigate("/detail", {
+                              state: {
+                                type: "TOR",
+                                judul: item.judul,
+                                tanggal: item.tanggal,
+                              },
+                            })
+                          }
+                          className="px-3 py-1 bg-[#6B7EF4] text-white rounded-md"
                         >
                           Detail
                         </button>
@@ -126,8 +151,6 @@ const DaftarKegiatan: React.FC = () => {
         </div>
       </div>
     </Layout>
-       );
-    };
- export default DaftarKegiatan;
-
-  
+  );
+};
+export default DaftarKegiatan;

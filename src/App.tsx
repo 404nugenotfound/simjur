@@ -44,7 +44,7 @@ function App() {
 
               <p className="text-xl font-poppins text-gray-200 tracking-wider">
                 Pengajuan & Laporan Kegiatan
-                <span className="font-semibold">Jurusan</span>
+                <span className="font-semibold pl-[6px]">Jurusan</span>
               </p>
             </div>
             <div className="mt-16  ml-40 font-poppins space-y-11">
