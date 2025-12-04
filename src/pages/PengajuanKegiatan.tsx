@@ -2,13 +2,8 @@ import React, { useState, useEffect } from "react";
 import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
-import Layout from "./Layout";
-
-type Kegiatan = {
-  id: number;
-  judul: string;
-  tanggal: string;
-};
+import { useParams, useLocation } from "react-router-dom";
+import { useActivities } from "../context/ActivitiesContext";
 
 type PengajuanProps = {
   mode: "list" | "form";
@@ -16,19 +11,23 @@ type PengajuanProps = {
 };
 
 const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
-  const [data, setData] = useState<Kegiatan[]>([]);
+  const { data, setData } = useActivities();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const limit = 5;
   const navigate = useNavigate();
 
   useEffect(() => {
-    const fakeData: Kegiatan[] = [
+    setData([
       { id: 1, judul: "Pelatihan Ormawa", tanggal: "12-12-2023" },
       { id: 2, judul: "Seminar Nasional", tanggal: "15-12-2023" },
       { id: 3, judul: "Kunjungan Industri", tanggal: "20-12-2023" },
-    ];
-    setData(fakeData);
+      { id: 4, judul: "Seminar Management Waktu", tanggal: "30-12-2023" },
+      { id: 5, judul: "PKKP 2024", tanggal: "17-02-2024" },
+      { id: 6, judul: "Expectik 2024", tanggal: "17-04-2024" },
+      { id: 7, judul: "Studek TIK", tanggal: "17-08-2024" },
+    ]);
   }, []);
 
   const filtered = data.filter((item) => {
@@ -36,6 +35,15 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     const searching = item.judul.toLowerCase().includes(search.toLowerCase());
     return matching && searching;
   });
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   const handleDelete = (id: number) => {
     if (!window.confirm("Yakin mo hapus data ini?")) return;
@@ -111,32 +119,31 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
             </thead>
 
             <tbody>
-              {filtered.length === 0 ? (
+              {paginatedData.length === 0 ? (
                 <tr>
                   <td colSpan={4} className="p-4 text-center text-gray-500">
                     Tidak ada data
                   </td>
                 </tr>
               ) : (
-                filtered.map((item, index) => (
+                paginatedData.map((item, index) => (
                   <tr
                     key={item.id}
                     className="border-b text-[#696868] text-center"
                   >
-                    <td className="p-3">{index + 1}</td>
-                    <td className="p-3">{item.judul}</td>
+                    <td className="p-3">{startIndex + index + 1}</td>
+                    <td className="p-3 font-semibold">{item.judul}</td>
                     <td className="p-3">{item.tanggal}</td>
                     <td className="p-3">
                       <button
-                        onClick={() =>
-                          navigate("/detail", {
+                        onClick={() => {
+                          console.log("Navigasi ke detail, ID:", item.id); // <- ini debug
+                          navigate(`/detail/${item.id}`, {
                             state: {
                               type: "TOR",
-                              judul: item.judul,
-                              tanggal: item.tanggal,
                             },
-                          })
-                        }
+                          });
+                        }}
                         className="px-5 py-1 bg-[#6B7EF4] text-white rounded-md mr-6"
                       >
                         TOR
@@ -188,6 +195,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
           <button
             className="px-2 py-1 border rounded border-[C4C3C3] shadow-[0_4px_12px_rgba(0,0,0,0.20)]"
             onClick={() => setPage(page + 1)}
+            disabled={page >= Math.ceil(filtered.length / limit)}
           >
             {">"}
           </button>

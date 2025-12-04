@@ -1,58 +1,149 @@
-// src/pages/UploadTor.tsx
+// src/pages/Detail.tsx
 import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import { userName } from "../components/Headerbar";
 import { useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import { TrashIcon } from "@heroicons/react/24/solid";
+import { useActivities } from "../context/ActivitiesContext";
 
-type TabKey = "detail" | "approval" | "submit" | "catatan";
+type TabKey = "detail" | "approval" | "submit";
 
-interface UploadTorProps {
+interface DetailProps {
   mode?: "TOR" | "LPJ";
 }
 
-const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
+const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   const { id } = useParams<{ id: string }>();
+  const { data, files, setFiles } = useActivities();
+
   const saved = JSON.parse(localStorage.getItem("kegiatan") || "[]");
-  const location = useLocation();
 
-  const activity = useMemo(() => {
-    if (location.state) return location.state;
-    return saved.find((x) => String(x.id) === String(id)) || null;
-  }, [id, location.state]);
+// tunggu data siap
+const activity = useMemo(() => {
+  if (!data.length || !id) return null;
+  return data.find((x) => String(x.id) === id) || null;
+}, [id, data]);
 
-  const detailData = {
-    nama: activity?.namaKegiatan ?? activity?.judul ?? "–",
-    tanggal: activity?.tanggalPengajuan ?? activity?.tanggal ?? "–",
+console.log("Detail activity ID:", activity?.id, "Current file:", files[activity?.id || ""]);
+
+
+
+  const detailInfo = {
+    nama: activity?.judul ?? "–",
+    tanggal: activity?.tanggal ?? "–",
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
     dana: activity?.dana ?? "Belum Dilampirkan.",
     catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
   };
 
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
-
-  // state upload (submit file tab)
+  const [status, setStatus] = useState("Pending");
   const [isDragging, setIsDragging] = useState(false);
-  const [file, setFile] = useState<File | null>(null);
+
+  const currentFile = files[String(activity?.id)];
+
+  const [detailData, setDetailData] = useState(() => {
+    const saved = localStorage.getItem("pengajuanDetail");
+    return saved
+      ? JSON.parse(saved)
+      : {
+          approval1Status: "Pending",
+          approval2Status: "Pending",
+          approval3Status: "Pending",
+        };
+  });
+
+  const clearStorage = () => {
+    localStorage.removeItem("pengajuanDetail");
+    localStorage.removeItem("approvalStatus");
+  };
+
+  const handleApprove = (
+    field: "approval1Status" | "approval2Status" | "approval3Status"
+  ) => {
+    const updated = {
+      ...detailData, // INI buat jaga status lama tetap ada
+      [field]: "Approved",
+    };
+
+    setDetailData(updated);
+    localStorage.setItem("pengajuanDetail", JSON.stringify(updated));
+  };
+
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(true);
   };
+
   const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
     setIsDragging(false);
   };
-  const handleDrop = (e: DragEvent<HTMLDivElement>) => {
+
+
+  // ==================== HANDLE DROP ====================
+  const handleDrop = (
+    e: React.DragEvent<HTMLDivElement>,
+    activityId: string
+  ) => {
     e.preventDefault();
     setIsDragging(false);
     const dropped = e.dataTransfer.files?.[0];
-    if (dropped) setFile(dropped);
+    if (!dropped) return;
+
+    setFiles((prev) => ({ ...prev, [activityId]: dropped }));
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      localStorage.setItem(`file-${activityId}`, reader.result as string);
+      localStorage.setItem(`file-name-${activityId}`, dropped.name);
+    };
+    reader.readAsDataURL(dropped);
   };
+
+  // ==================== HANDLE INPUT FILE ====================
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const selected = e.target.files?.[0];
-    if (selected) setFile(selected);
+    const file = e.target.files?.[0];
+    if (!file || !activity) return;
+
+    setFiles((prev) => ({ ...prev, [String(activity.id)]: file }));
+
+    const reader = new FileReader();
+    reader.onload = () => {
+      localStorage.setItem(`file-${activity.id}`, reader.result as string);
+      localStorage.setItem(`file-name-${activity.id}`, file.name);
+    };
+    reader.readAsDataURL(file);
   };
+
+  // ==================== DELETE FILE ====================
+  const deleteFile = () => {
+    if (!activity) return;
+    setFiles((prev) => ({ ...prev, [String(activity.id)]: null }));
+    localStorage.removeItem(`file-${activity.id}`);
+    localStorage.removeItem(`file-name-${activity.id}`);
+  };
+
+  // ==================== LOAD FILE DARI LOCALSTORAGE ====================
+ useEffect(() => {
+    if (!activity) return;
+
+    const storedBase64 = localStorage.getItem(`file-${activity.id}`);
+    const storedName = localStorage.getItem(`file-name-${activity.id}`);
+    if (storedBase64 && storedName) {
+      const arr = storedBase64.split(",");
+      const mime = arr[0].match(/:(.*?);/)?.[1] || "application/octet-stream";
+      const bstr = atob(arr[1]);
+      const u8arr = new Uint8Array(bstr.length);
+      for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
+
+      const file = new File([u8arr], storedName, { type: mime });
+      setFiles((prev) => ({ ...prev, [String(activity.id)]: file }));
+    }
+  }, [activity]);
 
   // 3 catatan role (simpan lokal dulu – nanti bisa dihubungkan ke backend/context)
   const [noteAdmin, setNoteAdmin] = useState("");
@@ -67,6 +158,14 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
     });
     alert("Catatan disimpan (sementara masih di front-end).");
   };
+
+  // tepat sebelum return JSX
+  console.log(
+    "Detail activity ID:",
+    activity?.id,
+    "Current file:",
+    currentFile
+  );
 
   return (
     <Layout>
@@ -124,16 +223,6 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
             >
               Submit File
             </button>
-            <button
-              className={`flex-1 py-3 text-sm ${
-                activeTab === "catatan"
-                  ? "bg-indigo-600 text-white"
-                  : "hover:bg-gray-100"
-              }`}
-              onClick={() => setActiveTab("catatan")}
-            >
-              Catatan
-            </button>
           </div>
 
           {/* Tab content */}
@@ -145,11 +234,11 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                 <div className="grid grid-cols-2 gap-4 text-sm">
                   <div>
                     <p className="text-gray-500">Nama Kegiatan</p>
-                    <p className="font-medium">{detailData.nama}</p>
+                    <p className="font-medium">{detailInfo.nama}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Tanggal Pengajuan</p>
-                    <p className="font-medium">{detailData.tanggal}</p>
+                    <p className="font-medium">{detailInfo.tanggal}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Penanggung Jawab</p>
@@ -157,22 +246,24 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                   </div>
                   <div>
                     <p className="text-gray-500">Total Dana</p>
-                    <p className="font-medium">{detailData.dana}</p>
+                    <p className="font-medium">{detailInfo.dana}</p>
                   </div>
                 </div>
 
                 <div className="mt-4">
                   <p className="text-gray-500 text-sm mb-1">Deskripsi</p>
                   <p className="text-sm leading-relaxed">
-                    {detailData.deskripsi}
+                    {detailInfo.deskripsi}
                   </p>
                 </div>
               </div>
             )}
 
-            {/* APPROVAL */}
+            {/* APPROVAL & CATATAN */}
+
             {activeTab === "approval" && (
               <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
+                {/* Part Approval */}
                 <h2 className="font-semibold mb-4">Approval Status</h2>
                 <div className="overflow-hidden rounded-xl border border-sm">
                   <table className="w-full text-sm text-gray-500">
@@ -187,98 +278,60 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                     <tbody>
                       <tr className="bg-gray-50 text-center">
                         <td className="p-2 font-semibold">Approval 1</td>
-                        <td className="p-2">{detailData.tanggal}</td>
+                        <td className="p-2">{detailInfo.tanggal}</td>
                         <td className="p-2">ACC dari Administrasi</td>
-                        <td className="p-2">Pending</td>
+                        <td className="p-2">
+                          {detailData.approval1Status === "Pending" ? (
+                            <button
+                              onClick={() => handleApprove("approval1Status")}
+                              className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                            >
+                              Approve
+                            </button>
+                          ) : (
+                            <span className="text-green-600 font-semibold">
+                              Approved ✔
+                            </span>
+                          )}
+                        </td>
                       </tr>
                       <tr className="bg-gray-100 text-center">
                         <td className="p-2 font-semibold">Approval 2</td>
-                        <td className="p-2">{detailData.tanggal}</td>
+                        <td className="p-2">{detailInfo.tanggal}</td>
                         <td className="p-2">ACC dari Sekjur</td>
-                        <td className="p-2">Pending</td>
+                        <td className="p-2">
+                          {detailData.approval2Status === "Pending" ? (
+                            <button
+                              className="bg-green-600 text-white px-3 py-1 rounded"
+                              onClick={() => handleApprove("approval2Status")}
+                            >
+                              Approve
+                            </button>
+                          ) : (
+                            <span className="text-green-600 font-semibold">
+                              Approved ✔
+                            </span>
+                          )}
+                        </td>
                       </tr>
                       <tr className="bg-gray-50 text-center">
                         <td className="p-2 font-semibold">Approval 3</td>
-                        <td className="p-2">{detailData.tanggal}</td>
+                        <td className="p-2">{detailInfo.tanggal}</td>
                         <td className="p-2">ACC dari Kajur</td>
                         <td className="p-2"></td>
                       </tr>
+                      <button
+                        className="bg-gray-50 text-gray-50 mt-4 px-3 py-1 rounded"
+                        onClick={clearStorage}
+                      >
+                        Reset Storage
+                      </button>
                     </tbody>
                   </table>
                 </div>
-              </div>
-            )}
 
-            {/* SUBMIT FILE */}
-            {activeTab === "submit" && (
-              <div
-                className={`border-2 border-dashed rounded-3xl min-h-[180px] flex flex-col items-center justify-center px-6 py-10 transition ${
-                  isDragging
-                    ? "border-indigo-500 bg-indigo-50"
-                    : "border-green-300 bg-green-100/70"
-                }`}
-                onDragOver={handleDragOver}
-                onDragLeave={handleDragLeave}
-                onDrop={handleDrop}
-              >
-                {!file && (
-                  <div className="flex flex-col items-center gap-4">
-                    <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
-                      <span className="text-2xl">⬆️</span>
-                    </div>
-                    <p className="font-medium text-gray-800">
-                      Unggah File Disini atau Telusuri Dokumen
-                    </p>
-                    <p className="text-xs text-gray-600">
-                      Unggah dokumen dalam format <b>PDF</b> (maks. 10MB)
-                    </p>
-                    <button
-                      type="button"
-                      className="mt-2 px-4 py-2 rounded-full bg-white text-sm shadow border"
-                      onClick={() =>
-                        document.getElementById("file-input-tor")?.click()
-                      }
-                    >
-                      Telusuri Dokumen
-                    </button>
-                    <input
-                      id="file-input-tor"
-                      type="file"
-                      accept=".pdf,.doc,.docx"
-                      className="hidden"
-                      onChange={handleFileChange}
-                      aria-label="hehe"
-                    />
-                  </div>
-                )}
-
-                {file && (
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-24 h-24 rounded-2xl bg-white shadow flex items-center justify-center">
-                      <span className="text-4xl">🧩</span>
-                    </div>
-                    <div className="text-center">
-                      <p className="text-sm font-semibold">{file.name}</p>
-                      <p className="text-xs text-gray-600">
-                        {(file.size / (1024 * 1024)).toFixed(2)} MB
-                      </p>
-                    </div>
-                    <button
-                      type="button"
-                      className="mt-2 text-xs text-red-500 underline"
-                      onClick={() => setFile(null)}
-                    >
-                      Hapus File
-                    </button>
-                  </div>
-                )}
-              </div>
-            )}
-
-            {/* CATATAN */}
-            {activeTab === "catatan" && (
-              <div className="bg-gray-50 rounded-xl p-6 shadow-inner space-y-4">
-                <h2 className="font-semibold mb-2">Catatan</h2>
+                {/* Part Catatan */}
+                <h2 className="font-semibold py-4 pt-12">Catatan</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Catatan Admin */}
@@ -288,7 +341,7 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                     </p>
                     <textarea
                       className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                      value={noteAdmin || detailData.catatanPengaju}
+                      value={noteAdmin || detailInfo.catatanPengaju}
                       placeholder="Catatan dari admin..."
                       readOnly
                     />
@@ -301,7 +354,7 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                     </p>
                     <textarea
                       className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                      value={noteSekretariat || detailData.catatanPengaju}
+                      value={noteSekretariat || detailInfo.catatanPengaju}
                       placeholder="Catatan dari sekretariat..."
                       readOnly
                     />
@@ -314,11 +367,106 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
                     </p>
                     <textarea
                       className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                      value={noteKajur || detailData.catatanPengaju}
+                      value={noteKajur || detailInfo.catatanPengaju}
                       placeholder="Catatan dari ketua jurusan..."
                       readOnly
                     />
                   </div>
+                </div>
+              </div>
+            )}
+
+            {/* SUBMIT FILE */}
+            {activeTab === "submit" && (
+              <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
+                <div
+                  className={`rounded-3xl min-h-[180px] flex flex-col items-center justify-center px-6 transition ${
+                    currentFile
+                      ? "border-none bg-transparent p-0"
+                      : isDragging
+                      ? "border-2 border-indigo-500 border-dashed bg-indigo-50"
+                      : "border-2 border-green-300 border-dashed bg-green-100/70"
+                  }`}
+                >
+                  {!currentFile ? (
+                    // INPUT MODE
+                    <div className="flex flex-col items-center gap-4 p-10">
+                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
+                        <span className="text-2xl">⬆️</span>
+                      </div>
+
+                      <p className="font-medium text-gray-800">
+                        Unggah File di sini atau Telusuri Dokumen
+                      </p>
+                      <p className="text-xs text-gray-600">
+                        Format: PDF (max 10MB)
+                      </p>
+
+                      <button
+                        type="button"
+                        className="mt-2 px-4 py-2 rounded-full bg-white text-sm shadow border cursor-pointer"
+                        onClick={() =>
+                          document.getElementById("file-input-tor")?.click()
+                        }
+                      >
+                        Telusuri Dokumen
+                      </button>
+
+                      <input
+                        id="file-input-tor"
+                        type="file"
+                        accept=".pdf,.doc,.docx"
+                        className="hidden"
+                        onChange={handleFileChange}
+                        aria-label="-"
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full flex justify-center mt-2">
+                      <div className="flex items-center justify-between bg-[#A4CEB6] px-8 py-8 rounded-xl shadow-md w-full max-w-[900px]">
+                        <p className="text-white font-semibold text-xl truncate max-w-[65%]">
+                          {currentFile.name ?? "–"}
+                        </p>
+
+                        <div className="flex items-center gap-3">
+                          {/* Tombol Unduh */}
+                          <button
+                            className="px-6 py-2.5 text-sm rounded-lg bg-[#5A6FDE] text-white font-semibold tracking-[0.05em]"
+                            onClick={() => {
+                              const url = URL.createObjectURL(currentFile);
+                              const a = document.createElement("a");
+                              a.href = url;
+                              a.download = currentFile.name;
+                              a.click();
+                              URL.revokeObjectURL(url);
+                            }}
+                          >
+                            Unduh
+                          </button>
+
+                          {/* Tombol Hapus */}
+                          <button
+                            aria-label="hapus"
+                            className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white"
+                            onClick={() => {
+                              setFiles((prev) => ({
+                                ...prev,
+                                [String(activity?.id)]: null,
+                              }));
+
+                              // Gunakan key yang sesuai dengan yang dipakai saat simpan
+                              localStorage.removeItem(`file-${activity?.id}`);
+                              localStorage.removeItem(
+                                `file-name-${activity?.id}`
+                              );
+                            }}
+                          >
+                            <TrashIcon className="w-6 h-6" />
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -329,4 +477,4 @@ const UploadTor: React.FC<UploadTorProps> = ({ mode = "TOR" }) => {
   );
 };
 
-export default UploadTor;
+export default Detail;

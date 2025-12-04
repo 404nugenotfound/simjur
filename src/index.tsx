@@ -15,7 +15,7 @@ import Profile from "./pages/Profile";
 import PengajuanKegiatan from "./pages/PengajuanKegiatan";
 import Layout from "./pages/Layout";
 import PengajuanContext from "./context/PengajuanContext";
-
+import { ActivitiesProvider } from "./context/ActivitiesContext";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -24,24 +24,26 @@ const root = ReactDOM.createRoot(
 root.render(
   <React.StrictMode>
     <DashboardProvider>
-      <BrowserRouter>
-        <Routes>
-          {/* Pagina tanpa layout (ex: login) */}
-          <Route path="/" element={<App />} />
+      <ActivitiesProvider>
+        <BrowserRouter>
+          <Routes>
+            {/* Pagina tanpa layout (ex: login) */}
+            <Route path="/" element={<App />} />
 
-          {/* Semua halaman dalam layout */}
-          <Route>
-            <Route path="/dashboard" element={<Dashboard />} />
-            <Route path="/user" element={<UserPage />} />
-            <Route path="/pengajuan" element={<PengajuanContext />} />
-            <Route path="/daftar" element={<DaftarKegiatan />} />
-            <Route path="/detail" element={<Detail />} />
-            <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
-            <Route path="/kelola" element={<KelolaDashboard />} />
-            <Route path="/profile" element={<Profile />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
+            {/* Semua halaman dalam layout */}
+            <Route>
+              <Route path="/dashboard" element={<Dashboard />} />
+              <Route path="/user" element={<UserPage />} />
+              <Route path="/pengajuan" element={<PengajuanContext />} />
+              <Route path="/daftar" element={<DaftarKegiatan />} />
+              <Route path="/detail/:id" element={<Detail />} />
+              <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
+              <Route path="/kelola" element={<KelolaDashboard />} />
+              <Route path="/profile" element={<Profile />} />
+            </Route>
+          </Routes>
+        </BrowserRouter>
+      </ActivitiesProvider>
     </DashboardProvider>
   </React.StrictMode>
 );

@@ -4,51 +4,32 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 import { userName } from "../components/Headerbar";
+import { useActivities } from "../context/ActivitiesContext";
 
-type Kegiatan = {
-  id: number;
-  nama: string;
-  judul: string;
-  tanggal: string;
-};
+
 
 const DaftarKegiatan: React.FC = () => {
-  const [mode, setMode] = useState<"list" | "form" | "upload">("list");
-  const [data, setData] = useState<Kegiatan[]>([]);
+  const { data } = useActivities();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
+  const limit = 5;
   const navigate = useNavigate();
-
-  useEffect(() => {
-    const fakeData: Kegiatan[] = [
-      {
-        id: 1,
-        nama: userName,
-        judul: "Pelatihan Ormawa",
-        tanggal: "12-12-2023",
-      },
-      {
-        id: 2,
-        nama: userName,
-        judul: "Seminar Nasional",
-        tanggal: "15-12-2023",
-      },
-      {
-        id: 3,
-        nama: userName,
-        judul: "Kunjungan Industri",
-        tanggal: "20-12-2023",
-      },
-    ];
-    setData(fakeData);
-  }, []);
 
   const filtered = data.filter((item) => {
     const matching = filter === "all" ? true : item.judul === filter;
     const searching = item.judul.toLowerCase().includes(search.toLowerCase());
     return matching && searching;
   });
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+   useEffect(() => {
+      setPage(1);
+    }, [search]);
 
   {
     /* Tabel */
@@ -88,21 +69,21 @@ const DaftarKegiatan: React.FC = () => {
               </thead>
 
               <tbody>
-                {filtered.length === 0 ? (
+                {paginatedData.length === 0 ? (
                   <tr>
                     <td colSpan={4} className="p-4 text-center text-gray-500">
                       Tidak ada data
                     </td>
                   </tr>
                 ) : (
-                  filtered.map((item, index) => (
+                  paginatedData.map((item, index) => (
                     <tr
                       key={item.id}
                       className="border-b text-[#696868] text-center"
                     >
-                      <td className="p-3">{index + 1}</td>
-                      <td className="p-3">{item.nama}</td>
-                      <td className="p-3">{item.judul}</td>
+                      <td className="p-3">{startIndex + index + 1}</td>
+                      <td className="p-3">{userName}</td>
+                      <td className="p-3 font-semibold">{item.judul}</td>
                       <td className="p-3">{item.tanggal}</td>
                       <td className="p-3">
                         <button
@@ -144,6 +125,7 @@ const DaftarKegiatan: React.FC = () => {
             <button
               className="px-2 py-1 border rounded border-[C4C3C3] shadow-[0_4px_12px_rgba(0,0,0,0.20)]"
               onClick={() => setPage(page + 1)}
+              disabled={page >= Math.ceil(filtered.length / limit)}
             >
               {">"}
             </button>
