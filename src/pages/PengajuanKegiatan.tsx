@@ -1,18 +1,20 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import FormPengajuan from "./FormPengajuan";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useParams, useLocation } from "react-router-dom";
 import { useActivities } from "../context/ActivitiesContext";
+import { ChevronDownIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
 
 type PengajuanProps = {
   mode: "list" | "form";
   setMode: (m: "list" | "form") => void;
 };
 
+
 const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const { data, setData } = useActivities();
-  const { approvalStatus } = useActivities();
+  const { approvalStatus, setApprovalStatus } = useActivities();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -39,8 +41,30 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
 
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit;
+  // Ambil dari localStorage saat pertama kali mount
+  useEffect(() => {
+    const saved = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+    setApprovalStatus(saved);
+  }, [setApprovalStatus]);
+
+  const handleApprove = (activityId: number, field: "approval1Status" | "approval2Status" | "approval3Status") => {
+  const updated = {
+    ...approvalStatus,
+    [activityId]: {
+      ...approvalStatus[activityId],
+      [field]: "Approved",
+    },
+  };
+  setApprovalStatus(updated);
+  localStorage.setItem("approvalStatus", JSON.stringify(updated));
+};
+
+  const [openDropdown, setOpenDropdown] = useState(false);
 
   const paginatedData = filtered.slice(startIndex, endIndex);
+
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPage(1);
@@ -54,6 +78,16 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
 
     localStorage.setItem("kegiatan", JSON.stringify(updated));
   };
+
+  useEffect(() => {
+    const handleClickOutside = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
 
   {
     /* Form View */
@@ -75,7 +109,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         <FormPengajuan />
       </div>
     );
-  }
+  };
 
   {
     /* Tabel */
@@ -99,13 +133,51 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
             />
             <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-8 text-gray-400 stroke-[2.3]" />
           </div>
+
+       <div ref={ref} className="relative inline-block">
+      {/* Tombol Tambah */}
+      <button
+        onClick={() => setOpenDropdown(!openDropdown)}
+        className="flex items-center gap-2 px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium tracking-[0.05em] transition"
+      >
+        Tambah
+        <ChevronDownIcon
+          className={`h-4 w-4 transition-transform duration-200 ${
+            openDropdown ? "rotate-180" : "rotate-0"
+          }`}
+        />
+      </button>
+
+      {/* Dropdown */}
+      {openDropdown && (
+        <div className="absolute top-full left-0 mt-2 w-36 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden animate-dropdown">
+          
           <button
-            onClick={() => setMode("form")}
-            className="px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium 
-            tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm"
+            onClick={() => {
+              setMode("form");
+              setOpenDropdown(false);
+            }}
           >
-            Tambah
+            <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+            TOR
           </button>
+
+          <button
+            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm"
+            onClick={() => {
+              setMode("form");
+              setOpenDropdown(false);
+            }}
+          >
+            <DocumentTextIcon className="h-4 w-4 text-gray-600" />
+            LPJ
+          </button>
+        </div>
+        )}
+      </div>
+
+
         </div>
 
         {/* Tabel */}
@@ -216,7 +288,8 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         </div>
       </div>
     </div>
-  );
-};
+    );
+  };
+
 
 export default PengajuanKegiatan;

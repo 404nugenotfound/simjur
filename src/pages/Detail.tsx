@@ -56,6 +56,19 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
         };
   });
 
+  useEffect(() => {
+  const saved = JSON.parse(localStorage.getItem("pengajuanDetail") || "{}");
+  if (saved && saved.id === id) {
+    setDetailData(saved);
+  } else {
+    setDetailData({
+      approval1Status: "Pending",
+      approval2Status: "Pending",
+      approval3Status: "Pending",
+    });
+  }
+}, [id]);
+
   const clearStorage = () => {
     localStorage.removeItem("pengajuanDetail");
     localStorage.removeItem("approvalStatus");
