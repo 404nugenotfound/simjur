@@ -1,6 +1,7 @@
 import React from "react";
 import Logo from "./assets/LogoName2.svg";
 import Illustration from "./assets/Illustration.svg";
+import { UserIcon, KeyIcon } from "@heroicons/react/24/solid";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
 
@@ -48,18 +49,30 @@ function App() {
               </p>
             </div>
             <div className="mt-16  ml-40 font-poppins space-y-11">
-              <input
-                className="w-3/4 py-3 px-6 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
-                placeholder="NIM / Email"
-              />
-              <input
-                type="password"
-                className="w-3/4 py-3 px-6 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
-                placeholder="Password"
-              />
+              <div className="relative w-3/4">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                  {/* Icon user */}
+                  <UserIcon className="h-5 w-5 text-gray-600" />
+                </div>
+                <input
+                  className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
+                  placeholder="NIM / Email"
+                />
+              </div>
+              <div className="relative w-3/4">
+                <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
+                  {/* Password user */}
+                  <KeyIcon className="h-5 w-5 text-gray-600" />
+                </div>
+                <input
+                  className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
+                  placeholder="Password"
+                />
+              </div>
               <div className="mr-32 flex justify-center">
                 <button
-                  className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold hover:bg-gray-200 transition"
+                  className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold 
+                  hover:bg-gray-800 hover:text-white hover:scale-[0.97] transition-colors duration-100 ease-in-out"
                   onClick={() => navigate("/dashboard")}
                 >
                   Login

@@ -87,16 +87,14 @@ const DaftarKegiatan: React.FC = () => {
                       <td className="p-3">{item.tanggal}</td>
                       <td className="p-3">
                         <button
-                          onClick={() =>
-                            navigate("/detail", {
-                              state: {
-                                type: "TOR",
-                                judul: item.judul,
-                                tanggal: item.tanggal,
-                              },
-                            })
-                          }
-                          className="px-3 py-1 bg-[#6B7EF4] text-white rounded-md"
+                          onClick={() => {
+                          navigate(`/detail/${item.id}`, {
+                            state: {
+                              type: "TOR",
+                            },
+                          });
+                        }}
+                          className="px-3 py-1 bg-[#6B7EF4] text-white rounded-md hover:scale-95 transition"
                         >
                           Detail
                         </button>

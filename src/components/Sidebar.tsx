@@ -8,6 +8,8 @@ import {
   Cog6ToothIcon,
   Bars3Icon,
   ChevronDownIcon,
+  CreditCardIcon,
+  BanknotesIcon,
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
@@ -18,6 +20,10 @@ export default function Sidebar({ setMode }: { setMode: (m: "list" | "form") => 
   const [openDropdown, setOpenDropdown] = useState(false);
   const [openKegiatanDropdown, setOpenKegiatanDropdown] = useState(false);
   const kegiatanRef = useRef<HTMLDivElement | null>(null);
+  const [openKelolaDropdown, setOpenKelolaDropdown] = useState(false);
+  const kelolaRef = useRef<HTMLDivElement>(null);
+
+
 
   useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -34,6 +40,17 @@ export default function Sidebar({ setMode }: { setMode: (m: "list" | "form") => 
     if (!open) setOpen(true);
     navigate(path);
   };
+
+  useEffect(() => {
+  function handleClickOutside(e) {
+    if (kelolaRef.current && !kelolaRef.current.contains(e.target)) {
+      setOpenKelolaDropdown(false);
+    }
+  }
+  document.addEventListener("mousedown", handleClickOutside);
+  return () => document.removeEventListener("mousedown", handleClickOutside);
+}, []);
+
 
   return (
     <aside
@@ -88,15 +105,58 @@ export default function Sidebar({ setMode }: { setMode: (m: "list" | "form") => 
             {open && <span>Dashboard</span>}
           </a>
 
-          <a
-            onClick={() => handleMenuClick("/kelola")}
+         <div className="relative" ref={kelolaRef}>
+          <button
+            onClick={() => {
+              if (!open) {
+                setOpen(true);
+                return;
+              }
+              setOpenKelolaDropdown(!openKelolaDropdown);
+            }}
             className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
-            ${!open && "justify-center"}
-            hover:bg-black/20`}
+              ${!open && "justify-center"}
+              hover:bg-black/20 w-full`}
           >
-            <Cog6ToothIcon className="w-6 h-6 min-w-[24px] " />
-            {open && <span>Kelola Dashboard</span>}
-          </a>
+            <Cog6ToothIcon className="w-6 h-6 min-w-[24px]" />
+            {open && (
+              <span className="flex items-center gap-12">
+                Kelola Dashboard
+                <ChevronDownIcon
+                  strokeWidth={2.5}
+                  className={`w-5 h-5 transition-transform ${
+                    openKelolaDropdown ? "rotate-180" : ""
+                  }`}
+                />
+              </span>
+            )}
+          </button>
+
+          {open && openKelolaDropdown && (
+           <div
+                className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C]
+                          text-white shadow-lg rounded-md py-2 w-full border border-white/10"
+              >
+
+              <button
+                onClick={() => navigate("/kelola")}
+                className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+              >
+                <CreditCardIcon className="w-5 h-5" />
+                Update Dana
+              </button>
+
+              <button
+                onClick={() => navigate("/Input")}
+                className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+              >
+                <BanknotesIcon className="w-5 h-5" />
+                Input Dana
+              </button>
+            </div>
+          )}
+        </div>
+
 
           <a
             onClick={() => {

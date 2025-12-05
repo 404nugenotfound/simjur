@@ -1,9 +1,8 @@
 // src/pages/Detail.tsx
 import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams } from "react-router-dom";
 import Layout from "./Layout";
 import { userName } from "../components/Headerbar";
-import { useLocation } from "react-router-dom";
 import { useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useActivities } from "../context/ActivitiesContext";
@@ -17,18 +16,20 @@ interface DetailProps {
 const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   const { id } = useParams<{ id: string }>();
   const { data, files, setFiles } = useActivities();
+  const { approvalStatus, setApprovalStatus } = useActivities();
 
-  const saved = JSON.parse(localStorage.getItem("kegiatan") || "[]");
+  // tunggu data siap
+  const activity = useMemo(() => {
+    if (!data.length || !id) return null;
+    return data.find((x) => String(x.id) === id) || null;
+  }, [id, data]);
 
-// tunggu data siap
-const activity = useMemo(() => {
-  if (!data.length || !id) return null;
-  return data.find((x) => String(x.id) === id) || null;
-}, [id, data]);
-
-console.log("Detail activity ID:", activity?.id, "Current file:", files[activity?.id || ""]);
-
-
+  console.log(
+    "Detail activity ID:",
+    activity?.id,
+    "Current file:",
+    files[activity?.id || ""]
+  );
 
   const detailInfo = {
     nama: activity?.judul ?? "–",
@@ -63,15 +64,24 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
   const handleApprove = (
     field: "approval1Status" | "approval2Status" | "approval3Status"
   ) => {
-    const updated = {
-      ...detailData, // INI buat jaga status lama tetap ada
-      [field]: "Approved",
+    if (!activity) return; // <- pastikan activity ada
+
+    const updatedDetail = { ...detailData, [field]: "Approved" };
+    setDetailData(updatedDetail);
+    localStorage.setItem("pengajuanDetail", JSON.stringify(updatedDetail));
+
+    const currentContext = approvalStatus[String(activity.id)] ?? {
+      approval1Status: "Pending",
+      approval2Status: "Pending",
+      approval3Status: "Pending",
     };
-
-    setDetailData(updated);
-    localStorage.setItem("pengajuanDetail", JSON.stringify(updated));
+    const updatedContext = { ...currentContext, [field]: "Approved" };
+    setApprovalStatus({ ...approvalStatus, [activity.id]: updatedContext });
+    localStorage.setItem(
+      "approvalStatus",
+      JSON.stringify({ ...approvalStatus, [activity.id]: updatedContext })
+    );
   };
-
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -82,7 +92,6 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
     e.preventDefault();
     setIsDragging(false);
   };
-
 
   // ==================== HANDLE DROP ====================
   const handleDrop = (
@@ -128,7 +137,7 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
   };
 
   // ==================== LOAD FILE DARI LOCALSTORAGE ====================
- useEffect(() => {
+  useEffect(() => {
     if (!activity) return;
 
     const storedBase64 = localStorage.getItem(`file-${activity.id}`);
@@ -182,7 +191,7 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
               className=" 
             px-4 py-[0.35rem]  mr-[-3.2rem] bg-[#4957B5] 
             text-white rounded font-poppins font-medium tracking-[0.05em]
-            hover:bg-gray-700 transition"
+            hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
             >
               ← Kembali
             </button>
@@ -245,7 +254,7 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
                     <p className="font-medium">{userName}</p>
                   </div>
                   <div>
-                    <p className="text-gray-500">Total Dana</p>
+                    <p className="text-gray-500">Dana Diajukan</p>
                     <p className="font-medium">{detailInfo.dana}</p>
                   </div>
                 </div>
@@ -276,6 +285,7 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
                       </tr>
                     </thead>
                     <tbody>
+                      {/* Approval 1 */}
                       <tr className="bg-gray-50 text-center">
                         <td className="p-2 font-semibold">Approval 1</td>
                         <td className="p-2">{detailInfo.tanggal}</td>
@@ -295,6 +305,8 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
                           )}
                         </td>
                       </tr>
+
+                      {/* Approval 2 */}
                       <tr className="bg-gray-100 text-center">
                         <td className="p-2 font-semibold">Approval 2</td>
                         <td className="p-2">{detailInfo.tanggal}</td>
@@ -302,7 +314,7 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
                         <td className="p-2">
                           {detailData.approval2Status === "Pending" ? (
                             <button
-                              className="bg-green-600 text-white px-3 py-1 rounded"
+                              className="bg-blue-500 text-white px-3 py-1 rounded"
                               onClick={() => handleApprove("approval2Status")}
                             >
                               Approve
@@ -314,18 +326,46 @@ console.log("Detail activity ID:", activity?.id, "Current file:", files[activity
                           )}
                         </td>
                       </tr>
+
+                      {/* Approval 3 muncul hanya jika Approval 1 & 2 sudah approved */}
                       <tr className="bg-gray-50 text-center">
                         <td className="p-2 font-semibold">Approval 3</td>
                         <td className="p-2">{detailInfo.tanggal}</td>
                         <td className="p-2">ACC dari Kajur</td>
-                        <td className="p-2"></td>
+                        <td className="p-2">
+                          {detailData.approval1Status === "Approved" &&
+                          detailData.approval2Status === "Approved" ? (
+                            detailData.approval3Status === "Pending" ? (
+                              <button
+                                onClick={() => handleApprove("approval3Status")}
+                                className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                              >
+                                Approve
+                              </button>
+                            ) : (
+                              <span className="text-green-600 font-semibold">
+                                Approved ✔
+                              </span>
+                            )
+                          ) : (
+                            <span className="text-gray-500 font-medium">
+                              Pending
+                            </span>
+                          )}
+                        </td>
                       </tr>
-                      <button
-                        className="bg-gray-50 text-gray-50 mt-4 px-3 py-1 rounded"
-                        onClick={clearStorage}
-                      >
-                        Reset Storage
-                      </button>
+
+                      {/* Reset Storage */}
+                      <tr>
+                        <td colSpan={4} className="text-center">
+                          <button
+                            className="bg-gray-50 text-gray-50 mt-4 px-3 py-1 rounded"
+                            onClick={clearStorage}
+                          >
+                            Reset Storage
+                          </button>
+                        </td>
+                      </tr>
                     </tbody>
                   </table>
                 </div>

@@ -16,6 +16,7 @@ import PengajuanKegiatan from "./pages/PengajuanKegiatan";
 import Layout from "./pages/Layout";
 import PengajuanContext from "./context/PengajuanContext";
 import { ActivitiesProvider } from "./context/ActivitiesContext";
+import KelolaDana from "./pages/DanaKegiatan";
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -40,6 +41,7 @@ root.render(
               <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
               <Route path="/kelola" element={<KelolaDashboard />} />
               <Route path="/profile" element={<Profile />} />
+              <Route path="/Input" element={<KelolaDana />} />
             </Route>
           </Routes>
         </BrowserRouter>

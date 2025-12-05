@@ -91,7 +91,7 @@ const DaftarKegiatanLPJ: React.FC = () => {
                               },
                             })
                           }
-                          className="px-3 py-1 bg-[#6B7EF4] text-white rounded-md"
+                          className="px-3 py-1 bg-[#6B7EF4] text-white rounded-md hover:scale-95 transition"
                         >
                           Detail
                         </button>

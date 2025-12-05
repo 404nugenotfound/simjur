@@ -179,7 +179,8 @@ export default function FormPengajuan() {
           <div className="font-medium">
             <button
               onClick={handleSubmit}
-              className="px-6 py-2 bg-[#4957B5] text-white rounded-lg hover:bg-gray-700 transition"
+              className="px-6 py-2 bg-[#4957B5] text-white rounded-lg 
+              hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
             >
               Simpan dan Generate
             </button>

@@ -101,6 +101,7 @@ const chartData = generateDateData(
                 key={i}
                 className="border bg-white rounded-xl p-5 text-center text-black shadow"
               >
+                
                 <p className="font-medium">{item.label}</p>
                 <p className="text-3xl font-bold mt-3">{item.value}</p>
               </div>

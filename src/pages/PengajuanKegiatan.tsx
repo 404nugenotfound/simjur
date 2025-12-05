@@ -12,6 +12,7 @@ type PengajuanProps = {
 
 const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const { data, setData } = useActivities();
+  const { approvalStatus } = useActivities();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
@@ -66,7 +67,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
             className="
             px-4 py-[0.35rem] bg-[#4957B5] 
             text-white rounded font-poppins font-medium tracking-[0.05em]
-            hover:bg-gray-700 transition"
+            hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
           >
             ← Kembali
           </button>
@@ -100,7 +101,8 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
           </div>
           <button
             onClick={() => setMode("form")}
-            className="px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium tracking-[0.05em]"
+            className="px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium 
+            tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
           >
             Tambah
           </button>
@@ -126,53 +128,65 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((item, index) => (
-                  <tr
-                    key={item.id}
-                    className="border-b text-[#696868] text-center"
-                  >
-                    <td className="p-3">{startIndex + index + 1}</td>
-                    <td className="p-3 font-semibold">{item.judul}</td>
-                    <td className="p-3">{item.tanggal}</td>
-                    <td className="p-3">
-                      <button
-                        onClick={() => {
-                          console.log("Navigasi ke detail, ID:", item.id); // <- ini debug
-                          navigate(`/detail/${item.id}`, {
-                            state: {
-                              type: "TOR",
-                            },
-                          });
-                        }}
-                        className="px-5 py-1 bg-[#6B7EF4] text-white rounded-md mr-6"
-                      >
-                        TOR
-                      </button>
+                paginatedData.map((item, index) => {
+                  const currentApproval = approvalStatus[String(item.id)] ?? {
+                    approval1Status: "Pending",
+                    approval2Status: "Pending",
+                    approval3Status: "Pending",
+                  };
 
-                      <button
-                        onClick={() =>
-                          navigate("/detail", {
-                            state: {
-                              type: "LPJ",
-                              judul: item.judul,
-                              tanggal: item.tanggal,
-                            },
-                          })
-                        }
-                        disabled={true}
-                        className="px-5 py-1 bg-[#d1d5db] text-[#7b7b7b] cursor-not-allowed opacity-60 rounded-md mr-6"
-                      >
-                        LPJ
-                      </button>
-                      <button
-                        onClick={() => handleDelete(item.id)}
-                        className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
-                      >
-                        Delete
-                      </button>
-                    </td>
-                  </tr>
-                ))
+                  return (
+                    <tr
+                      key={item.id}
+                      className="border-b text-[#696868] text-center"
+                    >
+                      <td className="p-3">{startIndex + index + 1}</td>
+                      <td className="p-3 font-semibold">{item.judul}</td>
+                      <td className="p-3">{item.tanggal}</td>
+                      <td className="p-3">
+                        <button
+                          onClick={() =>
+                            navigate(`/detail/${item.id}`, {
+                              state: { type: "TOR" },
+                            })
+                          }
+                          className="px-5 py-1 bg-[#6B7EF4] text-white rounded-md mr-6 hover:scale-95 transition"
+                        >
+                          TOR
+                        </button>
+
+                        <button
+                          onClick={() =>
+                            navigate(`/detail/${item.id}`, {
+                              state: {
+                                type: "LPJ",
+                                judul: item.judul,
+                                tanggal: item.tanggal,
+                              },
+                            })
+                          }
+                          disabled={
+                            currentApproval.approval3Status !== "Approved"
+                          }
+                          className={`px-5 py-1 rounded-md mr-6 transition hover:scale-95 ${
+                            currentApproval.approval3Status === "Approved"
+                              ? "bg-[#6B7EF4] text-white cursor-pointer"
+                              : "bg-[#d1d5db] text-[#7b7b7b] cursor-not-allowed opacity-60"
+                          }`}
+                        >
+                          LPJ
+                        </button>
+
+                        <button
+                          onClick={() => handleDelete(item.id)}
+                          className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
+                        >
+                          Delete
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
               )}
             </tbody>
           </table>

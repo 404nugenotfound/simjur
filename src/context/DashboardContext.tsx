@@ -1,4 +1,5 @@
-import { createContext, useState, ReactNode } from "react";
+// src/context/DashboardContext.tsx
+import { createContext, useState, useEffect, ReactNode } from "react";
 import { Kegiatan } from "../types/kegiatan";
 import { v4 as uuid } from "uuid";
 
@@ -19,6 +20,7 @@ interface DashboardContextType {
   };
 
   updateDana: (regular: number, terpakai: number) => void;
+  resetAll: () => void; // ⬅️ INI YANG BELUM ADA
 }
 
 export const DashboardContext = createContext<DashboardContextType>(
@@ -26,31 +28,99 @@ export const DashboardContext = createContext<DashboardContextType>(
 );
 
 export const DashboardProvider = ({ children }: { children: ReactNode }) => {
-  const [data, setData] = useState<Kegiatan[]>([]);
-
-  const addKegiatan = (item: Omit<Kegiatan, "id">) => {
-    setData((prev) => [...prev, { ...item, id: uuid() }]);
-  };
-
-  // ====== STATE DANA ======
-  const [dana, setDana] = useState({
-    danaRegular: 0,
-    danaTerpakai: 0,
-    tahun: new Date().getFullYear(),
+  // ====== KEGIATAN ======
+  const [data, setData] = useState<Kegiatan[]>(() => {
+    try {
+      const saved = localStorage.getItem("kegiatan");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
   });
 
-  const updateDana = (regular: number, terpakai: number) => {
+  // Simpan kegiatan ke localStorage setiap kali berubah
+  useEffect(() => {
+    try {
+      localStorage.setItem("kegiatan", JSON.stringify(data));
+    } catch {
+      // ignore
+    }
+  }, [data]);
+
+  const addKegiatan = (item: Omit<Kegiatan, "id">) => {
+    const newKegiatan: Kegiatan = { ...item, id: uuid() };
+    // update list kegiatan
+    setData((prev) => [...prev, newKegiatan]);
+
+    // update dana terpakai otomatis
     setDana((prev) => ({
       ...prev,
-      danaRegular: regular,
-      danaTerpakai: terpakai,
+      danaTerpakai: prev.danaTerpakai + newKegiatan.nominal,
     }));
   };
 
+  // ====== DANA ======
+  const [dana, setDana] = useState(() => {
+    try {
+      const saved = localStorage.getItem("dana");
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        return {
+          danaRegular: Number(parsed.danaRegular) || 0,
+          danaTerpakai: Number(parsed.danaTerpakai) || 0,
+          tahun: parsed.tahun || new Date().getFullYear(),
+        };
+      }
+    } catch {}
+
+    return {
+      danaRegular: 0,
+      danaTerpakai: 0,
+      tahun: new Date().getFullYear(),
+    };
+  });
+
+  // Simpan dana ke localStorage setiap kali berubah
+  useEffect(() => {
+    try {
+      localStorage.setItem("dana", JSON.stringify(dana));
+    } catch {
+      // ignore
+    }
+  }, [dana]);
+
+  const updateDana = (regular: number, terpakai: number) => {
+    setDana((prev) => {
+      const newDana = {
+        ...prev,
+        danaRegular: regular,
+        danaTerpakai: terpakai,
+      };
+      return newDana;
+    });
+  };
+
+  // ====== SUMMARY ======
   const summary = {
     totalTor: data.filter((d) => d.kategori === "TOR").length,
     totalLpj: data.filter((d) => d.kategori === "LPJ").length,
     totalSelesai: data.filter((d) => d.kategori === "Selesai").length,
+  };
+
+  // ====== RESET SEMUA DATA ======
+  const resetAll = () => {
+    // hapus localStorage
+    localStorage.removeItem("dana");
+
+    // reset state kegiatan
+    setData([]);
+
+    // reset dana
+    setDana({
+      danaRegular: 0,
+      danaTerpakai: 0,
+      tahun: new Date().getFullYear(),
+    });
   };
 
   return (
@@ -61,6 +131,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         summary,
         dana,
         updateDana,
+        resetAll,
       }}
     >
       {children}
