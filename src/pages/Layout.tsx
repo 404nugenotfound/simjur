@@ -7,11 +7,11 @@ type LayoutProps = {
   hideHeader?: boolean;
   children:
     | React.ReactNode
-    | ((mode: "list" | "form", setMode: (m: "list" | "form") => void) => React.ReactNode);
+    | ((mode: "list" | "TOR" | "LPJ", setMode: (m: "list" | "TOR" | "LPJ") => void) => React.ReactNode);
 };
 
 export default function Layout({ children, hideHeader }: LayoutProps) {
-  const [mode, setMode] = useState<"list" | "form">("list");
+  const [mode, setMode] = useState<"list" | "TOR" | "LPJ">("list") ;
 
   return (
     <div className="flex h-screen overflow-hidden bg-gray-100">

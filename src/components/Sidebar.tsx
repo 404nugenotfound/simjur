@@ -17,20 +17,25 @@ import { useState, useRef, useEffect } from "react";
 export default function Sidebar({
   setMode,
 }: {
-  setMode: (m: "list" | "form") => void;
+  setMode: (m: "list" | "TOR" | "LPJ") => void;
 }) {
   const navigate = useNavigate();
   const [open, setOpen] = useState(true);
   const kegiatanRef = useRef<HTMLDivElement | null>(null);
   const kelolaRef = useRef<HTMLDivElement>(null);
   const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
-  const [dropdownState, setDropdownState] = useState<
-    null | "kegiatan" | "kelola"
-  >(null);
+  const [dropdownState, setDropdown] = useState({
+  kelola: false,
+  kegiatan: false,
+});
 
-  const toggleDropdown = (type: "kegiatan" | "kelola") => {
-    setDropdownState((prev) => (prev === type ? null : type));
-  };
+
+ const toggleDropdown = (type: "kegiatan" | "kelola") => {
+  setDropdown(prev => ({
+    ...prev,
+    [type]: !prev[type],
+  }));
+};
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -40,7 +45,7 @@ export default function Sidebar({
         (!kegiatanRef.current || !kegiatanRef.current.contains(target)) &&
         (!kelolaRef.current || !kelolaRef.current.contains(target))
       ) {
-        setDropdownState(null);
+        setDropdown({ kelola: false, kegiatan: false });
       }
     }
 
@@ -126,14 +131,14 @@ export default function Sidebar({
                 <ChevronDownIcon
                   strokeWidth={2.5}
                   className={`w-5 h-5 transition-transform ${
-                    dropdownState === "kelola" ? "rotate-180" : ""
+                    dropdownState.kelola  ? "rotate-180" : ""
                   }`}
                 />
               </span>
             )}
           </button>
 
-          {open && dropdownState === "kelola" && (
+          {open && dropdownState.kelola && (
             <div
               className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C]
       text-white shadow-lg rounded-md py-2 w-full border border-white/10
@@ -190,14 +195,14 @@ export default function Sidebar({
                 <ChevronDownIcon
                   strokeWidth={2.5}
                   className={`w-5 h-5 transition-transform ${
-                    dropdownState === "kegiatan" ? "rotate-180" : ""
+                    dropdownState.kegiatan ? "rotate-180" : ""
                   }`}
                 />
               </span>
             )}
           </button>
 
-          {open && dropdownState === "kegiatan" && (
+          {open && dropdownState.kegiatan && (
             <div
               className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white
                            shadow-lg rounded-md py-2 w-full z-50 border border-white/10"

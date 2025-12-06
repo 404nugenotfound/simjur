@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import Logo from "./assets/LogoName2.svg";
 import Illustration from "./assets/Illustration.svg";
 import { UserIcon, KeyIcon } from "@heroicons/react/24/solid";
@@ -7,6 +7,29 @@ import { useNavigate } from "react-router-dom";
 
 function App() {
   const navigate = useNavigate();
+  const [username, setUsername] = useState("");
+  const [password, setPassword] = useState("");
+  const [role, setRole] = useState("Pengaju");
+
+ // fungsi update role otomatis
+  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setUsername(value);
+
+    // Rules sederhana
+    let newRole = "Pengaju"; // default kalau ga match
+    if (value.toLowerCase() === "admin") newRole = "Admin";
+    else if (value.toLowerCase() === "sekretariat") newRole = "Sekretariat";
+    else if (value.toLowerCase() === "kajur") newRole = "Kajur";
+
+    setRole(newRole);
+    localStorage.setItem("role", newRole); // optional, langsung save
+  };
+
+  const handleLogin = () => {
+    localStorage.setItem("username", username);
+    navigate("/dashboard");
+  };
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
@@ -57,6 +80,7 @@ function App() {
                 <input
                   className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
                   placeholder="NIM / Email"
+                  onChange={handleUsernameChange}
                 />
               </div>
               <div className="relative w-3/4">
@@ -73,7 +97,7 @@ function App() {
                 <button
                   className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold 
                   hover:bg-gray-800 hover:text-white hover:scale-[0.97] transition-colors duration-100 ease-in-out"
-                  onClick={() => navigate("/dashboard")}
+                  onClick={handleLogin}
                 >
                   Login
                 </button>

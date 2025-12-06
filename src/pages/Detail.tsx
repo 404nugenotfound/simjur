@@ -46,55 +46,59 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   const currentFile = files[String(activity?.id)];
 
   const [detailData, setDetailData] = useState(() => {
-    const saved = localStorage.getItem("pengajuanDetail");
-    return saved
-      ? JSON.parse(saved)
-      : {
-          approval1Status: "Pending",
-          approval2Status: "Pending",
-          approval3Status: "Pending",
-        };
-  });
+
+  return {
+    approval1Status: "Pending",
+    approval2Status: "Pending",
+    approval3Status: "Pending",
+  };
+});
+
 
   useEffect(() => {
-  const saved = JSON.parse(localStorage.getItem("pengajuanDetail") || "{}");
-  if (saved && saved.id === id) {
-    setDetailData(saved);
-  } else {
-    setDetailData({
-      approval1Status: "Pending",
-      approval2Status: "Pending",
-      approval3Status: "Pending",
-    });
-  }
-}, [id]);
+    const saved = JSON.parse(localStorage.getItem("pengajuanDetail") || "{}");
+    if (saved && saved.id === id) {
+      setDetailData(saved);
+    } else {
+      setDetailData({
+        approval1Status: "Pending",
+        approval2Status: "Pending",
+        approval3Status: "Pending",
+      });
+    }
+  }, [id]);
 
   const clearStorage = () => {
     localStorage.removeItem("pengajuanDetail");
     localStorage.removeItem("approvalStatus");
   };
 
-  const handleApprove = (
-    field: "approval1Status" | "approval2Status" | "approval3Status"
-  ) => {
-    if (!activity) return; // <- pastikan activity ada
+   useEffect(() => {
+    const approvalStore = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
 
-    const updatedDetail = { ...detailData, [field]: "Approved" };
-    setDetailData(updatedDetail);
-    localStorage.setItem("pengajuanDetail", JSON.stringify(updatedDetail));
+    if (activity && approvalStore[activity.id]) {
+      setDetailData(approvalStore[activity.id]);
+    }
+  }, [activity]);
 
-    const currentContext = approvalStatus[String(activity.id)] ?? {
-      approval1Status: "Pending",
-      approval2Status: "Pending",
-      approval3Status: "Pending",
-    };
-    const updatedContext = { ...currentContext, [field]: "Approved" };
-    setApprovalStatus({ ...approvalStatus, [activity.id]: updatedContext });
-    localStorage.setItem(
-      "approvalStatus",
-      JSON.stringify({ ...approvalStatus, [activity.id]: updatedContext })
-    );
+  const handleApprove = (field) => {
+  if (!activity) return;
+
+  const currentContext = approvalStatus[activity.id] ?? {
+    approval1Status: "Pending",
+    approval2Status: "Pending",
+    approval3Status: "Pending",
   };
+
+  const updatedContext = { ...currentContext, [field]: "Approved" };
+
+  setDetailData(updatedContext);
+
+  const updatedAll = { ...approvalStatus, [activity.id]: updatedContext };
+  setApprovalStatus(updatedAll);
+
+  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+};
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -180,6 +184,8 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     });
     alert("Catatan disimpan (sementara masih di front-end).");
   };
+  // ==================== ROLE ====================
+  const role = localStorage.getItem("role");
 
   // tepat sebelum return JSX
   console.log(
@@ -188,6 +194,27 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     "Current file:",
     currentFile
   );
+
+  // Saat load component, ambil dulu catatan dari localStorage
+  useEffect(() => {
+    const savedAdmin = localStorage.getItem("noteAdmin");
+    const savedSekretariat = localStorage.getItem("noteSekretariat");
+    const savedKajur = localStorage.getItem("noteKajur");
+
+    if (savedAdmin) setNoteAdmin(savedAdmin);
+    if (savedSekretariat) setNoteSekretariat(savedSekretariat);
+    if (savedKajur) setNoteKajur(savedKajur);
+  }, []);
+
+  // Fungsi save
+  const saveNote = (roleType: string, note: string) => {
+    if (roleType === "admin") localStorage.setItem("noteAdmin", note);
+    if (roleType === "sekretariat")
+      localStorage.setItem("noteSekretariat", note);
+    if (roleType === "kajur") localStorage.setItem("noteKajur", note);
+
+    alert("Catatan berhasil disimpan!");
+  };
 
   return (
     <Layout>
@@ -202,9 +229,9 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
               type="button"
               onClick={() => window.history.back()}
               className=" 
-            px-4 py-[0.35rem]  mr-[-3.2rem] bg-[#4957B5] 
-            text-white rounded font-poppins font-medium tracking-[0.05em]
-            hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+              px-4 py-[0.35rem]  mr-[-3.2rem] bg-[#4957B5] 
+              text-white rounded font-poppins font-medium tracking-[0.05em]
+              hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
             >
               ← Kembali
             </button>
@@ -212,43 +239,52 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
         </div>
 
         {/* Tabs container */}
-        <div className="bg-white rounded-xl shadow mb-6 overflow-hidden font-poppins">
-          {/* Tabs */}
-          <div className="flex border-b font-bold tracking-[0.05em]">
+        <div className="bg-white rounded-2xl shadow-md mb-6 px-4 py-3 font-poppins">
+          <div className="flex justify-center gap-10 py-2">
             <button
-              className={`flex-1 py-3 text-sm ${
-                activeTab === "detail"
-                  ? "bg-indigo-600 text-white"
-                  : "hover:bg-gray-100"
-              }`}
               onClick={() => setActiveTab("detail")}
+              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
+                ${
+                  activeTab === "detail"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-indigo-600 hover:text-[#6C74C6]"
+                }
+              `}
             >
               Detail
             </button>
+
             <button
-              className={`flex-1 py-3 text-sm ${
-                activeTab === "approval"
-                  ? "bg-indigo-600 text-white"
-                  : "hover:bg-gray-100"
-              }`}
               onClick={() => setActiveTab("approval")}
+              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
+                ${
+                  activeTab === "approval"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-indigo-600 hover:text-[#6C74C6]"
+                }
+              `}
             >
               Approval
             </button>
+
             <button
-              className={`flex-1 py-3 text-sm ${
-                activeTab === "submit"
-                  ? "bg-indigo-600 text-white"
-                  : "hover:bg-gray-100"
-              }`}
               onClick={() => setActiveTab("submit")}
+              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
+                ${
+                  activeTab === "submit"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-indigo-600 hover:text-[#6C74C6]"
+                }
+              `}
             >
               Submit File
             </button>
           </div>
+        </div>
 
-          {/* Tab content */}
-          <div className="p-8">
+        {/* Tab content */}
+        <div className="bg-white rounded-xl shadow-md mb-6 px-4 py-3 font-poppins">
+          <div className="p-4">
             {/* DETAIL */}
             {activeTab === "detail" && (
               <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
@@ -307,7 +343,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                           {detailData.approval1Status === "Pending" ? (
                             <button
                               onClick={() => handleApprove("approval1Status")}
-                              className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                              className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
                             >
                               Approve
                             </button>
@@ -327,7 +363,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                         <td className="p-2">
                           {detailData.approval2Status === "Pending" ? (
                             <button
-                              className="bg-blue-500 text-white px-3 py-1 rounded"
+                              className="bg-[#4957B5] text-white px-3 py-1 rounded transition hover:scale-95"
                               onClick={() => handleApprove("approval2Status")}
                             >
                               Approve
@@ -351,7 +387,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                             detailData.approval3Status === "Pending" ? (
                               <button
                                 onClick={() => handleApprove("approval3Status")}
-                                className="px-3 py-1 bg-blue-500 text-white rounded-md"
+                                className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
                               >
                                 Approve
                               </button>
@@ -387,51 +423,113 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                 <h2 className="font-semibold py-4 pt-12">Catatan</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Catatan Admin */}
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-1">
-                      Catatan Admin
-                    </p>
-                    <textarea
-                      className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                      value={noteAdmin || detailInfo.catatanPengaju}
-                      placeholder="Catatan dari admin..."
-                      readOnly
-                    />
-                  </div>
+                  {/* Admin */}
+                  {role === "Admin" && (
+                    <div className="col-span-1 md:col-span-3">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">
+                        Catatan Admin
+                      </p>
+                      <textarea
+                        className="w-full border rounded-lg p-3 min-h-[12rem]"
+                        value={noteAdmin || ""}
+                        placeholder="Catatan dari admin..."
+                        onChange={(e) => setNoteAdmin(e.target.value)}
+                      />
+                      <button
+                        className="mt-2 px-4 py-1 bg-[#4957B5] tracking-[0.10em] text-white rounded transition hover:scale-95"
+                        onClick={() => saveNote("admin", noteAdmin)}
+                      >
+                        Simpan
+                      </button>
+                    </div>
+                  )}
 
-                  {/* Catatan Sekretariat */}
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-1">
-                      Catatan Sekretariat
-                    </p>
-                    <textarea
-                      className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                      value={noteSekretariat || detailInfo.catatanPengaju}
-                      placeholder="Catatan dari sekretariat..."
-                      readOnly
-                    />
-                  </div>
+                  {/* Sekretariat */}
+                  {role === "Sekretariat" && (
+                    <div className="col-span-1 md:col-span-3">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">
+                        Catatan Sekretariat
+                      </p>
+                      <textarea
+                        className="w-full border rounded-lg p-3 min-h-[12rem]"
+                        value={noteSekretariat || ""}
+                        placeholder="Catatan dari sekretariat..."
+                        onChange={(e) => setNoteSekretariat(e.target.value)}
+                      />
+                      <button
+                        className="mt-2 px-4 py-1 bg-[#4957B5] text-white rounded transition hover:scale-95"
+                        onClick={() => saveNote("sekretariat", noteSekretariat)}
+                      >
+                        Simpan
+                      </button>
+                    </div>
+                  )}
 
-                  {/* Catatan Kajur */}
-                  <div>
-                    <p className="text-xs font-semibold text-gray-600 mb-1">
-                      Catatan Ketua Jurusan
-                    </p>
-                    <textarea
-                      className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                      value={noteKajur || detailInfo.catatanPengaju}
-                      placeholder="Catatan dari ketua jurusan..."
-                      readOnly
-                    />
-                  </div>
+                  {/* Kajur */}
+                  {role === "Kajur" && (
+                    <div className="col-span-1 md:col-span-3">
+                      <p className="text-xs font-semibold text-gray-600 mb-1">
+                        Catatan Ketua Jurusan
+                      </p>
+                      <textarea
+                        className="w-full border rounded-lg p-3 min-h-[12rem]"
+                        value={noteKajur || ""}
+                        placeholder="Catatan dari ketua jurusan..."
+                        onChange={(e) => setNoteKajur(e.target.value)}
+                      />
+                      <button
+                        className="mt-2 ml-1 px-4 py-1 bg-[#4957B5] text-white rounded transition hover:scale-95"
+                        onClick={() => saveNote("kajur", noteKajur)}
+                      >
+                        Simpan
+                      </button>
+                    </div>
+                  )}
+
+                  {/* Pengaju */}
+                  {role === "Pengaju" && (
+                    <>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 mb-1">
+                          Catatan Admin
+                        </p>
+                        <textarea
+                          className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
+                          value={noteAdmin || ""}
+                          readOnly
+                          placeholder="Catatan dari admin..."
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 mb-1">
+                          Catatan Sekretariat
+                        </p>
+                        <textarea
+                          className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
+                          value={noteSekretariat || ""}
+                          readOnly
+                          placeholder="Catatan dari sekretariat..."
+                        />
+                      </div>
+                      <div>
+                        <p className="text-xs font-semibold text-gray-600 mb-1">
+                          Catatan Ketua Jurusan
+                        </p>
+                        <textarea
+                          className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
+                          value={noteKajur || ""}
+                          readOnly
+                          placeholder="Catatan dari ketua jurusan..."
+                        />
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
-
             {/* SUBMIT FILE */}
             {activeTab === "submit" && (
-              <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
+              <div className="bg-gray-50 rounded-xl shadow-inner">
                 <div
                   className={`rounded-3xl min-h-[180px] flex flex-col items-center justify-center px-6 transition ${
                     currentFile
@@ -477,14 +575,14 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                   ) : (
                     <div className="w-full flex justify-center mt-2">
                       <div className="flex items-center justify-between bg-[#A4CEB6] px-8 py-8 rounded-xl shadow-md w-full max-w-[900px]">
-                        <p className="text-white font-semibold text-xl truncate max-w-[65%]">
+                        <p className="text-gray-100 font-semibold text-xl truncate max-w-[65%]">
                           {currentFile.name ?? "–"}
                         </p>
 
                         <div className="flex items-center gap-3">
                           {/* Tombol Unduh */}
                           <button
-                            className="px-6 py-2.5 text-sm rounded-lg bg-[#5A6FDE] text-white font-semibold tracking-[0.05em]"
+                            className="px-6 py-2.5 text-sm rounded-lg bg-[#4957B5] text-white font-semibold tracking-[0.05em] hover:scale-[0.97]"
                             onClick={() => {
                               const url = URL.createObjectURL(currentFile);
                               const a = document.createElement("a");
@@ -500,7 +598,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                           {/* Tombol Hapus */}
                           <button
                             aria-label="hapus"
-                            className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white"
+                            className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white hover:scale-[0.97]"
                             onClick={() => {
                               setFiles((prev) => ({
                                 ...prev,

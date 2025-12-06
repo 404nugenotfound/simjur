@@ -1,16 +1,18 @@
 import React, { useState, useEffect, useRef } from "react";
 import FormPengajuan from "./FormPengajuan";
+import FormPengajuanLPJ from "./FormPengajuanLPJ";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useParams, useLocation } from "react-router-dom";
 import { useActivities } from "../context/ActivitiesContext";
-import { ChevronDownIcon, DocumentTextIcon } from "@heroicons/react/24/outline";
+import { ChevronDownIcon, DocumentIcon, DocumentChartBarIcon } from "@heroicons/react/24/solid";
+
+type Mode = "list" | "TOR" | "LPJ";
 
 type PengajuanProps = {
-  mode: "list" | "form";
-  setMode: (m: "list" | "form") => void;
+  mode: Mode;
+  setMode: (m: Mode) => void;
 };
-
 
 const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const { data, setData } = useActivities();
@@ -47,24 +49,26 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     setApprovalStatus(saved);
   }, [setApprovalStatus]);
 
-  const handleApprove = (activityId: number, field: "approval1Status" | "approval2Status" | "approval3Status") => {
-  const updated = {
-    ...approvalStatus,
-    [activityId]: {
-      ...approvalStatus[activityId],
-      [field]: "Approved",
-    },
+  const handleApprove = (
+    activityId: number,
+    field: "approval1Status" | "approval2Status" | "approval3Status"
+  ) => {
+    const updated = {
+      ...approvalStatus,
+      [activityId]: {
+        ...approvalStatus[activityId],
+        [field]: "Approved",
+      },
+    };
+    setApprovalStatus(updated);
+    localStorage.setItem("approvalStatus", JSON.stringify(updated));
   };
-  setApprovalStatus(updated);
-  localStorage.setItem("approvalStatus", JSON.stringify(updated));
-};
 
   const [openDropdown, setOpenDropdown] = useState(false);
 
   const paginatedData = filtered.slice(startIndex, endIndex);
 
   const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     setPage(1);
@@ -79,12 +83,15 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     localStorage.setItem("kegiatan", JSON.stringify(updated));
   };
 
+  const ref = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (ref.current && !ref.current.contains(e.target as Node)) {
-        setOpen(false);
+        setOpenDropdown(false);
       }
     };
+
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
@@ -92,24 +99,40 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   {
     /* Form View */
   }
-  if (mode === "form") {
-    return (
-      <div className="p-6">
-        <div className="flex justify-end w-full mt-[8rem] px-20">
-          <button
-            onClick={() => setMode("list")}
-            className="
-            px-4 py-[0.35rem] bg-[#4957B5] 
-            text-white rounded font-poppins font-medium tracking-[0.05em]
-            hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
-          >
-            ← Kembali
-          </button>
-        </div>
-        <FormPengajuan />
+  if (mode === "TOR") {
+  return (
+    <div className="p-6">
+      <div className="flex justify-end w-full mt-[8rem] px-20">
+        <button
+          onClick={() => setMode("list")}
+          className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+        >
+          ← Kembali
+        </button>
       </div>
-    );
-  };
+
+      <FormPengajuan /> {/* khusus TOR */}
+    </div>
+  );
+}
+
+if (mode === "LPJ") {
+  return (
+    <div className="p-6">
+      <div className="flex justify-end w-full mt-[8rem] px-20">
+        <button
+          onClick={() => setMode("list")}
+          className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+        >
+          ← Kembali
+        </button>
+      </div>
+
+      <FormPengajuanLPJ /> {/* beda komponen */}
+    </div>
+  );
+}
+
 
   {
     /* Tabel */
@@ -134,50 +157,51 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
             <MagnifyingGlassIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-8 text-gray-400 stroke-[2.3]" />
           </div>
 
-       <div ref={ref} className="relative inline-block">
-      {/* Tombol Tambah */}
-      <button
-        onClick={() => setOpenDropdown(!openDropdown)}
-        className="flex items-center gap-2 px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium tracking-[0.05em] transition"
-      >
-        Tambah
-        <ChevronDownIcon
-          className={`h-4 w-4 transition-transform duration-200 ${
-            openDropdown ? "rotate-180" : "rotate-0"
-          }`}
-        />
-      </button>
+          <div ref={ref} className="relative inline-block">
+            {/* Tombol Tambah */}
+            <button
+              onClick={() => setOpenDropdown(!openDropdown)}
+              className="flex items-center gap-2 px-5 py-1.5 bg-[#4957B5] text-white rounded-md font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+            >
+              Tambah
+              <ChevronDownIcon
+                className={`h-4 w-4 transition-transform duration-200 ${
+                  openDropdown ? "rotate-180" : "rotate-0"
+                }`}
+              />
+            </button>
 
-      {/* Dropdown */}
-      {openDropdown && (
-        <div className="absolute top-full left-0 mt-2 w-36 bg-white border border-gray-200 rounded-md shadow-lg z-50 overflow-hidden animate-dropdown">
-          
-          <button
-            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm"
-            onClick={() => {
-              setMode("form");
-              setOpenDropdown(false);
-            }}
-          >
-            <DocumentTextIcon className="h-4 w-4 text-gray-600" />
-            TOR
-          </button>
+            {/* Dropdown */}
+            {openDropdown && (
+              <div className="absolute top-full left-0 mt-2 w-36 bg-white rounded-md shadow-lg z-50 overflow-hidden animate-dropdown">
+                <button
+                  className="w-full group flex items-center gap-2 px-10 py-3 hover:bg-gray-400 transition text-md"
+                  onClick={() => {
+                    setMode("TOR");
+                    setOpenDropdown(false);
+                  }}
+                >
+                  <DocumentIcon className="h-6 w-6 text-gray-600 group-hover:text-white" />
+                  <span className="group-hover:text-white font-medium tracking-[0.05em]">
+                    TOR
+                  </span>
+                </button>
 
-          <button
-            className="w-full flex items-center gap-2 px-4 py-2 hover:bg-gray-100 transition text-sm"
-            onClick={() => {
-              setMode("form");
-              setOpenDropdown(false);
-            }}
-          >
-            <DocumentTextIcon className="h-4 w-4 text-gray-600" />
-            LPJ
-          </button>
-        </div>
-        )}
-      </div>
-
-
+                <button
+                  className="w-full group flex items-center gap-2 px-10 py-3 hover:bg-gray-400 group-hover:text-white transition text-sm"
+                  onClick={() => {
+                    setMode("LPJ");
+                    setOpenDropdown(false);
+                  }}
+                >
+                  <DocumentChartBarIcon className="h-6 w-6 text-gray-600 group-hover:text-white" />
+                  <span className="group-hover:text-white font-medium tracking-[0.05em] ml-[0.16rem]">
+                    LPJ
+                  </span>
+                </button>
+              </div>
+            )}
+          </div>
         </div>
 
         {/* Tabel */}
@@ -288,8 +312,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         </div>
       </div>
     </div>
-    );
-  };
-
+  );
+};
 
 export default PengajuanKegiatan;
