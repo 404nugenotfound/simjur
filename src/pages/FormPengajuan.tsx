@@ -149,8 +149,8 @@ export default function FormPengajuan({ addData, setMode }) {
       tujuan: "( Diisi Manual )",
       latar_belakang: "( Diisi Manual )",
 
-      nama_kajur: "Bu Anita",
-      nip_kajur: "1234567",
+      nama_kajur: "Dr. Anita Hidayati, S.Kom., M.Kom.",
+      nip_kajur: "197908032003122003",
       nip_penanggung_jawab: "( Diisi Manual )",
     };
 

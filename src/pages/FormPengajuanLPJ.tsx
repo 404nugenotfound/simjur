@@ -189,7 +189,9 @@ export default function FormPengajuanLPJ({ setMode }) {
         "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     });
 
-    const filename = `TemplateLPJTesting.docx`;
+    const filename = `LPJ-${new Date().getFullYear()}-${Math.floor(
+      Math.random() * 1000
+    )}_${data.judul_kegiatan || ""}.docx`;
     saveAs(blob, filename);
   };
 
@@ -211,13 +213,24 @@ export default function FormPengajuanLPJ({ setMode }) {
       tor_id: selectedTor.id,
       tor_judul: selectedTor.judul,
       tor_penanggung_jawaban: selectedTor.penanggung_jawab,
+      dana_diajukan: selectedTor.dana,
+      tanggal: selectedTor.tanggal,
+
+      tahun: new Date().getFullYear(),
+      tanggal_generate: new Date().toLocaleDateString("id-ID"),
       metode_pelaksanaan: metode,
-      dana_terpakai: Number(danaTerpakai.replace(/\D/g, "")),
+
+      dana_terpakai: danaTerpakai,
       sisa_dana: sisaDana,
+
       peserta_mahasiswa: pesertaMahasiswa,
       peserta_alumni: pesertaAlumni,
       peserta_dosen: pesertaDosen,
       total_peserta: totalPeserta,
+
+      nama_kajur: "Dr. Anita Hidayati, S.Kom., M.Kom.",
+      nip_kajur: "197908032003122003",
+      nip_penanggung_jawab: "( Diisi Manual )",
     };
 
     // langsung generate file Word
