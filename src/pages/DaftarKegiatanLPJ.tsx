@@ -2,8 +2,9 @@ import React, { useState, useEffect } from "react";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
-import { userName } from "../components/Headerbar";
 import { useActivities } from "../context/ActivitiesContext";
+import { roleToName } from "../utils/roleToName";
+
 
 
 const DaftarKegiatanLPJ: React.FC = () => {
@@ -13,6 +14,7 @@ const DaftarKegiatanLPJ: React.FC = () => {
     const [page, setPage] = useState(1);
     const limit = 5;
     const navigate = useNavigate();
+    const namaPengaju = roleToName["Pengaju"];
   
     const filtered = data.filter((item) => {
       const matching = filter === "all" ? true : item.judul === filter;
@@ -59,7 +61,7 @@ const DaftarKegiatanLPJ: React.FC = () => {
               <thead className="bg-[#86BE9E] text-white tracking-[0.1em] font-semibold">
                 <tr className="text-center [&>th]:font-semibold">
                 <th className="px-4 p-3">No</th>
-                <th className="px-4 p-3">Nama</th>
+                <th className="px-4 p-3">Nama Pengaju</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>
                 <th className="px-4 p-3">Tanggal</th>
                 <th className="px-4 p-3">Action</th>
@@ -77,7 +79,7 @@ const DaftarKegiatanLPJ: React.FC = () => {
                   paginatedData.map((item, index) => (
                     <tr key={item.id} className="border-b text-[#696868] text-center">
                     <td className="p-3">{startIndex + index + 1}</td>
-                    <td className="p-3">{userName}</td>
+                    <td className="p-3">{namaPengaju}</td>
                     <td className="p-3 font-semibold">{item.judul}</td>
                     <td className="p-3">{item.tanggal}</td>
                     <td className="p-3">

@@ -4,6 +4,8 @@ import Illustration from "./assets/Illustration.svg";
 import { UserIcon, KeyIcon } from "@heroicons/react/24/solid";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
+import { roleToName } from "./utils/roleToName";
+
 
 function App() {
   const navigate = useNavigate();
@@ -11,7 +13,7 @@ function App() {
   const [password, setPassword] = useState("");
   const [role, setRole] = useState("Pengaju");
 
- // fungsi update role otomatis
+  // fungsi update role otomatis
   const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const value = e.target.value;
     setUsername(value);
@@ -19,7 +21,7 @@ function App() {
     // Rules sederhana
     let newRole = "Pengaju"; // default kalau ga match
     if (value.toLowerCase() === "admin") newRole = "Admin";
-    else if (value.toLowerCase() === "sekretariat") newRole = "Sekretariat";
+    else if (value.toLowerCase() === "sekjur") newRole = "Sekjur";
     else if (value.toLowerCase() === "kajur") newRole = "Kajur";
 
     setRole(newRole);
@@ -27,7 +29,13 @@ function App() {
   };
 
   const handleLogin = () => {
-    localStorage.setItem("username", username);
+    const realName = roleToName[role];
+
+    // Simpan nama dalam uppercase
+    localStorage.setItem("name", realName.toUpperCase());
+
+    // Simpan role juga kalo perlu
+    localStorage.setItem("role", role);
     navigate("/dashboard");
   };
 
@@ -90,7 +98,7 @@ function App() {
                 </div>
                 <input
                   className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
-                  placeholder="Password"
+                  placeholder="Kata Sandi"
                 />
               </div>
               <div className="mr-32 flex justify-center">
@@ -99,7 +107,7 @@ function App() {
                   hover:bg-gray-800 hover:text-white hover:scale-[0.97] transition-colors duration-100 ease-in-out"
                   onClick={handleLogin}
                 >
-                  Login
+                  Masuk
                 </button>
               </div>
             </div>

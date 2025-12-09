@@ -1,13 +1,79 @@
-import React, { useState } from "react";
-import jsPDF from "jspdf";
-import "jspdf-autotable";
+import React, { useEffect, useState } from "react";
+import PizZip from "pizzip";
+import Docxtemplater from "docxtemplater";
+import { saveAs } from "file-saver";
+import { ChevronDownIcon } from "@heroicons/react/24/solid";
+import { useActivities } from "../context/ActivitiesContext";
 
-export default function FormPengajuan() {
-  const [namaKegiatan, setNamaKegiatan] = useState("");
-  const [tanggalPengajuan, setTanggalPengajuan] = useState("");
-  const [penanggungJawab, setPenanggungJawab] = useState("");
-  const [deskripsi, setDeskripsi] = useState("");
-  const [dana, setDana] = useState("");
+// Definisi tipe TOR
+interface Tor {
+  id: string | number;
+  judul: string;
+  penanggung_jawab?: string;
+  tanggal?: string;
+  dana?: string;
+  tor?: {
+    nomor_tor: string;
+    tahun: number;
+    dana: string;
+    tanggal_mulai: string;
+    tanggal_berakhir: string;
+    tujuan?: string;
+    latar_belakang?: string;
+  };
+  lpj?: {
+    metode_pelaksanaan: string;
+    dana_terpakai?: string;
+    sisa_dana: number;
+    peserta_mahasiswa?: number;
+    peserta_alumni?: number;
+    peserta_dosen?: number;
+    total_peserta: number;
+    created_at?: string;
+    updated_at?: string;
+  };
+}
+
+export default function FormPengajuanLPJ({ setMode }) {
+  // === [ GET DATA ID ] ===
+  const [torItems, setTorItems] = useState<Tor[]>([]);
+  const [selectorTorId, setSelectorTorId] = useState(); // var di simpan di sini
+  const [selectedTor, setSelectedTor] = useState<Tor | null>(null);
+  const { updateData } = useActivities();
+
+  // === [ SET DATA TOR GENERATE ] ===
+
+  useEffect(() => {
+    const rawKegiatan = localStorage.getItem("kegiatan");
+    if (!rawKegiatan) return;
+
+    try {
+      const list = JSON.parse(rawKegiatan);
+      if (!Array.isArray(list)) return;
+
+      const kegiatanFiltered = list.filter((item) => item?.id);
+
+      console.log("KEGIATAN FILTERED:", kegiatanFiltered);
+      setTorItems(kegiatanFiltered);
+    } catch (e) {
+      console.error("Gagal parse JSON:", e);
+    }
+  }, []);
+
+  // update selectTor id untuk dropdown
+  useEffect(() => {
+    const tor = torItems.find((t) => Number(t.id) === selectorTorId) || null;
+    setSelectedTor(tor);
+  }, [selectorTorId, torItems]);
+
+  const [openDropdown, setOpenDropdown] = useState(false);
+  const [metode, setMetode] = useState("Luring");
+  const [danaTerpakai, setDanaTerpakai] = useState("");
+  const [pesertaMahasiswa, setPesertaMahasiswa] = useState<number>(0);
+  const [pesertaAlumni, setPesertaAlumni] = useState<number>(0);
+  const [pesertaDosen, setPesertaDosen] = useState<number>(0);
+  const [totalPeserta, setTotalPeserta] = useState<number>(0);
+  const [sisaDana, setSisaDana] = useState(0);
 
   const formatCurrency = (value: string) => {
     const numbersOnly = value.replace(/\D/g, "");
@@ -18,177 +84,349 @@ export default function FormPengajuan() {
     }).format(Number(numbersOnly));
   };
 
+  useEffect(() => {
+    const total = pesertaMahasiswa + pesertaAlumni + pesertaDosen;
+    setTotalPeserta(total);
+  }, [pesertaMahasiswa, pesertaAlumni, pesertaDosen]);
+
+  useEffect(() => {
+    if (!selectedTor) return;
+
+    // ambil dana dari TOR, bersihkan simbol dan spasi
+    const numericDana = Number(danaTerpakai.replace(/\D/g, "")) || 0;
+    const torDana = Number(selectedTor.dana?.replace(/\D/g, "") || 0);
+
+    setSisaDana(torDana - numericDana);
+  }, [selectedTor, danaTerpakai]);
+
   const handleDanaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDana(formatCurrency(e.target.value));
+    setDanaTerpakai(formatCurrency(e.target.value));
   };
 
-  // --- 🔥 Generate PDF dulu di atas baru submit ---
-  const generatePDF = (data: any) => {
-    const doc = new jsPDF();
+  const generateWord = async (data: any) => {
+    const TEMPLATE_PATH = "/templates/TemplateLPJ.docx";
 
-    doc.text("DOKUMEN TOR", 14, 10);
-
-    (doc as any).autoTable({
-      startY: 20,
-      head: [["Field", "Isi"]],
-      body: [
-        ["Nomor TOR", data.nomorTor],
-        ["Nama Kegiatan", data.namaKegiatan],
-        ["Tanggal", data.tanggalPengajuan],
-        ["Penanggung Jawab", data.penanggungJawab],
-        ["Deskripsi", data.deskripsi],
-        ["Dana", data.dana],
-        ["Status", data.status],
-      ],
-    });
-
-    doc.save(`${data.nomorTor}.pdf`);
-  };
-
-  // --- 🔥 Baru fungsi simpan disini ---
-  const handleSubmit = () => {
-    if (
-      !namaKegiatan ||
-      !tanggalPengajuan ||
-      !penanggungJawab ||
-      !deskripsi ||
-      !dana
-    ) {
-      alert("Semua form harus diisi!");
+    let response: Response;
+    try {
+      response = await fetch(TEMPLATE_PATH);
+    } catch (err) {
+      console.error("Fetch error:", err);
+      alert("Gagal load template. Cek path / internet.");
       return;
     }
 
-    const nomorTor =
-      "TOR-" +
-      new Date().getFullYear() +
-      "-" +
-      Math.floor(Math.random() * 1000);
+    if (!response.ok) {
+      alert(`Template tidak ditemukan (HTTP ${response.status})`);
+      return;
+    }
 
-    const newForm = {
-      id: Date.now(),
-      nomorTor,
-      namaKegiatan,
-      tanggalPengajuan,
-      penanggungJawab,
-      deskripsi,
-      dana,
-      status: "pending",
+    const content = await response.arrayBuffer();
+    console.log("Template size:", content.byteLength);
+
+    let zip;
+    try {
+      zip = new PizZip(content);
+    } catch (err) {
+      console.error("❌ Template bukan ZIP/Corrupt:", err);
+      alert("Template corrupt atau bukan DOCX valid.");
+      return;
+    }
+
+    if (!zip.files["word/document.xml"]) {
+      console.error("❌ word/document.xml tidak ada di file.");
+      alert("Template bukan DOCX standar.");
+      return;
+    }
+
+    const docXml = zip.files["word/document.xml"].asText();
+
+    let doc;
+    try {
+      doc = new Docxtemplater(zip, {
+        paragraphLoop: true,
+        linebreaks: true,
+        delimiters: { start: "{{", end: "}}" }, // 🔥 tambah delimiter biar strict
+      });
+    } catch (err: any) {
+      console.error("❌ Constructor Error:", err);
+      alert("Template error. Lihat console snippet.");
+      return;
+    }
+
+    // 🧪 Debug: cek placeholder apa yg terbaca
+    try {
+      const tags = doc.getTags();
+      console.log("Detected tags:", tags);
+    } catch (e) {
+      console.warn("getTags() gagal:", e);
+    }
+
+    try {
+      doc.render(data);
+    } catch (error: any) {
+      console.error("❌ RENDER ERROR:", error);
+
+      const props = error.properties;
+      if (props?.offset) {
+        const off = props.offset;
+        const start = Math.max(0, off - 120);
+        const end = Math.min(docXml.length, off + 120);
+
+        console.log(
+          "Snippet Error XML:\n\n",
+          docXml.substring(start, end),
+          "\n---------------------"
+        );
+      }
+
+      alert("Template salah. Perbaiki placeholder. Cek console.");
+      return;
+    }
+
+    const blob = doc.getZip().generate({
+      type: "blob",
+      mimeType:
+        "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
+    });
+
+    const filename = `TemplateLPJTesting.docx`;
+    saveAs(blob, filename);
+  };
+
+  const resetForm = () => {
+    setMetode("Luring");
+    setDanaTerpakai("");
+    setPesertaMahasiswa(0);
+    setPesertaAlumni(0);
+    setPesertaDosen(0);
+  };
+
+  const handleSubmit = async () => {
+    if (!selectedTor) {
+      alert("Pilih TOR terlebih dahulu!");
+      return;
+    }
+
+    const formData = {
+      tor_id: selectedTor.id,
+      tor_judul: selectedTor.judul,
+      tor_penanggung_jawaban: selectedTor.penanggung_jawab,
+      metode_pelaksanaan: metode,
+      dana_terpakai: Number(danaTerpakai.replace(/\D/g, "")),
+      sisa_dana: sisaDana,
+      peserta_mahasiswa: pesertaMahasiswa,
+      peserta_alumni: pesertaAlumni,
+      peserta_dosen: pesertaDosen,
+      total_peserta: totalPeserta,
     };
 
-    const saved = JSON.parse(localStorage.getItem("pengajuan") || "[]");
-    saved.push(newForm);
-    localStorage.setItem("pengajuan", JSON.stringify(saved));
+    // langsung generate file Word
+    await generateWord(formData);
 
-    generatePDF(newForm);
+    const update = {
+      lpj: {
+        dana_terpakai: selectedTor?.lpj?.dana_terpakai ?? "", // default string
+        peserta_mahasiswa: selectedTor?.lpj?.peserta_mahasiswa ?? 0,
+        peserta_alumni: selectedTor?.lpj?.peserta_alumni ?? 0,
+        peserta_dosen: selectedTor?.lpj?.peserta_dosen ?? 0,
+        created_at: selectedTor?.lpj?.created_at ?? new Date().toISOString(),
 
-    alert(`Data tersimpan!\nNomor TOR: ${nomorTor}`);
+        // field yang lu update
+        metode_pelaksanaan: metode,
+        sisa_dana: sisaDana,
+        total_peserta: totalPeserta,
+        updated_at: new Date().toISOString(),
+      },
+    };
+    updateData(selectedTor.id, update);
 
-    setNamaKegiatan("");
-    setTanggalPengajuan("");
-    setPenanggungJawab("");
-    setDeskripsi("");
-    setDana("");
+    resetForm();
+    setMode("list"); // optional, kalau mau balik ke list
   };
+
+  useEffect(() => {
+    if (torItems.length > 0 && !selectedTor) {
+      setSelectedTor(null);
+    }
+  }, [torItems]);
 
   return (
     <div className="px-12 pt-8 pb-8">
-    {/* Form */}
-       <h2 className="text-3xl font-bebas mb-24 tracking-[0.4rem] ml-[-1rem] mt-[-9.7rem] text-black">
-          TAMBAH DATA PENGAJUAN LPJ
-        </h2>
-        
-    <div className="flex justify-center w-full px-6">  
-      {/* Card Container */}
-      <div className="bg-white shadow-md border rounded-xl p-6 w-full max-w-6xl">
-        {/* Title */}
-        <div className="space-y-5 pb-[1rem] font-poppins">
-          <div>
-            <label className="block text-black font-semibold mb-1">
-              Nama Kegiatan
-            </label>
-            <input
-              type="text"
-              className="appearance-none border border-black rounded-lg w-full p-2 text-black"
-              placeholder="Masukkan nama kegiatan..."
-              value={namaKegiatan}
-              onChange={(e) => setNamaKegiatan(e.target.value)}
-            />
-          </div>
+      {/* Form */}
+      <h2 className="text-3xl font-bebas mb-24 tracking-[0.4rem] ml-[-1rem] mt-[-9.7rem] text-black">
+        TAMBAH DATA PENGAJUAN LPJ
+      </h2>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <label className="block text-black font-semibold mb-1">
-                Tanggal Pengajuan
-              </label>
-              <input
-                type="date"
-                className="appearance-none border border-black rounded-lg w-full p-2 text-gray-400 uppercase font-medium"
-                value={tanggalPengajuan}
-                onChange={(e) => setTanggalPengajuan(e.target.value)}
-                aria-label="Tanggal Pengajuan"
-              />
+      <div className="flex justify-center w-full px-6">
+        {/* Card Container */}
+        <div className="bg-white shadow-md border rounded-xl p-5 w-full max-w-6xl">
+          {/* Title */}
+          <div className="space-y-10   font-poppins pb-5">
+            {/* Baris 1: Metode & Dana */}
+            <div className="grid grid-cols-3 gap-6 items-start">
+              {/* Metode Pelaksanaan */}
+              <div className="w-full">
+                <label className="block text-black font-semibold mb-2">
+                  Metode Pelaksanaan
+                </label>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-black text-[15px]">
+                    Pilih Metode Acara:
+                  </span>
+
+                  {/* Select + custom arrow container */}
+                  <div className="relative w-28">
+                    <select
+                      className="border border-black rounded-lg p-2 text-black w-full
+                      appearance-none pr-8"
+                      value={metode}
+                      onChange={(e) => setMetode(e.target.value)}
+                      onClick={() => setOpenDropdown(!openDropdown)}
+                      aria-label="-"
+                    >
+                      <option value="Luring">Luring</option>
+                      <option value="Daring">Daring</option>
+                    </select>
+
+                    {/* Heroicon arrow */}
+                    <ChevronDownIcon
+                      className={`pointer-events-none h-5 w-5 text-black absolute right-2 top-1/2 -translate-y-1/2
+                      transition-transform duration-200 ${
+                        openDropdown ? "rotate-180" : "rotate-0"
+                      }`}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* ngambil ID*/}
+              <div className="col-span-2 w-full">
+                <label className="block text-black font-semibold mb-2">
+                  Nama Kegiatan
+                </label>
+
+                <div className="flex items-center gap-3">
+                  {torItems.length === 0 ? (
+                    <p className="text-gray-500">
+                      Tidak ada TOR di localStorage.
+                    </p>
+                  ) : (
+                    <div className="relative w-full">
+                      <select
+                        aria-label="Pilih TOR"
+                        className="border border-black rounded-lg p-2 w-full appearance-none"
+                        value={selectedTor ? selectedTor.id.toString() : ""}
+                        onChange={(e) => {
+                          const selectedId = Number(e.target.value);
+                          const tor =
+                            torItems.find((t) => t.id === selectedId) || null;
+                          setSelectedTor(tor);
+                          console.log("TOR dipilih:", tor);
+                        }}
+                      >
+                        <option value="" disabled>
+                          Pilih TOR
+                        </option>
+                        {torItems.map((tor) => (
+                          <option key={tor.id} value={tor.id.toString()}>
+                            {tor.judul} — {tor.penanggung_jawab}
+                          </option>
+                        ))}
+                      </select>
+
+                      <ChevronDownIcon className="pointer-events-none h-5 w-5 text-black absolute right-3 top-1/2 -translate-y-1/2" />
+                    </div>
+                  )}
+
+                  <button className="border border-black px-4 py-2 bg-[#D5D5D5] rounded-lg text-black text-opacity-60 font-semibold">
+                    LPJ
+                  </button>
+                </div>
+              </div>
             </div>
 
+            {/* Jumlah Peserta */}
             <div>
-              <label className="block text-black font-semibold mb-1">
-                Penanggung Jawab
+              <label className="block text-black font-semibold mb-3">
+                Jumlah Peserta (Orang)
               </label>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  className="appearance-none border border-black rounded-lg flex-1 p-2 text-black"
-                  placeholder="Nama penanggung jawab..."
-                  value={penanggungJawab}
-                  onChange={(e) => setPenanggungJawab(e.target.value)}
-                />
-                <button className="appearance-none border border-black px-4 py-2 bg-[#D5D5D5] rounded-lg text-black text-opacity-60 font-semibold">
-                  LPJ
+
+              <div className="grid grid-cols-3 gap-6">
+                <div>
+                  <label className="text-sm">Mahasiswa</label>
+                  <input
+                    type="number"
+                    className="appearance-none border border-black rounded-lg w-full p-2 text-black
+                    [&::-webkit-inner-spin-button]:appearance-none 
+                    [&::-webkit-outer-spin-button]:appearance-none"
+                    placeholder="0"
+                    value={pesertaMahasiswa}
+                    onChange={(e) =>
+                      setPesertaMahasiswa(Number(e.target.value))
+                    }
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm">Alumni</label>
+                  <input
+                    type="number"
+                    className="appearance-none border border-black rounded-lg w-full p-2 text-black
+                    [&::-webkit-inner-spin-button]:appearance-none 
+                    [&::-webkit-outer-spin-button]:appearance-none"
+                    placeholder="0"
+                    value={pesertaAlumni}
+                    onChange={(e) => setPesertaAlumni(Number(e.target.value))}
+                  />
+                </div>
+
+                <div>
+                  <label className="text-sm">Dosen</label>
+                  <input
+                    type="number"
+                    className="appearance-none border border-black rounded-lg w-full p-2 text-black
+                    [&::-webkit-inner-spin-button]:appearance-none 
+                    [&::-webkit-outer-spin-button]:appearance-none"
+                    placeholder="0"
+                    value={pesertaDosen}
+                    onChange={(e) => setPesertaDosen(Number(e.target.value))}
+                  />
+                </div>
+              </div>
+            </div>
+
+            {/* Jumlah Dana */}
+            <div className="flex items-end gap-4">
+              <div className="flex-1">
+                <label className="block text-black font-semibold mb-2">
+                  Jumlah Dana Yang Digunakan
+                </label>
+
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    className="appearance-none border border-black rounded-lg w-[20rem] p-2 text-black"
+                    placeholder="Rp 0"
+                    value={danaTerpakai}
+                    onChange={handleDanaChange}
+                  />
+                </div>
+              </div>
+
+              {/* Submit */}
+              <div className="pt-2 flex justify-end">
+                <button
+                  onClick={handleSubmit}
+                  className="px-6 py-2 bg-[#4957B5] text-white font-medium rounded-lg hover:bg-[#3e4b99] transition-colors duration-300"
+                >
+                  Simpan dan Generate
                 </button>
               </div>
             </div>
           </div>
-
-          <div>
-            <label className="block text-black font-semibold mb-1">
-              Deskripsi
-            </label>
-            <textarea
-              className="appearance-none border border-black rounded-lg w-full p-3 h-36 resize-none text-black"
-              placeholder="Tuliskan deskripsi kegiatan..."
-              value={deskripsi}
-              onChange={(e) => setDeskripsi(e.target.value)}
-            ></textarea>
-          </div>
-
-          {/* Dana */}
-          <div className="flex items-end gap-4">
-          <div className="flex-1">
-            <label className="block text-black font-semibold mb-1">
-              Total Dana Dibutuhkan
-            </label>
-            <input
-              type="text"
-              className="appearance-none border border-black rounded-lg w-[20rem] p-2 text-black"
-              placeholder="Rp 0"
-              value={dana}
-              onChange={handleDanaChange}
-            />
-          </div>
-
-          {/* Submit */}
-          <div className="font-medium">
-            <button
-              onClick={handleSubmit}
-              className="px-6 py-2 bg-[#4957B5] text-white rounded-lg 
-              hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
-            >
-              Simpan dan Generate
-            </button>
-          </div>
-          </div>
         </div>
       </div>
-    </div>
     </div>
   );
 }

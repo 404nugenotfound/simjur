@@ -20,22 +20,21 @@ export default function Sidebar({
   setMode: (m: "list" | "TOR" | "LPJ") => void;
 }) {
   const navigate = useNavigate();
-  const [open, setOpen] = useState(true);
   const kegiatanRef = useRef<HTMLDivElement | null>(null);
   const kelolaRef = useRef<HTMLDivElement>(null);
-  const [activeDropdown, setActiveDropdown] = useState<string | null>(null);
   const [dropdownState, setDropdown] = useState({
-  kelola: false,
-  kegiatan: false,
-});
+    kelola: false,
+    kegiatan: false,
+  });
+  const [open, setOpen] = useState(true);
+  const [openClick, setOpenClick] = useState(false); // state mental untuk toggle dropdown
 
-
- const toggleDropdown = (type: "kegiatan" | "kelola") => {
-  setDropdown(prev => ({
-    ...prev,
-    [type]: !prev[type],
-  }));
-};
+  const toggleDropdown = (type: "kegiatan" | "kelola") => {
+    setDropdown((prev) => ({
+      ...prev,
+      [type]: !prev[type],
+    }));
+  };
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -54,9 +53,8 @@ export default function Sidebar({
   }, []);
 
   const handleMenuClick = (path: string) => {
-    if (!open) setOpen(true);
-    navigate(path);
-  };
+  navigate(path); // navigasi aja, tanpa ubah open
+};
 
   return (
     <aside
@@ -100,93 +98,92 @@ export default function Sidebar({
       </h2>
 
       {/* Navigation */}
-      <nav className={`space-y-3 ml-[-1rem] pl-5`}>
-        <a
-          onClick={() => handleMenuClick("/dashboard")}
-          className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
-            ${!open && "justify-center"}
-            hover:bg-black/20`}
-        >
-          <ChartBarIcon className="w-6 h-6 min-w-[24px] " />
-          {open && <span>Dashboard</span>}
-        </a>
+      <nav className="space-y-3 ml-[-1rem] pl-5">
+       {/* Dashboard */}
+      <a
+        onClick={() => {
+          setOpenClick(!openClick); // mentalin doang, ga ngerubah styling
+          navigate("/dashboard"); // langsung navigasi
+        }}
+        className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
+          ${!open ? "justify-center" : "justify-start"} hover:bg-black/20`}
+      >
+        <ChartBarIcon className="w-6 h-6 min-w-[24px]" />
+        {open && <span>Dashboard</span>}
+      </a>
 
-        <div className="relative" ref={kelolaRef}>
-          <button
-            onClick={() => {
-              if (!open) {
-                setOpen(true);
-                return;
-              }
-              toggleDropdown("kelola");
-            }}
-            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
-      ${!open && "justify-center"}
-      hover:bg-black/20 w-full`}
-          >
-            <Cog6ToothIcon className="w-6 h-6 min-w-[24px]" />
-            {open && (
-              <span className="flex items-center gap-[2.4rem]">
-                Kelola Dashboard
-                <ChevronDownIcon
-                  strokeWidth={2.5}
-                  className={`w-5 h-5 transition-transform ${
-                    dropdownState.kelola  ? "rotate-180" : ""
-                  }`}
-                />
-              </span>
-            )}
-          </button>
-
-          {open && dropdownState.kelola && (
-            <div
-              className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C]
-      text-white shadow-lg rounded-md py-2 w-full border border-white/10
-      transition-all duration-300 origin-top animate-[fadeDown_0.25s_ease]"
-            >
-              <button
-                onClick={() => navigate("/kelola")}
-                className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
-              >
-                <CreditCardIcon className="w-5 h-5" />
-                Update Dana
-              </button>
-
-              <button
-                onClick={() => navigate("/Input")}
-                className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
-              >
-                <BanknotesIcon className="w-5 h-5" />
-                Input Dana
-              </button>
-            </div>
-          )}
-        </div>
-
-        <a
+        {/* Kelola Dashboard Dropdown */}
+      <div className="relative" ref={kelolaRef}>
+        <button
           onClick={() => {
-            navigate("/pengajuan");
-            setMode("list");
+            if (!open) {
+              setOpen(true); // buka sidebar kalau mini
+              setDropdown({ ...dropdownState, kelola: true }); // langsung buka dropdown
+              return;
+            }
+            toggleDropdown("kelola"); // toggle dropdown normal
           }}
           className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
-              ${!open && "justify-center"}
-              hover:bg-black/20`}
+            ${!open && "justify-center"} hover:bg-black/20 w-full`}
+        >
+          <Cog6ToothIcon className="w-6 h-6 min-w-[24px]" />
+          {open && (
+            <span className="flex items-center gap-[2.4rem]">
+              Kelola Dashboard
+              <ChevronDownIcon
+                strokeWidth={2.5}
+                className={`w-5 h-5 transition-transform ${
+                  dropdownState.kelola ? "rotate-180" : ""
+                }`}
+              />
+            </span>
+          )}
+        </button>
+
+        {open && dropdownState.kelola && (
+          <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white shadow-lg rounded-md py-2 w-full border border-white/10 transition-all duration-300 origin-top animate-[fadeDown_0.25s_ease]">
+            <button
+              onClick={() => navigate("/kelola")}
+              className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+            >
+              <CreditCardIcon className="w-5 h-5" />
+              Update Dana
+            </button>
+
+            <button
+              onClick={() => navigate("/Input")}
+              className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+            >
+              <BanknotesIcon className="w-5 h-5" />
+              Input Dana
+            </button>
+          </div>
+        )}
+      </div>
+
+        {/* Pengajuan Kegiatan (tidak punya dropdown) */}
+        <a
+          onClick={() => handleMenuClick("/pengajuan")} // Hapus setOpen(true)
+          className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
+            ${!open && "justify-center"} hover:bg-black/20`}
         >
           <DocumentTextIcon className="w-6 h-6 min-w-[24px]" />
           {open && <span>Pengajuan Kegiatan</span>}
         </a>
+
+        {/* Daftar Kegiatan Dropdown */}
         <div className="relative" ref={kegiatanRef}>
           <button
             onClick={() => {
               if (!open) {
-                setOpen(true);
+                setOpen(true); // buka sidebar
+                setDropdown({ ...dropdownState, kegiatan: true }); // langsung buka dropdown
                 return;
               }
-              toggleDropdown("kegiatan");
+              toggleDropdown("kegiatan"); // toggle dropdown normal
             }}
-            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
-              ${!open && "justify-center"}
-              hover:bg-black/20 w-full`}
+            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer
+        ${!open && "justify-center"} hover:bg-black/20 w-full`}
           >
             <ClipboardDocumentListIcon className="w-6 h-6 min-w-[24px]" />
             {open && (
@@ -203,19 +200,16 @@ export default function Sidebar({
           </button>
 
           {open && dropdownState.kegiatan && (
-            <div
-              className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white
-                           shadow-lg rounded-md py-2 w-full z-50 border border-white/10"
+          <div className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white shadow-lg rounded-md py-2 w-full z-50 border border-white/10">
+            <button
+              onClick={() => navigate("/daftar")}
+              className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
             >
-              <button
-                onClick={() => navigate("/daftar")}
-                className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
-              >
-                <DocumentArrowUpIcon className="w-5 h-5" />
-                Pengajuan TOR
-              </button>
+              <DocumentArrowUpIcon className="w-5 h-5" />
+              Pengajuan TOR
+            </button>
 
-              <button
+            <button
                 onClick={() => navigate("/daftar-LPJ")}
                 className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
               >

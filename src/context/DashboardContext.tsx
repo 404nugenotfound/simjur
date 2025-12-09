@@ -1,6 +1,6 @@
 // src/context/DashboardContext.tsx
 import { createContext, useState, useEffect, ReactNode } from "react";
-import { Kegiatan } from "../types/kegiatan";
+import { Kegiatan } from "../utils/kegiatan";
 import { v4 as uuid } from "uuid";
 
 interface DashboardContextType {

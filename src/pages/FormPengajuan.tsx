@@ -3,13 +3,14 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 
-export default function FormPengajuan() {
+export default function FormPengajuan({ addData, setMode }) {
   const [namaKegiatan, setNamaKegiatan] = useState("");
   const [tanggalMulai, setTanggalMulai] = useState("");
   const [tanggalBerakhir, setTanggalBerakhir] = useState("");
   const [penanggungJawab, setPenanggungJawab] = useState("");
   const [deskripsi, setDeskripsi] = useState("");
   const [dana, setDana] = useState("");
+  // const [selectedActivity, setSelectedActivity] = useState<Kegiatan | null>(null);
 
   const formatCurrency = (value: string) => {
     const numbersOnly = value.replace(/\D/g, "");
@@ -25,7 +26,7 @@ export default function FormPengajuan() {
   };
 
   const generateWord = async (data: any) => {
-    const TEMPLATE_PATH = "/templates/TemplateTO.docx";
+    const TEMPLATE_PATH = "/templates/TemplateTOR.docx";
 
     let response: Response;
     try {
@@ -116,6 +117,15 @@ export default function FormPengajuan() {
     saveAs(blob, filename);
   };
 
+  const resetForm = () => {
+    setNamaKegiatan("");
+    setTanggalMulai("");
+    setTanggalBerakhir("");
+    setPenanggungJawab("");
+    setDana("");
+    setDeskripsi("");
+  };
+
   const handleSubmit = async () => {
     const nomorTor =
       "TOR-" +
@@ -123,6 +133,7 @@ export default function FormPengajuan() {
       "-" +
       Math.floor(Math.random() * 1000);
 
+    // 🔥 Data lengkap untuk Word
     const formData = {
       nomor_tor: nomorTor,
       tahun: new Date().getFullYear(),
@@ -143,7 +154,38 @@ export default function FormPengajuan() {
       nip_penanggung_jawab: "( Diisi Manual )",
     };
 
-    generateWord(formData);
+    // 🔥 Generate Word dulu
+    await generateWord(formData);
+
+    // 🔥 Data yg disimpan ke context (fix struktur)
+    const tableItem = {
+      id: Math.floor(Math.random() * 10000000), // now matches type string
+      judul: namaKegiatan,
+      tanggal: new Date().toLocaleDateString("id-ID"),
+      penanggung_jawab: penanggungJawab,
+      dana: dana,
+      deskripsi: deskripsi,
+
+      tor: {
+        nomor_tor: nomorTor,
+        tahun: new Date().getFullYear(),
+        dana: dana,
+        tanggal_mulai: tanggalMulai,
+        tanggal_berakhir: tanggalBerakhir,
+        tujuan: "( Diisi Manual )",
+        latar_belakang: "( Diisi Manual )",
+        created_at: new Date().toISOString(),
+      },
+    };
+
+    // 🔥 Simpan
+    addData(tableItem);
+
+    // 🔥 Reset form
+    resetForm();
+
+    // 🔥 Balik ke list
+    setMode("list");
   };
 
   return (
@@ -261,3 +303,5 @@ export default function FormPengajuan() {
     </div>
   );
 }
+
+

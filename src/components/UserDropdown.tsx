@@ -39,7 +39,7 @@ export default function UserDropdown({ close }: { close: () => void }) {
         }}
       >
         <UserIcon className="w-6 h-6" />
-        Profile
+        Profil
       </button>
 
       <button
@@ -50,7 +50,7 @@ export default function UserDropdown({ close }: { close: () => void }) {
         }}
       >
         <LogoutIcon className="w-6 h-6" />
-        Logout
+        Keluar
       </button>
     </motion.div>
   );

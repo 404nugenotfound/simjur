@@ -1,12 +1,12 @@
 import Layout from "./Layout";
-import { userName } from "../components/Headerbar";
 import ProfilePic from "../assets/2X.svg";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 
 export default function Profile() {
-  const [name, setName] = useState(userName);
-  const [email, setEmail] = useState("rangga@example.com");
+  const storedName = localStorage.getItem("name") || "";
+  const [name, setName] = useState(storedName);
+  const [email, setEmail] = useState("tik-23@example.com");
   const [nim, setNIM] = useState("123456789");
 
   const [oldPass, setOldPass] = useState("");
@@ -36,7 +36,7 @@ export default function Profile() {
                 <p>:</p>
                 <p>{name}</p>
 
-                <p className="font-medium">NIM</p>
+                <p className="font-medium">NIM/NIP</p>
                 <p>:</p>
                 <p>{nim}</p>
 
@@ -107,13 +107,13 @@ export default function Profile() {
 
                 <div className="font-medium grid grid-cols-2 mt-4 gap-4">
                   <button 
-                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-start"
+                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-start hover:scale-[0.97]"
                   >
                     Ganti Password
                   </button>
 
                   <button
-                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-end"
+                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-end hover:scale-[0.97]"
                     onClick={() => {
                       navigate("/user");
                     }}

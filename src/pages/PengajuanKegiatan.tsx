@@ -5,7 +5,11 @@ import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
 import { useParams, useLocation } from "react-router-dom";
 import { useActivities } from "../context/ActivitiesContext";
-import { ChevronDownIcon, DocumentIcon, DocumentChartBarIcon } from "@heroicons/react/24/solid";
+import {
+  ChevronDownIcon,
+  DocumentIcon,
+  DocumentChartBarIcon,
+} from "@heroicons/react/24/solid";
 
 type Mode = "list" | "TOR" | "LPJ";
 
@@ -14,8 +18,31 @@ type PengajuanProps = {
   setMode: (m: Mode) => void;
 };
 
+// Definisi tipe TOR
+interface Tor {
+  id: string; 
+  judul: string;
+  penanggung_jawab?: string;
+  tanggal?: string;
+  dana?: string;
+  tor?: {
+    nomor_tor: string;
+    tahun: number;
+    dana: string;
+    tanggal_mulai: string;
+    tanggal_berakhir: string;
+    tujuan?: string;
+    latar_belakang?: string;
+  };
+}
+
+
+
+
+
 const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
-  const { data, setData } = useActivities();
+  const [selectedActivity, setSelectedActivity] = useState(null);
+  const { data, setData, addData } = useActivities();
   const { approvalStatus, setApprovalStatus } = useActivities();
   const [search, setSearch] = useState("");
   const [filter, setFilter] = useState("all");
@@ -23,17 +50,38 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const limit = 5;
   const navigate = useNavigate();
 
+  // get data TOR 
+  const [selectedTorId, setSelectedTorId] = useState(null);
+  
+  const [torItems, setTorItems] = useState<Tor[]>([]);
+
   useEffect(() => {
-    setData([
-      { id: 1, judul: "Pelatihan Ormawa", tanggal: "12-12-2023" },
-      { id: 2, judul: "Seminar Nasional", tanggal: "15-12-2023" },
-      { id: 3, judul: "Kunjungan Industri", tanggal: "20-12-2023" },
-      { id: 4, judul: "Seminar Management Waktu", tanggal: "30-12-2023" },
-      { id: 5, judul: "PKKP 2024", tanggal: "17-02-2024" },
-      { id: 6, judul: "Expectik 2024", tanggal: "17-04-2024" },
-      { id: 7, judul: "Studek TIK", tanggal: "17-08-2024" },
-    ]);
-  }, []);
+  const rawKegiatan = localStorage.getItem("kegiatan");
+  if (!rawKegiatan) return;
+
+  try {
+    const list = JSON.parse(rawKegiatan);
+
+    if (!Array.isArray(list)) return;
+
+    const kegiatanFiltered = list.filter((item) => {
+      const nomor =
+        String(item?.full?.nomor_tor ?? "") ||
+        String(item?.tor?.nomor_tor ?? "") ||
+        String(item?.id ?? "");
+
+      return nomor.startsWith("TOR-2025");
+    });
+
+    console.log("KEGIATAN FILTERED:", kegiatanFiltered);
+    setTorItems(kegiatanFiltered);
+
+  } catch (e) {
+    console.error("Gagal parse JSON:", e);
+  }
+}, []);
+
+  
 
   const filtered = data.filter((item) => {
     const matching = filter === "all" ? true : item.judul === filter;
@@ -75,7 +123,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   }, [search]);
 
   const handleDelete = (id: number) => {
-    if (!window.confirm("Yakin mo hapus data ini?")) return;
+    if (!window.confirm("Ose yakin mo hapus par data ini ka seng ?")) return;
 
     const updated = data.filter((item) => item.id !== id);
     setData(updated);
@@ -100,39 +148,42 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     /* Form View */
   }
   if (mode === "TOR") {
-  return (
-    <div className="p-6">
-      <div className="flex justify-end w-full mt-[8rem] px-20">
-        <button
-          onClick={() => setMode("list")}
-          className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
-        >
-          ← Kembali
-        </button>
+    return (
+      <div className="p-6">
+        <div className="flex justify-end w-full mt-[8rem] px-20">
+          <button
+            onClick={() => setMode("list")}
+            className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+          >
+            ← Kembali
+          </button>
+        </div>
+        <FormPengajuan addData={addData} setMode={setMode} /> {/* khusus TOR */}
       </div>
+    );
+  }
 
-      <FormPengajuan /> {/* khusus TOR */}
-    </div>
-  );
-}
+  if (mode === "LPJ") {
+    return (
+      <div className="p-6">
 
-if (mode === "LPJ") {
-  return (
-    <div className="p-6">
-      <div className="flex justify-end w-full mt-[8rem] px-20">
-        <button
-          onClick={() => setMode("list")}
-          className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
-        >
-          ← Kembali
-        </button>
+
+
+        <div className="flex justify-end w-full mt-[8rem] px-20">
+          <button
+            onClick={() => setMode("list")}
+            className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
+          >
+            ← Kembali
+          </button>
+        </div>
+
+        <FormPengajuanLPJ
+          setMode={setMode}
+        />
       </div>
-
-      <FormPengajuanLPJ /> {/* beda komponen */}
-    </div>
-  );
-}
-
+    );
+  }
 
   {
     /* Tabel */
@@ -177,6 +228,7 @@ if (mode === "LPJ") {
                 <button
                   className="w-full group flex items-center gap-2 px-10 py-3 hover:bg-gray-400 transition text-md"
                   onClick={() => {
+                    // setSelectedActivity(null);
                     setMode("TOR");
                     setOpenDropdown(false);
                   }}
@@ -188,7 +240,7 @@ if (mode === "LPJ") {
                 </button>
 
                 <button
-                  className="w-full group flex items-center gap-2 px-10 py-3 hover:bg-gray-400 group-hover:text-white transition text-sm"
+                  className={`w-full group flex items-center gap-2 px-10 py-3 hover:bg-gray-400 transition text-sm`}
                   onClick={() => {
                     setMode("LPJ");
                     setOpenDropdown(false);
@@ -209,10 +261,10 @@ if (mode === "LPJ") {
           <table className="w-full text-left">
             <thead className="bg-[#86BE9E] tracking-[0.1em] text-center text-white font-semibold">
               <tr className="[&>th]:font-semibold">
-                <th className="px-4 p-3">No</th>
+                <th className="px-4 p-3">No.</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>
                 <th className="px-4 p-3">Tanggal</th>
-                <th className="px-4 p-3">Action</th>
+                <th className="px-4 p-3">Detail dan Aksi</th>
               </tr>
             </thead>
 
@@ -256,8 +308,6 @@ if (mode === "LPJ") {
                             navigate(`/detail/${item.id}`, {
                               state: {
                                 type: "LPJ",
-                                judul: item.judul,
-                                tanggal: item.tanggal,
                               },
                             })
                           }
@@ -274,7 +324,7 @@ if (mode === "LPJ") {
                         </button>
 
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => handleDelete(Number(item.id))}
                           className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
                         >
                           Delete

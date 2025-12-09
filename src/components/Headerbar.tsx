@@ -2,10 +2,11 @@ import Profile from "../assets/2X.svg";
 import { useState } from "react";
 import UserDropdown from "./UserDropdown";
 
-export const userName = "MUHAMMAD RANGGA FABIANO";
-
 export default function HeaderBar() {
   const [openDropdown, setOpenDropdown] = useState(false);
+
+  // Ambil nama dari localStorage
+  const userName = localStorage.getItem("name") || "USER";
 
   return (
     <header className="flex items-center justify-end bg-white shadow relative">
@@ -30,7 +31,7 @@ export default function HeaderBar() {
             />
 
             {/* Nama */}
-            <span className="font-semibold font-poppins text-black max-w-[200px] pl-1 truncate">
+            <span className="font-semibold font-poppins text-black max-w-[201px] pl-1 pr-3 truncate">
               {userName}
             </span>
           </div>

@@ -2,7 +2,6 @@
 import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
 import { useParams } from "react-router-dom";
 import Layout from "./Layout";
-import { userName } from "../components/Headerbar";
 import { useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useActivities } from "../context/ActivitiesContext";
@@ -15,8 +14,8 @@ interface DetailProps {
 
 const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   const { id } = useParams<{ id: string }>();
-  const { data, files, setFiles } = useActivities();
-  const { approvalStatus, setApprovalStatus } = useActivities();
+  const { data, files, setFiles, approvalStatus, setApprovalStatus } =
+    useActivities();
 
   // tunggu data siap
   const activity = useMemo(() => {
@@ -35,8 +34,13 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     nama: activity?.judul ?? "–",
     tanggal: activity?.tanggal ?? "–",
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
-    dana: activity?.dana ?? "Belum Dilampirkan.",
+    dana:
+      activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
     catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
+    penanggung_jawab: activity?.penanggung_jawab ?? "-",
+    sisaDana: activity?.lpj?.sisa_dana ?? "-",
+    metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",
+    total_peserta: activity?.lpj?.total_peserta
   };
 
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
@@ -44,16 +48,15 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   const [isDragging, setIsDragging] = useState(false);
 
   const currentFile = files[String(activity?.id)];
+  const userName = localStorage.getItem("name") || "";
 
   const [detailData, setDetailData] = useState(() => {
-
-  return {
-    approval1Status: "Pending",
-    approval2Status: "Pending",
-    approval3Status: "Pending",
-  };
-});
-
+    return {
+      approval1Status: "Pending",
+      approval2Status: "Pending",
+      approval3Status: "Pending",
+    };
+  });
 
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("pengajuanDetail") || "{}");
@@ -73,8 +76,10 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     localStorage.removeItem("approvalStatus");
   };
 
-   useEffect(() => {
-    const approvalStore = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+  useEffect(() => {
+    const approvalStore = JSON.parse(
+      localStorage.getItem("approvalStatus") || "{}"
+    );
 
     if (activity && approvalStore[activity.id]) {
       setDetailData(approvalStore[activity.id]);
@@ -82,23 +87,23 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   }, [activity]);
 
   const handleApprove = (field) => {
-  if (!activity) return;
+    if (!activity) return;
 
-  const currentContext = approvalStatus[activity.id] ?? {
-    approval1Status: "Pending",
-    approval2Status: "Pending",
-    approval3Status: "Pending",
+    const currentContext = approvalStatus[activity.id] ?? {
+      approval1Status: "Pending",
+      approval2Status: "Pending",
+      approval3Status: "Pending",
+    };
+
+    const updatedContext = { ...currentContext, [field]: "Approved" };
+
+    setDetailData(updatedContext);
+
+    const updatedAll = { ...approvalStatus, [activity.id]: updatedContext };
+    setApprovalStatus(updatedAll);
+
+    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
   };
-
-  const updatedContext = { ...currentContext, [field]: "Approved" };
-
-  setDetailData(updatedContext);
-
-  const updatedAll = { ...approvalStatus, [activity.id]: updatedContext };
-  setApprovalStatus(updatedAll);
-
-  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
-};
 
   const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
     e.preventDefault();
@@ -173,13 +178,21 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
 
   // 3 catatan role (simpan lokal dulu – nanti bisa dihubungkan ke backend/context)
   const [noteAdmin, setNoteAdmin] = useState("");
-  const [noteSekretariat, setNoteSekretariat] = useState("");
+  const [noteSekjur, setNoteSekjur] = useState("");
   const [noteKajur, setNoteKajur] = useState("");
+
+  const roleToField = {
+    admin: "approval1Status",
+    sekjur: "approval2Status",
+    kajur: "approval3Status",
+  };
+  const userRole = (localStorage.getItem("role") || "").toLowerCase();
+  const allowedField = roleToField[userRole];
 
   const handleSaveNotes = () => {
     console.log("Catatan disimpan:", {
       admin: noteAdmin,
-      sekretariat: noteSekretariat,
+      sekjur: noteSekjur,
       kajur: noteKajur,
     });
     alert("Catatan disimpan (sementara masih di front-end).");
@@ -198,19 +211,18 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   // Saat load component, ambil dulu catatan dari localStorage
   useEffect(() => {
     const savedAdmin = localStorage.getItem("noteAdmin");
-    const savedSekretariat = localStorage.getItem("noteSekretariat");
+    const savedSekjur = localStorage.getItem("noteSekjur");
     const savedKajur = localStorage.getItem("noteKajur");
 
     if (savedAdmin) setNoteAdmin(savedAdmin);
-    if (savedSekretariat) setNoteSekretariat(savedSekretariat);
+    if (savedSekjur) setNoteSekjur(savedSekjur);
     if (savedKajur) setNoteKajur(savedKajur);
   }, []);
 
   // Fungsi save
   const saveNote = (roleType: string, note: string) => {
     if (roleType === "admin") localStorage.setItem("noteAdmin", note);
-    if (roleType === "sekretariat")
-      localStorage.setItem("noteSekretariat", note);
+    if (roleType === "sekjur") localStorage.setItem("noteSekjur", note);
     if (roleType === "kajur") localStorage.setItem("noteKajur", note);
 
     alert("Catatan berhasil disimpan!");
@@ -300,17 +312,29 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                   </div>
                   <div>
                     <p className="text-gray-500">Penanggung Jawab</p>
-                    <p className="font-medium">{userName}</p>
+                    <p className="font-medium">{detailInfo.penanggung_jawab}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Dana Diajukan</p>
                     <p className="font-medium">{detailInfo.dana}</p>
                   </div>
+                  <div>
+                    <p className="text-gray-500">Jumlah Peserta</p>
+                    <p className="font-medium">{detailInfo.total_peserta}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Dana Tersisa</p>
+                    <p className="font-medium">{detailInfo.sisaDana}</p>
+                  </div>
+                  <div>
+                    <p className="text-gray-500">Metode Pelaksanaan</p>
+                    <p className="font-medium">{detailInfo.metode_pelaksanaan}</p>
+                  </div>
                 </div>
 
                 <div className="mt-4">
                   <p className="text-gray-500 text-sm mb-1">Deskripsi</p>
-                  <p className="text-sm leading-relaxed">
+                  <p className="text-sm leading-relaxed font-medium">
                     {detailInfo.deskripsi}
                   </p>
                 </div>
@@ -340,7 +364,12 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                         <td className="p-2">{detailInfo.tanggal}</td>
                         <td className="p-2">ACC dari Administrasi</td>
                         <td className="p-2">
-                          {detailData.approval1Status === "Pending" ? (
+                          {detailData.approval1Status === "Approved" ? (
+                            <span className="text-green-600 font-semibold">
+                              Approved ✔
+                            </span>
+                          ) : allowedField === "approval1Status" &&
+                            detailData.approval1Status === "Pending" ? (
                             <button
                               onClick={() => handleApprove("approval1Status")}
                               className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
@@ -348,8 +377,8 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                               Approve
                             </button>
                           ) : (
-                            <span className="text-green-600 font-semibold">
-                              Approved ✔
+                            <span className="text-gray-500 font-medium">
+                              Pending
                             </span>
                           )}
                         </td>
@@ -361,16 +390,21 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                         <td className="p-2">{detailInfo.tanggal}</td>
                         <td className="p-2">ACC dari Sekjur</td>
                         <td className="p-2">
-                          {detailData.approval2Status === "Pending" ? (
+                          {detailData.approval2Status === "Approved" ? (
+                            <span className="text-green-600 font-semibold">
+                              Approved ✔
+                            </span>
+                          ) : allowedField === "approval2Status" &&
+                            detailData.approval2Status === "Pending" ? (
                             <button
-                              className="bg-[#4957B5] text-white px-3 py-1 rounded transition hover:scale-95"
                               onClick={() => handleApprove("approval2Status")}
+                              className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
                             >
                               Approve
                             </button>
                           ) : (
-                            <span className="text-green-600 font-semibold">
-                              Approved ✔
+                            <span className="text-gray-500 font-medium">
+                              Pending
                             </span>
                           )}
                         </td>
@@ -384,35 +418,35 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                         <td className="p-2">
                           {detailData.approval1Status === "Approved" &&
                           detailData.approval2Status === "Approved" ? (
-                            detailData.approval3Status === "Pending" ? (
+                            // ==============================
+                            // STATUS APABILA APPROVAL 1 & 2 SUDAH APPROVED
+                            // ==============================
+
+                            detailData.approval3Status === "Approved" ? (
+                              <span className="text-green-600 font-semibold">
+                                Approved ✔
+                              </span>
+                            ) : // Kalau masih pending → cek rolenya
+                            allowedField === "approval3Status" ? (
+                              // Ini role yg bener → munculin button
                               <button
                                 onClick={() => handleApprove("approval3Status")}
-                                className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
+                                className="px-3 py-1 bg-[#4957B5] text-white rounded-md hover:scale-95 transition"
                               >
                                 Approve
                               </button>
                             ) : (
-                              <span className="text-green-600 font-semibold">
-                                Approved ✔
+                              // Bukan role yg berwenang → tampilkan teks pending
+                              <span className="text-gray-500 font-medium">
+                                Pending
                               </span>
                             )
                           ) : (
+                            // Approval 1 & 2 belum approve
                             <span className="text-gray-500 font-medium">
                               Pending
                             </span>
                           )}
-                        </td>
-                      </tr>
-
-                      {/* Reset Storage */}
-                      <tr>
-                        <td colSpan={4} className="text-center">
-                          <button
-                            className="bg-gray-50 text-gray-50 mt-4 px-3 py-1 rounded"
-                            onClick={clearStorage}
-                          >
-                            Reset Storage
-                          </button>
                         </td>
                       </tr>
                     </tbody>
@@ -444,21 +478,21 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                     </div>
                   )}
 
-                  {/* Sekretariat */}
-                  {role === "Sekretariat" && (
+                  {/* Sekjur */}
+                  {role === "Sekjur" && (
                     <div className="col-span-1 md:col-span-3">
                       <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan Sekretariat
+                        Catatan Sekjur
                       </p>
                       <textarea
                         className="w-full border rounded-lg p-3 min-h-[12rem]"
-                        value={noteSekretariat || ""}
-                        placeholder="Catatan dari sekretariat..."
-                        onChange={(e) => setNoteSekretariat(e.target.value)}
+                        value={noteSekjur || ""}
+                        placeholder="Catatan dari sekjur..."
+                        onChange={(e) => setNoteSekjur(e.target.value)}
                       />
                       <button
                         className="mt-2 px-4 py-1 bg-[#4957B5] text-white rounded transition hover:scale-95"
-                        onClick={() => saveNote("sekretariat", noteSekretariat)}
+                        onClick={() => saveNote("sekjur", noteSekjur)}
                       >
                         Simpan
                       </button>
@@ -502,13 +536,13 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan Sekretariat
+                          Catatan Sekjur
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={noteSekretariat || ""}
+                          value={noteSekjur || ""}
                           readOnly
-                          placeholder="Catatan dari sekretariat..."
+                          placeholder="Catatan dari sekjur..."
                         />
                       </div>
                       <div>
@@ -596,24 +630,26 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                           </button>
 
                           {/* Tombol Hapus */}
-                          <button
-                            aria-label="hapus"
-                            className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white hover:scale-[0.97]"
-                            onClick={() => {
-                              setFiles((prev) => ({
-                                ...prev,
-                                [String(activity?.id)]: null,
-                              }));
+                          {localStorage.getItem("role") === "Pengaju" && (
+                            <button
+                              aria-label="hapus"
+                              className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white hover:scale-[0.97]"
+                              onClick={() => {
+                                setFiles((prev) => ({
+                                  ...prev,
+                                  [String(activity?.id)]: null,
+                                }));
 
-                              // Gunakan key yang sesuai dengan yang dipakai saat simpan
-                              localStorage.removeItem(`file-${activity?.id}`);
-                              localStorage.removeItem(
-                                `file-name-${activity?.id}`
-                              );
-                            }}
-                          >
-                            <TrashIcon className="w-6 h-6" />
-                          </button>
+                                // Gunakan key yang sesuai dengan yang dipakai saat simpan
+                                localStorage.removeItem(`file-${activity?.id}`);
+                                localStorage.removeItem(
+                                  `file-name-${activity?.id}`
+                                );
+                              }}
+                            >
+                              <TrashIcon className="w-6 h-6" />
+                            </button>
+                          )}
                         </div>
                       </div>
                     </div>
