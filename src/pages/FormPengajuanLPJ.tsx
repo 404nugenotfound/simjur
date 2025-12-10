@@ -69,6 +69,7 @@ export default function FormPengajuanLPJ({ setMode }) {
   const [openDropdown, setOpenDropdown] = useState(false);
   const [metode, setMetode] = useState("Luring");
   const [danaTerpakai, setDanaTerpakai] = useState("");
+  const [danaTerpakaiNumber, setDanaTerpakaiNumber] = useState(0); // angka bersih
   const [pesertaMahasiswa, setPesertaMahasiswa] = useState<number>(0);
   const [pesertaAlumni, setPesertaAlumni] = useState<number>(0);
   const [pesertaDosen, setPesertaDosen] = useState<number>(0);
@@ -93,14 +94,16 @@ export default function FormPengajuanLPJ({ setMode }) {
     if (!selectedTor) return;
 
     // ambil dana dari TOR, bersihkan simbol dan spasi
-    const numericDana = Number(danaTerpakai.replace(/\D/g, "")) || 0;
     const torDana = Number(selectedTor.dana?.replace(/\D/g, "") || 0);
 
-    setSisaDana(torDana - numericDana);
-  }, [selectedTor, danaTerpakai]);
+    setSisaDana(torDana - danaTerpakaiNumber); 
+  }, [selectedTor, danaTerpakaiNumber]);
 
+  
   const handleDanaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setDanaTerpakai(formatCurrency(e.target.value));
+    const numbersOnly = e.target.value.replace(/\D/g, "");
+    setDanaTerpakai(formatCurrency(numbersOnly));   // tampilan "Rp ..."
+    setDanaTerpakaiNumber(Number(numbersOnly));     // angka bersih
   };
 
   const generateWord = async (data: any) => {

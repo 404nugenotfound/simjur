@@ -20,7 +20,7 @@ type PengajuanProps = {
 
 // Definisi tipe TOR
 interface Tor {
-  id: string; 
+  id: string;
   judul: string;
   penanggung_jawab?: string;
   tanggal?: string;
@@ -36,10 +36,6 @@ interface Tor {
   };
 }
 
-
-
-
-
 const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const [selectedActivity, setSelectedActivity] = useState(null);
   const { data, setData, addData } = useActivities();
@@ -50,48 +46,47 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const limit = 5;
   const navigate = useNavigate();
 
-  // get data TOR 
+  // get data TOR
   const [selectedTorId, setSelectedTorId] = useState(null);
-  
   const [torItems, setTorItems] = useState<Tor[]>([]);
 
+  // === LOAD DATA TOR (DIBALIK URUTANNYA) ===
   useEffect(() => {
-  const rawKegiatan = localStorage.getItem("kegiatan");
-  if (!rawKegiatan) return;
+    const rawKegiatan = localStorage.getItem("kegiatan");
+    if (!rawKegiatan) return;
 
-  try {
-    const list = JSON.parse(rawKegiatan);
+    try {
+      const list = JSON.parse(rawKegiatan);
+      if (!Array.isArray(list)) return;
 
-    if (!Array.isArray(list)) return;
+      const kegiatanFiltered = list.filter((item) => item?.id);
 
-    const kegiatanFiltered = list.filter((item) => {
-      const nomor =
-        String(item?.full?.nomor_tor ?? "") ||
-        String(item?.tor?.nomor_tor ?? "") ||
-        String(item?.id ?? "");
+      // Buat terbaru paling atas
+      const sorted = [...kegiatanFiltered].sort(
+        (a, b) => Number(b.id) - Number(a.id)
+      );
 
-      return nomor.startsWith("TOR-2025");
-    });
+      setTorItems(sorted);
+    } catch (e) {
+      console.error("Gagal parse JSON:", e);
+    }
+  }, []);
 
-    console.log("KEGIATAN FILTERED:", kegiatanFiltered);
-    setTorItems(kegiatanFiltered);
-
-  } catch (e) {
-    console.error("Gagal parse JSON:", e);
-  }
-}, []);
-
-  
-
-  const filtered = data.filter((item) => {
+ // === FILTER + SORT UTAMA ===
+  const filtered = [...data]      // clone dulu biar aman
+  .reverse()                    // urutan terbaru paling atas
+  .filter((item) => {
     const matching = filter === "all" ? true : item.judul === filter;
-    const searching = item.judul.toLowerCase().includes(search.toLowerCase());
+    const searching = item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
     return matching && searching;
   });
 
+    
+  // === PAGINATION ===
   const startIndex = (page - 1) * limit;
-  const endIndex = startIndex + limit;
-  // Ambil dari localStorage saat pertama kali mount
+  const paginatedData = filtered.slice(startIndex, startIndex + limit);
+
+  // === LOAD APPROVAL STATUS ===
   useEffect(() => {
     const saved = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
     setApprovalStatus(saved);
@@ -108,29 +103,13 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         [field]: "Approved",
       },
     };
+
     setApprovalStatus(updated);
     localStorage.setItem("approvalStatus", JSON.stringify(updated));
   };
 
+   // === DROPDOWN OUTSIDE CLICK ===
   const [openDropdown, setOpenDropdown] = useState(false);
-
-  const paginatedData = filtered.slice(startIndex, endIndex);
-
-  const [open, setOpen] = useState(false);
-
-  useEffect(() => {
-    setPage(1);
-  }, [search]);
-
-  const handleDelete = (id: number) => {
-    if (!window.confirm("Ose yakin mo hapus par data ini ka seng ?")) return;
-
-    const updated = data.filter((item) => item.id !== id);
-    setData(updated);
-
-    localStorage.setItem("kegiatan", JSON.stringify(updated));
-  };
-
   const ref = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -143,6 +122,21 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     document.addEventListener("mousedown", handleClickOutside);
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
+
+  // Reset page kalau search berubah
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
+
+  // === DELETE DATA ===
+  const handleDelete = (id: number) => {
+    if (!window.confirm("Ose yakin mo hapus par data ini ka seng ?")) return;
+
+    const updated = data.filter((item) => item.id !== id);
+    setData(updated);
+
+    localStorage.setItem("kegiatan", JSON.stringify(updated));
+  };
 
   {
     /* Form View */
@@ -166,9 +160,6 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   if (mode === "LPJ") {
     return (
       <div className="p-6">
-
-
-
         <div className="flex justify-end w-full mt-[8rem] px-20">
           <button
             onClick={() => setMode("list")}
@@ -178,9 +169,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
           </button>
         </div>
 
-        <FormPengajuanLPJ
-          setMode={setMode}
-        />
+        <FormPengajuanLPJ setMode={setMode} />
       </div>
     );
   }
@@ -263,7 +252,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
               <tr className="[&>th]:font-semibold">
                 <th className="px-4 p-3">No.</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>
-                <th className="px-4 p-3">Tanggal</th>
+                <th className="px-4 p-3">Tanggal Diajukan</th>
                 <th className="px-4 p-3">Detail dan Aksi</th>
               </tr>
             </thead>
@@ -327,7 +316,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                           onClick={() => handleDelete(Number(item.id))}
                           className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
                         >
-                          Delete
+                          Hapus
                         </button>
                       </td>
                     </tr>

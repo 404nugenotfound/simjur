@@ -40,7 +40,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     penanggung_jawab: activity?.penanggung_jawab ?? "-",
     sisaDana: activity?.lpj?.sisa_dana ?? "-",
     metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",
-    total_peserta: activity?.lpj?.total_peserta
+    total_peserta: activity?.lpj?.total_peserta ?? "[ Belum Ada Data ]",
   };
 
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
@@ -114,6 +114,15 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     e.preventDefault();
     setIsDragging(false);
   };
+
+  const formatCurrency = (value: string) => {
+  const numbersOnly = value.replace(/\D/g, "");
+  return new Intl.NumberFormat("id-ID", {
+    style: "currency",
+    currency: "IDR",
+    minimumFractionDigits: 0,
+  }).format(Number(numbersOnly));
+};
 
   // ==================== HANDLE DROP ====================
   const handleDrop = (
@@ -228,6 +237,27 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     alert("Catatan berhasil disimpan!");
   };
 
+  const handleReject = (
+    field: "approval1Status" | "approval2Status" | "approval3Status"
+  ) => {
+    const key = String(id); // dari useParams
+
+    const updated = {
+      ...approvalStatus,
+      [key]: {
+        approval1Status: approvalStatus[key]?.approval1Status ?? "Pending",
+        approval2Status: approvalStatus[key]?.approval2Status ?? "Pending",
+        approval3Status: approvalStatus[key]?.approval3Status ?? "Pending",
+        [field]: "Rejected",
+      },
+    };
+
+    setApprovalStatus(updated);
+    localStorage.setItem("approvalStatus", JSON.stringify(updated));
+  };
+
+  const [hasDownloaded, setHasDownloaded] = useState(false);
+
   return (
     <Layout>
       <div className="p-12">
@@ -263,20 +293,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                 }
               `}
             >
-              Detail
-            </button>
-
-            <button
-              onClick={() => setActiveTab("approval")}
-              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
-                ${
-                  activeTab === "approval"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-indigo-600 hover:text-[#6C74C6]"
-                }
-              `}
-            >
-              Approval
+              Detail Kegiatan
             </button>
 
             <button
@@ -290,6 +307,19 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
               `}
             >
               Submit File
+            </button>
+
+            <button
+              onClick={() => setActiveTab("approval")}
+              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
+                ${
+                  activeTab === "approval"
+                    ? "bg-indigo-600 text-white shadow-sm"
+                    : "text-indigo-600 hover:text-[#6C74C6]"
+                }
+              `}
+            >
+              Status Persetujuan
             </button>
           </div>
         </div>
@@ -320,15 +350,17 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                   </div>
                   <div>
                     <p className="text-gray-500">Jumlah Peserta</p>
-                    <p className="font-medium">{detailInfo.total_peserta}</p>
+                    <p className="font-medium">{detailInfo.total_peserta} peserta</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Dana Tersisa</p>
-                    <p className="font-medium">{detailInfo.sisaDana}</p>
+                    <p className="font-medium">{formatCurrency(String(detailInfo.sisaDana || 0))}</p>
                   </div>
                   <div>
                     <p className="text-gray-500">Metode Pelaksanaan</p>
-                    <p className="font-medium">{detailInfo.metode_pelaksanaan}</p>
+                    <p className="font-medium">
+                      {detailInfo.metode_pelaksanaan}
+                    </p>
                   </div>
                 </div>
 
@@ -346,103 +378,205 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
             {activeTab === "approval" && (
               <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
                 {/* Part Approval */}
-                <h2 className="font-semibold mb-4">Approval Status</h2>
+                <h2 className="font-semibold mb-4">Status Persetujuan</h2>
                 <div className="overflow-hidden rounded-xl border border-sm">
                   <table className="w-full text-sm text-gray-500">
                     <thead>
                       <tr className="bg-[#86BE9E] text-white">
                         <th className="p-2 text-center">Code</th>
-                        <th className=" text-center">Tanggal</th>
-                        <th className=" text-center">Description</th>
+                        <th className=" text-center">Tanggal Pengajuan</th>
+                        <th className=" text-center">Deskripsi</th>
                         <th className="text-center">Status</th>
                       </tr>
                     </thead>
                     <tbody>
                       {/* Approval 1 */}
                       <tr className="bg-gray-50 text-center">
-                        <td className="p-2 font-semibold">Approval 1</td>
+                        <td className="p-2 font-semibold">Persetujuan 1</td>
                         <td className="p-2">{detailInfo.tanggal}</td>
-                        <td className="p-2">ACC dari Administrasi</td>
+                        <td className="p-2">Persetujuan dari Administrasi</td>
+
                         <td className="p-2">
-                          {detailData.approval1Status === "Approved" ? (
+                          {/* === STATUS: APPROVED === */}
+                          {detailData.approval1Status === "Approved" && (
                             <span className="text-green-600 font-semibold">
-                              Approved ✔
-                            </span>
-                          ) : allowedField === "approval1Status" &&
-                            detailData.approval1Status === "Pending" ? (
-                            <button
-                              onClick={() => handleApprove("approval1Status")}
-                              className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
-                            >
-                              Approve
-                            </button>
-                          ) : (
-                            <span className="text-gray-500 font-medium">
-                              Pending
+                              Disetujui ✔
                             </span>
                           )}
+
+                          {/* === STATUS: REJECTED === */}
+                          {detailData.approval1Status === "Rejected" && (
+                            <span className="text-red-600 font-semibold">
+                              Ditolak ✖
+                            </span>
+                          )}
+
+                          {/* === STATUS: PENDING — ROLE BERWENANG === */}
+                          {detailData.approval1Status === "Pending" &&
+                            allowedField === "approval1Status" && (
+                              <div className="flex gap-2 justify-center">
+                                <button
+                                  disabled={!hasDownloaded}
+                                  onClick={() =>
+                                    handleApprove("approval1Status")
+                                  }
+                                  className="px-3 py-1 bg-[#4957B5] text-white 
+                                  rounded-md transition hover:scale-95
+                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
+                                >
+                                  Setujui
+                                </button>
+
+                                <button
+                                  disabled={!hasDownloaded}
+                                  onClick={() =>
+                                    handleReject("approval1Status")
+                                  }
+                                  className="px-3 py-1 bg-red-800 text-white 
+                                  rounded-md transition hover:scale-95
+                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
+                                >
+                                  Tolak
+                                </button>
+                              </div>
+                            )}
+
+                          {/* === STATUS: PENDING — TIDAK BERWENANG === */}
+                          {detailData.approval1Status === "Pending" &&
+                            allowedField !== "approval1Status" && (
+                              <span className="text-gray-500 font-medium">
+                                Pending
+                              </span>
+                            )}
                         </td>
                       </tr>
 
                       {/* Approval 2 */}
                       <tr className="bg-gray-100 text-center">
-                        <td className="p-2 font-semibold">Approval 2</td>
+                        <td className="p-2 font-semibold">Persetujuan 2</td>
                         <td className="p-2">{detailInfo.tanggal}</td>
-                        <td className="p-2">ACC dari Sekjur</td>
+                        <td className="p-2">Persetujuan dari Sekjur</td>
+
                         <td className="p-2">
-                          {detailData.approval2Status === "Approved" ? (
+                          {/* === STATUS: APPROVED === */}
+                          {detailData.approval2Status === "Approved" && (
                             <span className="text-green-600 font-semibold">
-                              Approved ✔
-                            </span>
-                          ) : allowedField === "approval2Status" &&
-                            detailData.approval2Status === "Pending" ? (
-                            <button
-                              onClick={() => handleApprove("approval2Status")}
-                              className="px-3 py-1 bg-[#4957B5] text-white rounded-md transition hover:scale-95"
-                            >
-                              Approve
-                            </button>
-                          ) : (
-                            <span className="text-gray-500 font-medium">
-                              Pending
+                              Disetujui ✔
                             </span>
                           )}
-                        </td>
-                      </tr>
 
-                      {/* Approval 3 muncul hanya jika Approval 1 & 2 sudah approved */}
-                      <tr className="bg-gray-50 text-center">
-                        <td className="p-2 font-semibold">Approval 3</td>
-                        <td className="p-2">{detailInfo.tanggal}</td>
-                        <td className="p-2">ACC dari Kajur</td>
-                        <td className="p-2">
-                          {detailData.approval1Status === "Approved" &&
-                          detailData.approval2Status === "Approved" ? (
-                            // ==============================
-                            // STATUS APABILA APPROVAL 1 & 2 SUDAH APPROVED
-                            // ==============================
+                          {/* === STATUS: REJECTED === */}
+                          {detailData.approval2Status === "Rejected" && (
+                            <span className="text-red-600 font-semibold">
+                              Ditolak ✖
+                            </span>
+                          )}
 
-                            detailData.approval3Status === "Approved" ? (
-                              <span className="text-green-600 font-semibold">
-                                Approved ✔
-                              </span>
-                            ) : // Kalau masih pending → cek rolenya
-                            allowedField === "approval3Status" ? (
-                              // Ini role yg bener → munculin button
-                              <button
-                                onClick={() => handleApprove("approval3Status")}
-                                className="px-3 py-1 bg-[#4957B5] text-white rounded-md hover:scale-95 transition"
-                              >
-                                Approve
-                              </button>
-                            ) : (
-                              // Bukan role yg berwenang → tampilkan teks pending
+                          {/* === STATUS: PENDING — ROLE BERWENANG === */}
+                          {detailData.approval2Status === "Pending" &&
+                            allowedField === "approval2Status" && (
+                              <div className="flex gap-2 justify-center">
+                                <button
+                                  disabled={!hasDownloaded}
+                                  onClick={() =>
+                                    handleApprove("approval2Status")
+                                  }
+                                  className="px-3 py-1 bg-[#4957B5] text-white 
+                                  rounded-md transition hover:scale-95
+                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
+                                >
+                                  Setujui
+                                </button>
+
+                                <button
+                                  disabled={!hasDownloaded}
+                                  onClick={() =>
+                                    handleReject("approval2Status")
+                                  }
+                                  className="px-3 py-1 bg-red-800 text-white 
+                                  rounded-md transition hover:scale-95
+                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
+                                >
+                                  Tolak
+                                </button>
+                              </div>
+                            )}
+
+                          {/* === STATUS: PENDING — TIDAK BERWENANG === */}
+                          {detailData.approval2Status === "Pending" &&
+                            allowedField !== "approval2Status" && (
                               <span className="text-gray-500 font-medium">
                                 Pending
                               </span>
-                            )
+                            )}
+                        </td>
+                      </tr>
+
+                      {/* Approval 3 muncul hanya jika Approval 1 & 2 sudah Approved */}
+                      <tr className="bg-gray-50 text-center">
+                        <td className="p-2 font-semibold">Persetujuan 3</td>
+                        <td className="p-2">{detailInfo.tanggal}</td>
+                        <td className="p-2">Persetujuan dari Kajur</td>
+
+                        <td className="p-2">
+                          {/* === CEK: Approval 1 & 2 harus Approved dulu === */}
+                          {detailData.approval1Status === "Approved" &&
+                          detailData.approval2Status === "Approved" ? (
+                            <>
+                              {/* === STATUS: APPROVED === */}
+                              {detailData.approval3Status === "Approved" && (
+                                <span className="text-green-600 font-semibold">
+                                  Disetujui ✔
+                                </span>
+                              )}
+
+                              {/* === STATUS: REJECTED === */}
+                              {detailData.approval3Status === "Rejected" && (
+                                <span className="text-red-600 font-semibold">
+                                  Ditolak ✖
+                                </span>
+                              )}
+
+                              {/* === STATUS: PENDING — ROLE BERWENANG === */}
+                              {detailData.approval3Status === "Pending" &&
+                                allowedField === "approval3Status" && (
+                                  <div className="flex gap-2 justify-center">
+                                    <button
+                                      disabled={!hasDownloaded}
+                                      onClick={() =>
+                                        handleApprove("approval3Status")
+                                      }
+                                      className="px-3 py-1 bg-[#4957B5] text-white 
+                                      rounded-md transition hover:scale-95
+                                      disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
+                                    >
+                                      Setujui
+                                    </button>
+
+                                    <button
+                                      disabled={!hasDownloaded}
+                                      onClick={() =>
+                                        handleReject("approval3Status")
+                                      }
+                                      className="px-3 py-1 bg-red-800 text-white 
+                                      rounded-md transition hover:scale-95
+                                      disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
+                                    >
+                                      Tolak
+                                    </button>
+                                  </div>
+                                )}
+
+                              {/* === STATUS: PENDING — TIDAK BERWENANG === */}
+                              {detailData.approval3Status === "Pending" &&
+                                allowedField !== "approval3Status" && (
+                                  <span className="text-gray-500 font-medium">
+                                    Pending
+                                  </span>
+                                )}
+                            </>
                           ) : (
-                            // Approval 1 & 2 belum approve
+                            // Approval 1 & 2 belum disetujui
                             <span className="text-gray-500 font-medium">
                               Pending
                             </span>
@@ -454,14 +588,14 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                 </div>
 
                 {/* Part Catatan */}
-                <h2 className="font-semibold py-4 pt-12">Catatan</h2>
+                <h2 className="font-semibold py-4 pt-12">Catatan Revisi</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                   {/* Admin */}
                   {role === "Admin" && (
                     <div className="col-span-1 md:col-span-3">
                       <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan Admin
+                        Catatan dari Admin
                       </p>
                       <textarea
                         className="w-full border rounded-lg p-3 min-h-[12rem]"
@@ -482,7 +616,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                   {role === "Sekjur" && (
                     <div className="col-span-1 md:col-span-3">
                       <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan Sekjur
+                        Catatan dari Sekjur
                       </p>
                       <textarea
                         className="w-full border rounded-lg p-3 min-h-[12rem]"
@@ -503,7 +637,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                   {role === "Kajur" && (
                     <div className="col-span-1 md:col-span-3">
                       <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan Ketua Jurusan
+                        Catatan dari Ketua Jurusan
                       </p>
                       <textarea
                         className="w-full border rounded-lg p-3 min-h-[12rem]"
@@ -525,7 +659,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                     <>
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan Admin
+                          Catatan dari Admin
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
@@ -536,7 +670,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan Sekjur
+                          Catatan dari Sekjur
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
@@ -547,7 +681,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                       </div>
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan Ketua Jurusan
+                          Catatan dari Ketua Jurusan
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
@@ -561,6 +695,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                 </div>
               </div>
             )}
+
             {/* SUBMIT FILE */}
             {activeTab === "submit" && (
               <div className="bg-gray-50 rounded-xl shadow-inner">
@@ -624,6 +759,8 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                               a.download = currentFile.name;
                               a.click();
                               URL.revokeObjectURL(url);
+
+                              setHasDownloaded(true); // 🔥 Set status sudah unduh
                             }}
                           >
                             Unduh
@@ -639,6 +776,13 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                                   ...prev,
                                   [String(activity?.id)]: null,
                                 }));
+
+                                if (
+                                  !window.confirm(
+                                    "Ose yakin mo hapus par data ini ka seng ?"
+                                  )
+                                )
+                                  return;
 
                                 // Gunakan key yang sesuai dengan yang dipakai saat simpan
                                 localStorage.removeItem(`file-${activity?.id}`);

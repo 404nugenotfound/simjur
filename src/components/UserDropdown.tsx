@@ -32,7 +32,7 @@ export default function UserDropdown({ close }: { close: () => void }) {
       className="absolute top-16 right-6 bg-white shadow-lg border rounded-md w-40 py-2 font-poppins tracking-[0.07rem]"
     >
       <button
-        className="flex items-center gap-3 px-5 py-3 hover:bg-gray-100 w-full text-black font-medium"
+        className="flex items-center gap-5 px-5 py-3 hover:bg-gray-100 w-full text-black font-medium"
         onClick={() => {
           close();
           navigate("/profile");
@@ -43,7 +43,7 @@ export default function UserDropdown({ close }: { close: () => void }) {
       </button>
 
       <button
-        className="flex items-center gap-[0.6rem] px-[1.4rem] py-3 hover:bg-gray-100 w-full text-red-500 font-medium"
+        className="flex items-center gap-[1.2rem] px-[1.4rem] py-3 hover:bg-gray-100 w-full text-[#9C1818] font-medium"
         onClick={() => {
           close();
           navigate("/");

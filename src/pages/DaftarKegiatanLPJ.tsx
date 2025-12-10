@@ -63,8 +63,8 @@ const DaftarKegiatanLPJ: React.FC = () => {
                 <th className="px-4 p-3">No</th>
                 <th className="px-4 p-3">Nama Pengaju</th>
                 <th className="px-4 p-3">Judul Kegiatan</th>
-                <th className="px-4 p-3">Tanggal</th>
-                <th className="px-4 p-3">Action</th>
+                <th className="px-4 p-3">Tanggal Diajukan</th>
+                <th className="px-4 p-3">Aksi</th>
                 </tr>
               </thead>
 
