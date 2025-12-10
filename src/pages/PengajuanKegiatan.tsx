@@ -72,16 +72,16 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     }
   }, []);
 
- // === FILTER + SORT UTAMA ===
-  const filtered = [...data]      // clone dulu biar aman
-  .reverse()                    // urutan terbaru paling atas
-  .filter((item) => {
-    const matching = filter === "all" ? true : item.judul === filter;
-    const searching = item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
-    return matching && searching;
-  });
+  // === FILTER + SORT UTAMA ===
+  const filtered = [...data] // clone dulu biar aman
+    .reverse() // urutan terbaru paling atas
+    .filter((item) => {
+      const matching = filter === "all" ? true : item.judul === filter;
+      const searching =
+        item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
+      return matching && searching;
+    });
 
-    
   // === PAGINATION ===
   const startIndex = (page - 1) * limit;
   const paginatedData = filtered.slice(startIndex, startIndex + limit);
@@ -108,7 +108,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     localStorage.setItem("approvalStatus", JSON.stringify(updated));
   };
 
-   // === DROPDOWN OUTSIDE CLICK ===
+  // === DROPDOWN OUTSIDE CLICK ===
   const [openDropdown, setOpenDropdown] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
 
@@ -144,7 +144,10 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   if (mode === "TOR") {
     return (
       <div className="p-6">
-        <div className="flex justify-end w-full mt-[8rem] px-20">
+        <div className="flex tems-center justify-between w-full mt-[7.5rem] px-20">
+          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg text-white font-bold pointer-events-none tracking-[0.05em]">
+            Form TOR
+          </button>
           <button
             onClick={() => setMode("list")}
             className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
@@ -160,7 +163,10 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   if (mode === "LPJ") {
     return (
       <div className="p-6">
-        <div className="flex justify-end w-full mt-[8rem] px-20">
+        <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
+          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg text-white font-bold pointer-events-none tracking-[0.05em]">
+            Form LPJ
+          </button>
           <button
             onClick={() => setMode("list")}
             className="px-4 py-[0.35rem] bg-[#4957B5] text-white rounded font-poppins font-medium tracking-[0.05em] hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"

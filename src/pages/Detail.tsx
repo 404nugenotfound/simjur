@@ -16,6 +16,7 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   const { id } = useParams<{ id: string }>();
   const { data, files, setFiles, approvalStatus, setApprovalStatus } =
     useActivities();
+  const [currentNote, setCurrentNote] = useState("");
 
   // tunggu data siap
   const activity = useMemo(() => {
@@ -116,13 +117,13 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   };
 
   const formatCurrency = (value: string) => {
-  const numbersOnly = value.replace(/\D/g, "");
-  return new Intl.NumberFormat("id-ID", {
-    style: "currency",
-    currency: "IDR",
-    minimumFractionDigits: 0,
-  }).format(Number(numbersOnly));
-};
+    const numbersOnly = value.replace(/\D/g, "");
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(Number(numbersOnly));
+  };
 
   // ==================== HANDLE DROP ====================
   const handleDrop = (
@@ -185,58 +186,52 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     }
   }, [activity]);
 
-  // 3 catatan role (simpan lokal dulu – nanti bisa dihubungkan ke backend/context)
-  const [noteAdmin, setNoteAdmin] = useState("");
-  const [noteSekjur, setNoteSekjur] = useState("");
-  const [noteKajur, setNoteKajur] = useState("");
+  // ===================== STATE CATATAN PER ID =====================
+  const [notes, setNotes] = useState(() => {
+    const saved = localStorage.getItem("notes");
+    return saved ? JSON.parse(saved) : {};
+  });
 
+  const role = localStorage.getItem("role") || "";
+  // Role mapping tetap sama
   const roleToField = {
     admin: "approval1Status",
     sekjur: "approval2Status",
     kajur: "approval3Status",
   };
+
   const userRole = (localStorage.getItem("role") || "").toLowerCase();
   const allowedField = roleToField[userRole];
 
-  const handleSaveNotes = () => {
-    console.log("Catatan disimpan:", {
-      admin: noteAdmin,
-      sekjur: noteSekjur,
-      kajur: noteKajur,
-    });
-    alert("Catatan disimpan (sementara masih di front-end).");
-  };
-  // ==================== ROLE ====================
-  const role = localStorage.getItem("role");
-
-  // tepat sebelum return JSX
-  console.log(
-    "Detail activity ID:",
-    activity?.id,
-    "Current file:",
-    currentFile
-  );
-
-  // Saat load component, ambil dulu catatan dari localStorage
+  // ===================== LOAD CATATAN SAAT COMPONENT MOUNT =====================
   useEffect(() => {
-    const savedAdmin = localStorage.getItem("noteAdmin");
-    const savedSekjur = localStorage.getItem("noteSekjur");
-    const savedKajur = localStorage.getItem("noteKajur");
-
-    if (savedAdmin) setNoteAdmin(savedAdmin);
-    if (savedSekjur) setNoteSekjur(savedSekjur);
-    if (savedKajur) setNoteKajur(savedKajur);
+    const saved = localStorage.getItem("notes");
+    if (saved) {
+      setNotes(JSON.parse(saved));
+    }
   }, []);
 
-  // Fungsi save
+  // ===================== SIMPAN CATATAN PER-ID & PER-ROLE =====================
   const saveNote = (roleType: string, note: string) => {
-    if (roleType === "admin") localStorage.setItem("noteAdmin", note);
-    if (roleType === "sekjur") localStorage.setItem("noteSekjur", note);
-    if (roleType === "kajur") localStorage.setItem("noteKajur", note);
+    if (!activity) return;
+
+    const activityId = String(activity.id);
+
+    const updated = {
+      ...notes,
+      [activityId]: {
+        ...notes[activityId],
+        [roleType]: note,
+      },
+    };
+
+    setNotes(updated);
+    localStorage.setItem("notes", JSON.stringify(updated));
 
     alert("Catatan berhasil disimpan!");
   };
 
+  // ===================== HANDLE REJECT SESUAI ROLE =====================
   const handleReject = (
     field: "approval1Status" | "approval2Status" | "approval3Status"
   ) => {
@@ -350,11 +345,15 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                   </div>
                   <div>
                     <p className="text-gray-500">Jumlah Peserta</p>
-                    <p className="font-medium">{detailInfo.total_peserta} peserta</p>
+                    <p className="font-medium">
+                      {detailInfo.total_peserta} peserta
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Dana Tersisa</p>
-                    <p className="font-medium">{formatCurrency(String(detailInfo.sisaDana || 0))}</p>
+                    <p className="font-medium">
+                      {formatCurrency(String(detailInfo.sisaDana || 0))}
+                    </p>
                   </div>
                   <div>
                     <p className="text-gray-500">Metode Pelaksanaan</p>
@@ -591,70 +590,37 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                 <h2 className="font-semibold py-4 pt-12">Catatan Revisi</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* Admin */}
-                  {role === "Admin" && (
+                  {/* BAGIAN ADMIN / SEKJUR / KAJUR (boleh edit) */}
+                  {(role === "Admin" ||
+                    role === "Sekjur" ||
+                    role === "Kajur") && (
                     <div className="col-span-1 md:col-span-3">
                       <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan dari Admin
+                        {role === "Admin"
+                          ? "Catatan dari Admin"
+                          : role === "Sekjur"
+                          ? "Catatan dari Sekjur"
+                          : "Catatan dari Ketua Jurusan"}
                       </p>
+
                       <textarea
                         className="w-full border rounded-lg p-3 min-h-[12rem]"
-                        value={noteAdmin || ""}
-                        placeholder="Catatan dari admin..."
-                        onChange={(e) => setNoteAdmin(e.target.value)}
+                        value={currentNote}
+                        placeholder={`Catatan dari ${role.toLowerCase()}...`}
+                        aria-label={`Textarea catatan dari ${role}`}
+                        onChange={(e) => setCurrentNote(e.target.value)}
                       />
+
                       <button
                         className="mt-2 px-4 py-1 bg-[#4957B5] tracking-[0.10em] text-white rounded transition hover:scale-95"
-                        onClick={() => saveNote("admin", noteAdmin)}
+                        onClick={() => saveNote(userRole, currentNote)}
                       >
                         Simpan
                       </button>
                     </div>
                   )}
 
-                  {/* Sekjur */}
-                  {role === "Sekjur" && (
-                    <div className="col-span-1 md:col-span-3">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan dari Sekjur
-                      </p>
-                      <textarea
-                        className="w-full border rounded-lg p-3 min-h-[12rem]"
-                        value={noteSekjur || ""}
-                        placeholder="Catatan dari sekjur..."
-                        onChange={(e) => setNoteSekjur(e.target.value)}
-                      />
-                      <button
-                        className="mt-2 px-4 py-1 bg-[#4957B5] text-white rounded transition hover:scale-95"
-                        onClick={() => saveNote("sekjur", noteSekjur)}
-                      >
-                        Simpan
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Kajur */}
-                  {role === "Kajur" && (
-                    <div className="col-span-1 md:col-span-3">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">
-                        Catatan dari Ketua Jurusan
-                      </p>
-                      <textarea
-                        className="w-full border rounded-lg p-3 min-h-[12rem]"
-                        value={noteKajur || ""}
-                        placeholder="Catatan dari ketua jurusan..."
-                        onChange={(e) => setNoteKajur(e.target.value)}
-                      />
-                      <button
-                        className="mt-2 ml-1 px-4 py-1 bg-[#4957B5] text-white rounded transition hover:scale-95"
-                        onClick={() => saveNote("kajur", noteKajur)}
-                      >
-                        Simpan
-                      </button>
-                    </div>
-                  )}
-
-                  {/* Pengaju */}
+                  {/* BAGIAN PENGAJU (read-only) */}
                   {role === "Pengaju" && (
                     <>
                       <div>
@@ -663,31 +629,33 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={noteAdmin || ""}
+                          value={notes[String(activity?.id)]?.admin || ""}
+                          placeholder="Belum ada catatan dari Admin..."
                           readOnly
-                          placeholder="Catatan dari admin..."
                         />
                       </div>
+
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
                           Catatan dari Sekjur
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={noteSekjur || ""}
+                          value={notes[String(activity?.id)]?.sekjur || ""}
+                          placeholder="Belum ada catatan dari Sekjur..."
                           readOnly
-                          placeholder="Catatan dari sekjur..."
                         />
                       </div>
+
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
                           Catatan dari Ketua Jurusan
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={noteKajur || ""}
+                          value={notes[String(activity?.id)]?.kajur || ""}
+                          placeholder="Belum ada catatan dari Kajur..."
                           readOnly
-                          placeholder="Catatan dari ketua jurusan..."
                         />
                       </div>
                     </>

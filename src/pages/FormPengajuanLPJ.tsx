@@ -96,14 +96,13 @@ export default function FormPengajuanLPJ({ setMode }) {
     // ambil dana dari TOR, bersihkan simbol dan spasi
     const torDana = Number(selectedTor.dana?.replace(/\D/g, "") || 0);
 
-    setSisaDana(torDana - danaTerpakaiNumber); 
+    setSisaDana(torDana - danaTerpakaiNumber);
   }, [selectedTor, danaTerpakaiNumber]);
 
-  
   const handleDanaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const numbersOnly = e.target.value.replace(/\D/g, "");
-    setDanaTerpakai(formatCurrency(numbersOnly));   // tampilan "Rp ..."
-    setDanaTerpakaiNumber(Number(numbersOnly));     // angka bersih
+    setDanaTerpakai(formatCurrency(numbersOnly)); // tampilan "Rp ..."
+    setDanaTerpakaiNumber(Number(numbersOnly)); // angka bersih
   };
 
   const generateWord = async (data: any) => {
@@ -267,12 +266,11 @@ export default function FormPengajuanLPJ({ setMode }) {
   }, [torItems]);
 
   return (
-    <div className="px-12 pt-8 pb-8">
+    <div className="px-12 pt-8 pb-6">
       {/* Form */}
       <h2 className="text-3xl font-bebas mb-24 tracking-[0.4rem] ml-[-1rem] mt-[-9.7rem] text-black">
         TAMBAH DATA PENGAJUAN LPJ
       </h2>
-
       <div className="flex justify-center w-full px-6">
         {/* Card Container */}
         <div className="bg-white shadow-md border rounded-xl p-5 w-full max-w-6xl">
@@ -354,10 +352,6 @@ export default function FormPengajuanLPJ({ setMode }) {
                       <ChevronDownIcon className="pointer-events-none h-5 w-5 text-black absolute right-3 top-1/2 -translate-y-1/2" />
                     </div>
                   )}
-
-                  <button className="border border-black px-4 py-2 bg-[#D5D5D5] rounded-lg text-black text-opacity-60 font-semibold">
-                    LPJ
-                  </button>
                 </div>
               </div>
             </div>

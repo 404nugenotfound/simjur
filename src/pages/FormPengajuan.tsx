@@ -253,9 +253,6 @@ export default function FormPengajuan({ addData, setMode }) {
                   value={penanggungJawab}
                   onChange={(e) => setPenanggungJawab(e.target.value)}
                 />
-                <button className="appearance-none border border-black px-4 py-2 bg-[#D5D5D5] rounded-lg text-black text-opacity-60 font-semibold">
-                  TOR
-                </button>
               </div>
             </div>
 
