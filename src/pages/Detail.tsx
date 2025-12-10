@@ -6,9 +6,9 @@ import { useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useActivities } from "../context/ActivitiesContext";
 
+// ----------------- TYPES -----------------
 type TabKey = "detail" | "approval" | "submit";
 
-// ---------- STORAGE / DEFAULTS ----------
 type ApprovalState = {
   approval1Status: "Pending" | "Approved" | "Rejected";
   approval2Status: "Pending" | "Approved" | "Rejected";
@@ -24,7 +24,6 @@ type NotesState = {
 type ModeData = {
   approval: ApprovalState;
   notes: NotesState;
-  // optional file base64 string (jika mau simpan di sini)
   file?: string | null;
   fileName?: string | null;
 };
@@ -36,6 +35,12 @@ type ActivityStore = {
   };
 };
 
+interface ApprovalData {
+  approval1Status: string;
+  approval2Status: string;
+  approval3Status: string;
+}
+
 interface DetailProps {
   mode?: "TOR" | "LPJ";
 }
@@ -44,13 +49,11 @@ const STORAGE_KEY = "activityStore";
 
 const Detail: React.FC<DetailProps> = () => {
   const { id } = useParams<{ id: string }>();
-  const { data, files, setFiles, approvalStatus, setApprovalStatus } =
-    useActivities();
+  const { data, files, setFiles, setData, approvalStatus, setApprovalStatus } = useActivities();
   const [currentNote, setCurrentNote] = useState("");
   const location = useLocation();
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
-
 
   // tunggu data siap
   const activity = useMemo(() => {
@@ -83,55 +86,171 @@ const Detail: React.FC<DetailProps> = () => {
 
   const currentFile = files[String(activity?.id)];
 
-  const [detailData, setDetailData] = useState(() => {
-    return {
-      approval1Status: "Pending",
-      approval2Status: "Pending",
-      approval3Status: "Pending",
-    };
+  // ---------- DEFAULT (tetap) ----------
+const defaultApproval = {
+  approval1Status: "Pending",
+  approval2Status: "Pending",
+  approval3Status: "Pending",
+
+  lpjApproval1Status: "Pending",
+  lpjApproval2Status: "Pending",
+  lpjApproval3Status: "Pending",
+};
+
+const [detailData, setDetailData] = useState(defaultApproval);
+
+const activeApproval =
+  mode === "TOR"
+    ? {
+        approval1Status: detailData.approval1Status,
+        approval2Status: detailData.approval2Status,
+        approval3Status: detailData.approval3Status,
+      }
+    : {
+        approval1Status: detailData.lpjApproval1Status ?? "Pending",
+        approval2Status: detailData.lpjApproval2Status ?? "Pending",
+        approval3Status: detailData.lpjApproval3Status ?? "Pending",
+      };
+
+
+// ---------- MIGRATE DATA ONCE (safe) ----------
+useEffect(() => {
+  if (!data || !data.length) return;
+
+  let needsWrite = false;
+
+  const migrated = data.map((item) => {
+    // only add missing LPJ fields when absent
+    const copy = { ...item } as any;
+    if (copy.lpjApproval1Status === undefined) {
+      copy.lpjApproval1Status = "Pending";
+      copy.lpjApproval2Status = "Pending";
+      copy.lpjApproval3Status = "Pending";
+      needsWrite = true;
+    }
+    return copy;
   });
 
-  useEffect(() => {
-    const saved = JSON.parse(localStorage.getItem("pengajuanDetail") || "{}");
-    if (saved && saved.id === id) {
-      setDetailData(saved);
-    } else {
-      setDetailData({
-        approval1Status: "Pending",
-        approval2Status: "Pending",
-        approval3Status: "Pending",
-      });
+  if (needsWrite) {
+    // persist migrated array and update context once
+    setData(migrated);
+    try {
+      localStorage.setItem("kegiatan", JSON.stringify(migrated));
+    } catch (e) {
+      console.error("Failed to persist migrated kegiatan", e);
     }
-  }, [id]);
+  }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+}, [data.length]); // run when data first loads (length change)
+ 
 
-  useEffect(() => {
-    const approvalStore = JSON.parse(
-      localStorage.getItem("approvalStatus") || "{}"
+ // ---------- SYNC detailData FROM approvalStatus (mode-aware, guarded) ----------
+useEffect(() => {
+  if (!activity) return;
+
+  const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+  const saved = store[activity.id]?.[mode];
+
+  if (saved) {
+    setDetailData((prev) => {
+      const next = { ...defaultApproval, ...saved };
+      return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+    });
+  } else {
+    const next =
+      mode === "TOR"
+        ? {
+            ...defaultApproval,
+            approval1Status: "Pending",
+            approval2Status: "Pending",
+            approval3Status: "Pending",
+          }
+        : {
+            ...defaultApproval,
+            lpjApproval1Status: "Pending",
+            lpjApproval2Status: "Pending",
+            lpjApproval3Status: "Pending",
+          };
+
+    setDetailData((prev) =>
+      JSON.stringify(prev) === JSON.stringify(next) ? prev : next
     );
+  }
+}, [activity, mode]);
 
-    if (activity && approvalStore[activity.id]) {
-      setDetailData(approvalStore[activity.id]);
-    }
-  }, [activity]);
 
-  const handleApprove = (field) => {
-    if (!activity) return;
 
-    const currentContext = approvalStatus[activity.id] ?? {
-      approval1Status: "Pending",
-      approval2Status: "Pending",
-      approval3Status: "Pending",
-    };
+ // ---------- HANDLE APPROVE (mode-aware, safe) ----------
+const handleApprove = (field: keyof typeof defaultApproval) => {
+  if (!activity) return;
 
-    const updatedContext = { ...currentContext, [field]: "Approved" };
+  const key = String(activity.id);
+  const approvalStore = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
 
-    setDetailData(updatedContext);
+  // get mode chunk or fallback
+  const currentModeData = approvalStore[key]?.[mode] ?? (mode === "TOR"
+    ? { approval1Status: "Pending", approval2Status: "Pending", approval3Status: "Pending" }
+    : { lpjApproval1Status: "Pending", lpjApproval2Status: "Pending", lpjApproval3Status: "Pending" });
 
-    const updatedAll = { ...approvalStatus, [activity.id]: updatedContext };
-    setApprovalStatus(updatedAll);
-
-    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+  // updated mode-only data
+  const updatedModeData = {
+    ...currentModeData,
+    [field]: "Approved",
   };
+
+  const updatedAll = {
+    ...approvalStore,
+    [key]: {
+      ...approvalStore[key],
+      [mode]: updatedModeData,
+    },
+  };
+
+  // persist to context + localStorage
+  setApprovalStatus(updatedAll);
+  try {
+    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+  } catch (e) {
+    console.error("Failed to persist approvalStatus", e);
+  }
+
+  // update local detailData (merge with default so shape stays full)
+  setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
+};
+
+ // ---------- HANDLE REJECT (mode-aware, safe) ----------
+const handleReject = (field: keyof typeof defaultApproval) => {
+  if (!activity) return;
+
+  const key = String(activity.id);
+  const approvalStore = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+
+  const currentModeData = approvalStore[key]?.[mode] ?? (mode === "TOR"
+    ? { approval1Status: "Pending", approval2Status: "Pending", approval3Status: "Pending" }
+    : { lpjApproval1Status: "Pending", lpjApproval2Status: "Pending", lpjApproval3Status: "Pending" });
+
+  const updatedModeData = {
+    ...currentModeData,
+    [field]: "Rejected",
+  };
+
+  const updatedAll = {
+    ...approvalStore,
+    [key]: {
+      ...approvalStore[key],
+      [mode]: updatedModeData,
+    },
+  };
+
+  setApprovalStatus(updatedAll);
+  try {
+    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+  } catch (e) {
+    console.error("Failed to persist approvalStatus", e);
+  }
+
+  setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
+};
 
 
   const formatCurrency = (value: string) => {
@@ -142,7 +261,6 @@ const Detail: React.FC<DetailProps> = () => {
       minimumFractionDigits: 0,
     }).format(Number(numbersOnly));
   };
-
 
   // ==================== HANDLE INPUT FILE ====================
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -222,25 +340,6 @@ const Detail: React.FC<DetailProps> = () => {
     alert("Catatan berhasil disimpan!");
   };
 
-  // ===================== HANDLE REJECT SESUAI ROLE =====================
-  const handleReject = (
-    field: "approval1Status" | "approval2Status" | "approval3Status"
-  ) => {
-    const key = String(id); // dari useParams
-
-    const updated = {
-      ...approvalStatus,
-      [key]: {
-        approval1Status: approvalStatus[key]?.approval1Status ?? "Pending",
-        approval2Status: approvalStatus[key]?.approval2Status ?? "Pending",
-        approval3Status: approvalStatus[key]?.approval3Status ?? "Pending",
-        [field]: "Rejected",
-      },
-    };
-
-    setApprovalStatus(updated);
-    localStorage.setItem("approvalStatus", JSON.stringify(updated));
-  };
 
   const [hasDownloaded, setHasDownloaded] = useState(false);
 
@@ -388,21 +487,21 @@ const Detail: React.FC<DetailProps> = () => {
 
                         <td className="p-2">
                           {/* === STATUS: APPROVED === */}
-                          {detailData.approval1Status === "Approved" && (
+                          {activeApproval.approval1Status === "Approved" && (
                             <span className="text-green-600 font-semibold">
                               Disetujui ✔
                             </span>
                           )}
 
                           {/* === STATUS: REJECTED === */}
-                          {detailData.approval1Status === "Rejected" && (
+                          {activeApproval.approval1Status === "Rejected" && (
                             <span className="text-red-600 font-semibold">
                               Ditolak ✖
                             </span>
                           )}
 
                           {/* === STATUS: PENDING — ROLE BERWENANG === */}
-                          {detailData.approval1Status === "Pending" &&
+                          {activeApproval.approval1Status === "Pending" &&
                             allowedField === "approval1Status" && (
                               <div className="flex gap-2 justify-center">
                                 <button
@@ -432,7 +531,7 @@ const Detail: React.FC<DetailProps> = () => {
                             )}
 
                           {/* === STATUS: PENDING — TIDAK BERWENANG === */}
-                          {detailData.approval1Status === "Pending" &&
+                          {activeApproval.approval1Status === "Pending" &&
                             allowedField !== "approval1Status" && (
                               <span className="text-gray-500 font-medium">
                                 Pending
@@ -449,21 +548,21 @@ const Detail: React.FC<DetailProps> = () => {
 
                         <td className="p-2">
                           {/* === STATUS: APPROVED === */}
-                          {detailData.approval2Status === "Approved" && (
+                          {activeApproval.approval2Status === "Approved" && (
                             <span className="text-green-600 font-semibold">
                               Disetujui ✔
                             </span>
                           )}
 
                           {/* === STATUS: REJECTED === */}
-                          {detailData.approval2Status === "Rejected" && (
+                          {activeApproval.approval2Status === "Rejected" && (
                             <span className="text-red-600 font-semibold">
                               Ditolak ✖
                             </span>
                           )}
 
                           {/* === STATUS: PENDING — ROLE BERWENANG === */}
-                          {detailData.approval2Status === "Pending" &&
+                          {activeApproval.approval2Status === "Pending" &&
                             allowedField === "approval2Status" && (
                               <div className="flex gap-2 justify-center">
                                 <button
@@ -493,7 +592,7 @@ const Detail: React.FC<DetailProps> = () => {
                             )}
 
                           {/* === STATUS: PENDING — TIDAK BERWENANG === */}
-                          {detailData.approval2Status === "Pending" &&
+                          {activeApproval.approval2Status === "Pending" &&
                             allowedField !== "approval2Status" && (
                               <span className="text-gray-500 font-medium">
                                 Pending
@@ -510,25 +609,25 @@ const Detail: React.FC<DetailProps> = () => {
 
                         <td className="p-2">
                           {/* === CEK: Approval 1 & 2 harus Approved dulu === */}
-                          {detailData.approval1Status === "Approved" &&
-                          detailData.approval2Status === "Approved" ? (
+                          {activeApproval.approval1Status === "Approved" &&
+                          activeApproval.approval2Status === "Approved" ? (
                             <>
                               {/* === STATUS: APPROVED === */}
-                              {detailData.approval3Status === "Approved" && (
+                              {activeApproval.approval3Status === "Approved" && (
                                 <span className="text-green-600 font-semibold">
                                   Disetujui ✔
                                 </span>
                               )}
 
                               {/* === STATUS: REJECTED === */}
-                              {detailData.approval3Status === "Rejected" && (
+                              {activeApproval.approval3Status === "Rejected" && (
                                 <span className="text-red-600 font-semibold">
                                   Ditolak ✖
                                 </span>
                               )}
 
                               {/* === STATUS: PENDING — ROLE BERWENANG === */}
-                              {detailData.approval3Status === "Pending" &&
+                              {activeApproval.approval3Status === "Pending" &&
                                 allowedField === "approval3Status" && (
                                   <div className="flex gap-2 justify-center">
                                     <button
@@ -558,7 +657,7 @@ const Detail: React.FC<DetailProps> = () => {
                                 )}
 
                               {/* === STATUS: PENDING — TIDAK BERWENANG === */}
-                              {detailData.approval3Status === "Pending" &&
+                              {activeApproval.approval3Status === "Pending" &&
                                 allowedField !== "approval3Status" && (
                                   <span className="text-gray-500 font-medium">
                                     Pending

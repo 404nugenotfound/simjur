@@ -9,6 +9,20 @@ export type Kegiatan = {
   penanggung_jawab?: string;
   catatanPengaju?: string;
 
+  // TOR approvals
+  torApproval1Status: string;
+  torApproval2Status: string;
+  torApproval3Status: string;
+
+  // LPJ approvals
+  lpjApproval1Status: string;
+  lpjApproval2Status: string;
+  lpjApproval3Status: string;
+
+  // catatan jika ada
+  torNotes?: string[];
+  lpjNotes?: string[];
+
   full?: Record<string, any>;
 
   tor?: {
@@ -23,17 +37,16 @@ export type Kegiatan = {
   };
 
   lpj?: {
-  metode_pelaksanaan: string;
-  dana_terpakai: string;
-  sisa_dana: number;
-  peserta_mahasiswa: number;
-  peserta_alumni: number;
-  peserta_dosen: number;
-  total_peserta: number;
-  created_at: string;
-  updated_at?: string; 
-};
-
+    metode_pelaksanaan: string;
+    dana_terpakai: string;
+    sisa_dana: number;
+    peserta_mahasiswa: number;
+    peserta_alumni: number;
+    peserta_dosen: number;
+    total_peserta: number;
+    created_at: string;
+    updated_at?: string;
+  };
 };
 
 type ApprovalStatus = {
@@ -100,6 +113,24 @@ export function ActivitiesProvider({ children }: { children: ReactNode }) {
   );
 
   const addData = (item: Kegiatan) => {
+    const fixedItem: Kegiatan = {
+      ...item,
+
+      // Default TOR approvals
+      torApproval1Status: item.torApproval1Status || "Pending",
+      torApproval2Status: item.torApproval2Status || "Pending",
+      torApproval3Status: item.torApproval3Status || "Pending",
+
+      // Default LPJ approvals
+      lpjApproval1Status: item.lpjApproval1Status || "Pending",
+      lpjApproval2Status: item.lpjApproval2Status || "Pending",
+      lpjApproval3Status: item.lpjApproval3Status || "Pending",
+
+      // Default Notes
+      torNotes: item.torNotes || [],
+      lpjNotes: item.lpjNotes || [],
+    };
+
     setData((prev) => {
       const updated = [...prev, item];
       localStorage.setItem("kegiatan", JSON.stringify(updated));

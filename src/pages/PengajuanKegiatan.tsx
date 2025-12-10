@@ -145,8 +145,10 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     return (
       <div className="p-6">
         <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
-          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
-          text-white font-bold pointer-events-none tracking-[0.05em]">
+          <button
+            className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
+          text-white font-bold pointer-events-none tracking-[0.05em]"
+          >
             Form TOR
           </button>
           <button
@@ -165,8 +167,10 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     return (
       <div className="p-6">
         <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
-          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
-          text-white font-bold pointer-events-none tracking-[0.05em]">
+          <button
+            className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
+          text-white font-bold pointer-events-none tracking-[0.05em]"
+          >
             Form LPJ
           </button>
           <button
@@ -273,63 +277,79 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                   </td>
                 </tr>
               ) : (
-                paginatedData.map((item, index) => {
-                  const currentApproval = approvalStatus[String(item.id)] ?? {
-                    approval1Status: "Pending",
-                    approval2Status: "Pending",
-                    approval3Status: "Pending",
-                  };
-
-                  return (
-                    <tr
-                      key={item.id}
-                      className="border-b text-[#696868] text-center"
-                    >
-                      <td className="p-3">{startIndex + index + 1}</td>
-                      <td className="p-3 font-semibold">{item.judul}</td>
-                      <td className="p-3">{item.tanggal}</td>
-                      <td className="p-3">
-                        <button
-                          onClick={() =>
-                            navigate(`/detail/${item.id}`, {
-                              state: { type: "TOR" },
-                            })
-                          }
-                          className="px-5 py-1 bg-[#6B7EF4] text-white rounded-md mr-6 hover:scale-95 transition"
-                        >
-                          TOR
-                        </button>
-
-                        <button
-                          onClick={() =>
-                            navigate(`/detail/${item.id}`, {
-                              state: {
-                                type: "LPJ",
-                              },
-                            })
-                          }
-                          disabled={
-                            currentApproval.approval3Status !== "Approved"
-                          }
-                          className={`px-5 py-1 rounded-md mr-6 transition hover:scale-95 ${
-                            currentApproval.approval3Status === "Approved"
-                              ? "bg-[#6B7EF4] text-white cursor-pointer"
-                              : "bg-[#d1d5db] text-[#7b7b7b] cursor-not-allowed opacity-60"
-                          }`}
-                        >
-                          LPJ
-                        </button>
-
-                        <button
-                          onClick={() => handleDelete(Number(item.id))}
-                          className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
-                        >
-                          Hapus
-                        </button>
-                      </td>
-                    </tr>
+                (() => {
+                  // Parse approval sekali DI SINI, bukan di dalam map
+                  const approvalStore = JSON.parse(
+                    localStorage.getItem("approvalStatus") || "{}"
                   );
-                })
+
+                  return paginatedData.map((item, index) => {
+                    // === TOR STATUS (buat ngecek tombol LPJ) ===
+                    const torStatus = approvalStore[item.id]?.TOR || {};
+
+                    const isTorApproved =
+                      torStatus.approval1Status === "Approved" &&
+                      torStatus.approval2Status === "Approved" &&
+                      torStatus.approval3Status === "Approved";
+
+                    // === CURRENT APPROVAL DI LIST (optional) ===
+                    const currentApproval = approvalStatus[String(item.id)] ?? {
+                      approval1Status: "Pending",
+                      approval2Status: "Pending",
+                      approval3Status: "Pending",
+                    };
+
+                    return (
+                      <tr
+                        key={item.id}
+                        className="border-b text-[#696868] text-center"
+                      >
+                        <td className="p-3">{startIndex + index + 1}</td>
+                        <td className="p-3 font-semibold">{item.judul}</td>
+                        <td className="p-3">{item.tanggal}</td>
+
+                        <td className="p-3">
+                          {/* TOR BUTTON */}
+                          <button
+                            onClick={() =>
+                              navigate(`/detail/${item.id}`, {
+                                state: { type: "TOR" },
+                              })
+                            }
+                            className="px-5 py-1 bg-[#6B7EF4] text-white rounded-md mr-6 hover:scale-95 transition"
+                          >
+                            TOR
+                          </button>
+
+                          {/* LPJ BUTTON — only enabled if TOR approved 3x */}
+                          <button
+                            onClick={() =>
+                              navigate(`/detail/${item.id}`, {
+                                state: { type: "LPJ" },
+                              })
+                            }
+                            disabled={!isTorApproved}
+                            className={`px-5 py-1 rounded-md mr-6 transition hover:scale-95 ${
+                              isTorApproved
+                                ? "bg-[#6B7EF4] text-white cursor-pointer"
+                                : "bg-[#d1d5db] text-[#7b7b7b] cursor-not-allowed opacity-60"
+                            }`}
+                          >
+                            LPJ
+                          </button>
+
+                          {/* HAPUS */}
+                          <button
+                            onClick={() => handleDelete(Number(item.id))}
+                            className="px-5 py-1 bg-[#9C1818] text-white rounded-md hover:scale-95 transition"
+                          >
+                            Hapus
+                          </button>
+                        </td>
+                      </tr>
+                    );
+                  });
+                })()
               )}
             </tbody>
           </table>
