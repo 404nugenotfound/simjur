@@ -17,11 +17,15 @@ const DaftarKegiatan: React.FC = () => {
   const navigate = useNavigate();
   const namaPengaju = roleToName["Pengaju"];
 
-  const filtered = data.filter((item) => {
+// === FILTER + SORT UTAMA ===
+  const filtered = [...data]      // clone dulu biar aman
+  .reverse()                    // urutan terbaru paling atas
+  .filter((item) => {
     const matching = filter === "all" ? true : item.judul === filter;
-    const searching = item.judul.toLowerCase().includes(search.toLowerCase());
+    const searching = item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
     return matching && searching;
   });
+
 
   const startIndex = (page - 1) * limit;
   const endIndex = startIndex + limit;
