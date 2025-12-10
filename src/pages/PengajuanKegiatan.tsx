@@ -144,8 +144,9 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   if (mode === "TOR") {
     return (
       <div className="p-6">
-        <div className="flex tems-center justify-between w-full mt-[7.5rem] px-20">
-          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg text-white font-bold pointer-events-none tracking-[0.05em]">
+        <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
+          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
+          text-white font-bold pointer-events-none tracking-[0.05em]">
             Form TOR
           </button>
           <button
@@ -164,7 +165,8 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     return (
       <div className="p-6">
         <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
-          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg text-white font-bold pointer-events-none tracking-[0.05em]">
+          <button className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
+          text-white font-bold pointer-events-none tracking-[0.05em]">
             Form LPJ
           </button>
           <button

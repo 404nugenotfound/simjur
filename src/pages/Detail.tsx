@@ -1,6 +1,6 @@
 // src/pages/Detail.tsx
 import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useLocation } from "react-router-dom";
 import Layout from "./Layout";
 import { useEffect } from "react";
 import { TrashIcon } from "@heroicons/react/24/solid";
@@ -8,15 +8,49 @@ import { useActivities } from "../context/ActivitiesContext";
 
 type TabKey = "detail" | "approval" | "submit";
 
+// ---------- STORAGE / DEFAULTS ----------
+type ApprovalState = {
+  approval1Status: "Pending" | "Approved" | "Rejected";
+  approval2Status: "Pending" | "Approved" | "Rejected";
+  approval3Status: "Pending" | "Approved" | "Rejected";
+};
+
+type NotesState = {
+  admin: string;
+  sekjur: string;
+  kajur: string;
+};
+
+type ModeData = {
+  approval: ApprovalState;
+  notes: NotesState;
+  // optional file base64 string (jika mau simpan di sini)
+  file?: string | null;
+  fileName?: string | null;
+};
+
+type ActivityStore = {
+  [activityId: string]: {
+    TOR?: ModeData;
+    LPJ?: ModeData;
+  };
+};
+
 interface DetailProps {
   mode?: "TOR" | "LPJ";
 }
 
-const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
+const STORAGE_KEY = "activityStore";
+
+const Detail: React.FC<DetailProps> = () => {
   const { id } = useParams<{ id: string }>();
   const { data, files, setFiles, approvalStatus, setApprovalStatus } =
     useActivities();
   const [currentNote, setCurrentNote] = useState("");
+  const location = useLocation();
+
+  const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
+
 
   // tunggu data siap
   const activity = useMemo(() => {
@@ -45,11 +79,9 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
   };
 
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
-  const [status, setStatus] = useState("Pending");
   const [isDragging, setIsDragging] = useState(false);
 
   const currentFile = files[String(activity?.id)];
-  const userName = localStorage.getItem("name") || "";
 
   const [detailData, setDetailData] = useState(() => {
     return {
@@ -71,11 +103,6 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
       });
     }
   }, [id]);
-
-  const clearStorage = () => {
-    localStorage.removeItem("pengajuanDetail");
-    localStorage.removeItem("approvalStatus");
-  };
 
   useEffect(() => {
     const approvalStore = JSON.parse(
@@ -106,15 +133,6 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
   };
 
-  const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: DragEvent<HTMLDivElement>) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
 
   const formatCurrency = (value: string) => {
     const numbersOnly = value.replace(/\D/g, "");
@@ -125,25 +143,6 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
     }).format(Number(numbersOnly));
   };
 
-  // ==================== HANDLE DROP ====================
-  const handleDrop = (
-    e: React.DragEvent<HTMLDivElement>,
-    activityId: string
-  ) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const dropped = e.dataTransfer.files?.[0];
-    if (!dropped) return;
-
-    setFiles((prev) => ({ ...prev, [activityId]: dropped }));
-
-    const reader = new FileReader();
-    reader.onload = () => {
-      localStorage.setItem(`file-${activityId}`, reader.result as string);
-      localStorage.setItem(`file-name-${activityId}`, dropped.name);
-    };
-    reader.readAsDataURL(dropped);
-  };
 
   // ==================== HANDLE INPUT FILE ====================
   const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
@@ -158,14 +157,6 @@ const Detail: React.FC<DetailProps> = ({ mode = "TOR" }) => {
       localStorage.setItem(`file-name-${activity.id}`, file.name);
     };
     reader.readAsDataURL(file);
-  };
-
-  // ==================== DELETE FILE ====================
-  const deleteFile = () => {
-    if (!activity) return;
-    setFiles((prev) => ({ ...prev, [String(activity.id)]: null }));
-    localStorage.removeItem(`file-${activity.id}`);
-    localStorage.removeItem(`file-name-${activity.id}`);
   };
 
   // ==================== LOAD FILE DARI LOCALSTORAGE ====================
