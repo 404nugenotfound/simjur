@@ -1,39 +1,40 @@
-  import { useContext, useState } from "react";
-  import { DashboardContext } from "../context/DashboardContext";
-  import { useNavigate } from "react-router-dom";
-  import Layout from "./Layout";
+import { useContext, useState } from "react";
+import { DashboardContext } from "../context/DashboardContext";
+import { useNavigate } from "react-router-dom";
+import Layout from "./Layout";
 
-  export default function KelolaDana() {
-    const { dana, updateDana, data, resetAll } = useContext(DashboardContext);
+export default function KelolaDana() {
+  const { dana, updateDana, data, resetDanaRegular } =
+    useContext(DashboardContext);
 
-    // hitung dana terpakai dari semua kegiatan
-    const totalTerpakai = data.reduce(
+  // hitung dana terpakai dari semua kegiatan
+  const totalTerpakai = data.reduce(
     (acc, item) => acc + Number(item.nominal || 0),
     0
   );
-    // form input untuk dana regular
-    const [regular, setRegular] = useState(Number(dana.danaRegular) || 0);  
-    const [regularDisplay, setRegularDisplay] = useState(
-      dana.danaRegular
-        ? new Intl.NumberFormat("id-ID", {
-            style: "currency",
-            currency: "IDR",
-            minimumFractionDigits: 0,
-          }).format(dana.danaRegular)
-        : ""
-    );
+  // form input untuk dana regular
+  const [regular, setRegular] = useState(Number(dana.danaRegular) || 0);
+  const [regularDisplay, setRegularDisplay] = useState(
+    dana.danaRegular
+      ? new Intl.NumberFormat("id-ID", {
+          style: "currency",
+          currency: "IDR",
+          minimumFractionDigits: 0,
+        }).format(dana.danaRegular)
+      : ""
+  );
 
-    const navigate = useNavigate();
+  const navigate = useNavigate();
 
-    const formatRupiah = (v: number) => {
-      return new Intl.NumberFormat("id-ID", {
-        style: "currency",
-        currency: "IDR",
-        minimumFractionDigits: 0,
-      }).format(v);
-    };
+  const formatRupiah = (v: number) => {
+    return new Intl.NumberFormat("id-ID", {
+      style: "currency",
+      currency: "IDR",
+      minimumFractionDigits: 0,
+    }).format(v);
+  };
 
-    const handleRegularChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleRegularChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const numbers = e.target.value.replace(/\D/g, "");
     const raw = numbers ? Number(numbers) : 0;
 
@@ -41,10 +42,10 @@
     setRegularDisplay(raw ? formatRupiah(raw) : "");
   };
 
-    const handleSubmit = () => {
-      updateDana(regular, totalTerpakai); // terpakai dihitung otomatis dari kegiatan
-      navigate("/dashboard");
-    };
+  const handleSubmit = () => {
+    updateDana(regular, totalTerpakai); // terpakai dihitung otomatis dari kegiatan
+    navigate("/dashboard");
+  };
 
   return (
     <Layout>
@@ -84,7 +85,10 @@
         {/* BUTTONS */}
         <div className="flex justify-center gap-5 mt-6 font-medium">
           <button
-            onClick={resetAll}
+            onClick={() => {
+              resetDanaRegular();
+              window.location.reload();
+            }}
             className="bg-[#9C1818] px-5 py-1.5 rounded-md text-white hover:scale-95 transition"
           >
             Reset

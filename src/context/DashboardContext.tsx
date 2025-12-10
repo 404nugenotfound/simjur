@@ -20,7 +20,7 @@ interface DashboardContextType {
   };
 
   updateDana: (regular: number, terpakai: number) => void;
-  resetAll: () => void; // ⬅️ INI YANG BELUM ADA
+  resetDanaRegular: () => void; // ⬅️ INI YANG BELUM ADA
 }
 
 export const DashboardContext = createContext<DashboardContextType>(
@@ -100,27 +100,19 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     });
   };
 
+  const resetDanaRegular = () => {
+  setDana((prev) => ({
+    ...prev,
+    danaRegular: 0,     // cuma ini yang direset
+  }));
+};
+
+
   // ====== SUMMARY ======
   const summary = {
     totalTor: data.filter((d) => d.kategori === "TOR").length,
     totalLpj: data.filter((d) => d.kategori === "LPJ").length,
     totalSelesai: data.filter((d) => d.kategori === "Selesai").length,
-  };
-
-  // ====== RESET SEMUA DATA ======
-  const resetAll = () => {
-    // hapus localStorage
-    localStorage.removeItem("dana");
-
-    // reset state kegiatan
-    setData([]);
-
-    // reset dana
-    setDana({
-      danaRegular: 0,
-      danaTerpakai: 0,
-      tahun: new Date().getFullYear(),
-    });
   };
 
   return (
@@ -131,7 +123,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         summary,
         dana,
         updateDana,
-        resetAll,
+        resetDanaRegular,
       }}
     >
       {children}
