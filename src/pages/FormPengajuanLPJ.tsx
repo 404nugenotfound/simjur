@@ -278,41 +278,7 @@ export default function FormPengajuanLPJ({ setMode }) {
           <div className="space-y-10   font-poppins pb-5">
             {/* Baris 1: Metode & Dana */}
             <div className="grid grid-cols-3 gap-6 items-start">
-              {/* Metode Pelaksanaan */}
-              <div className="w-full">
-                <label className="block text-black font-semibold mb-2">
-                  Metode Pelaksanaan
-                </label>
-
-                <div className="flex items-center justify-between">
-                  <span className="text-black text-[15px]">
-                    Pilih Metode Acara:
-                  </span>
-
-                  {/* Select + custom arrow container */}
-                  <div className="relative w-28">
-                    <select
-                      className="border border-black rounded-lg p-2 text-black w-full
-                      appearance-none pr-8"
-                      value={metode}
-                      onChange={(e) => setMetode(e.target.value)}
-                      onClick={() => setOpenDropdown(!openDropdown)}
-                      aria-label="-"
-                    >
-                      <option value="Luring">Luring</option>
-                      <option value="Daring">Daring</option>
-                    </select>
-
-                    {/* Heroicon arrow */}
-                    <ChevronDownIcon
-                      className={`pointer-events-none h-5 w-5 text-black absolute right-2 top-1/2 -translate-y-1/2
-                      transition-transform duration-200 ${
-                        openDropdown ? "rotate-180" : "rotate-0"
-                      }`}
-                    />
-                  </div>
-                </div>
-              </div>
+              
 
               {/* ngambil ID*/}
               <div className="col-span-2 w-full">
@@ -352,6 +318,42 @@ export default function FormPengajuanLPJ({ setMode }) {
                       <ChevronDownIcon className="pointer-events-none h-5 w-5 text-black absolute right-3 top-1/2 -translate-y-1/2" />
                     </div>
                   )}
+                </div>
+              </div>
+
+              {/* Metode Pelaksanaan */}
+              <div className="w-full">
+                <label className="block text-black font-semibold mb-2">
+                  Metode Pelaksanaan
+                </label>
+
+                <div className="flex items-center justify-between">
+                  <span className="text-black text-[15px]">
+                    Pilih Metode Acara:
+                  </span>
+
+                  {/* Select + custom arrow container */}
+                  <div className="relative w-28">
+                    <select
+                      className="border border-black rounded-lg p-2 text-black w-full
+                      appearance-none pr-8"
+                      value={metode}
+                      onChange={(e) => setMetode(e.target.value)}
+                      onClick={() => setOpenDropdown(!openDropdown)}
+                      aria-label="-"
+                    >
+                      <option value="Luring">Luring</option>
+                      <option value="Daring">Daring</option>
+                    </select>
+
+                    {/* Heroicon arrow */}
+                    <ChevronDownIcon
+                      className={`pointer-events-none h-5 w-5 text-black absolute right-2 top-1/2 -translate-y-1/2
+                      transition-transform duration-200 ${
+                        openDropdown ? "rotate-180" : "rotate-0"
+                      }`}
+                    />
+                  </div>
                 </div>
               </div>
             </div>

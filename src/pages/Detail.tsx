@@ -49,7 +49,8 @@ const STORAGE_KEY = "activityStore";
 
 const Detail: React.FC<DetailProps> = () => {
   const { id } = useParams<{ id: string }>();
-  const { data, files, setFiles, setData, approvalStatus, setApprovalStatus } = useActivities();
+  const { data, files, setFiles, setData, approvalStatus, setApprovalStatus } =
+    useActivities();
   const [currentNote, setCurrentNote] = useState("");
   const location = useLocation();
 
@@ -84,174 +85,194 @@ const Detail: React.FC<DetailProps> = () => {
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
   const [isDragging, setIsDragging] = useState(false);
 
-  const currentFile = files[String(activity?.id)];
+  const currentFile = files[`file-${mode}-${activity?.id ?? "noid"}`] || null;
 
   // ---------- DEFAULT (tetap) ----------
-const defaultApproval = {
-  approval1Status: "Pending",
-  approval2Status: "Pending",
-  approval3Status: "Pending",
+  const defaultApproval = {
+    approval1Status: "Pending",
+    approval2Status: "Pending",
+    approval3Status: "Pending",
 
-  lpjApproval1Status: "Pending",
-  lpjApproval2Status: "Pending",
-  lpjApproval3Status: "Pending",
-};
+    lpjApproval1Status: "Pending",
+    lpjApproval2Status: "Pending",
+    lpjApproval3Status: "Pending",
+  };
 
-const [detailData, setDetailData] = useState(defaultApproval);
+  const [detailData, setDetailData] = useState(defaultApproval);
 
-const activeApproval =
-  mode === "TOR"
-    ? {
-        approval1Status: detailData.approval1Status,
-        approval2Status: detailData.approval2Status,
-        approval3Status: detailData.approval3Status,
+  const activeApproval =
+    mode === "TOR"
+      ? {
+          approval1Status: detailData.approval1Status,
+          approval2Status: detailData.approval2Status,
+          approval3Status: detailData.approval3Status,
+        }
+      : {
+          approval1Status: detailData.lpjApproval1Status ?? "Pending",
+          approval2Status: detailData.lpjApproval2Status ?? "Pending",
+          approval3Status: detailData.lpjApproval3Status ?? "Pending",
+        };
+
+  // ---------- MIGRATE DATA ONCE (safe) ----------
+  useEffect(() => {
+    if (!data || !data.length) return;
+
+    let needsWrite = false;
+
+    const migrated = data.map((item) => {
+      // only add missing LPJ fields when absent
+      const copy = { ...item } as any;
+      if (copy.lpjApproval1Status === undefined) {
+        copy.lpjApproval1Status = "Pending";
+        copy.lpjApproval2Status = "Pending";
+        copy.lpjApproval3Status = "Pending";
+        needsWrite = true;
       }
-    : {
-        approval1Status: detailData.lpjApproval1Status ?? "Pending",
-        approval2Status: detailData.lpjApproval2Status ?? "Pending",
-        approval3Status: detailData.lpjApproval3Status ?? "Pending",
-      };
-
-
-// ---------- MIGRATE DATA ONCE (safe) ----------
-useEffect(() => {
-  if (!data || !data.length) return;
-
-  let needsWrite = false;
-
-  const migrated = data.map((item) => {
-    // only add missing LPJ fields when absent
-    const copy = { ...item } as any;
-    if (copy.lpjApproval1Status === undefined) {
-      copy.lpjApproval1Status = "Pending";
-      copy.lpjApproval2Status = "Pending";
-      copy.lpjApproval3Status = "Pending";
-      needsWrite = true;
-    }
-    return copy;
-  });
-
-  if (needsWrite) {
-    // persist migrated array and update context once
-    setData(migrated);
-    try {
-      localStorage.setItem("kegiatan", JSON.stringify(migrated));
-    } catch (e) {
-      console.error("Failed to persist migrated kegiatan", e);
-    }
-  }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-}, [data.length]); // run when data first loads (length change)
- 
-
- // ---------- SYNC detailData FROM approvalStatus (mode-aware, guarded) ----------
-useEffect(() => {
-  if (!activity) return;
-
-  const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
-  const saved = store[activity.id]?.[mode];
-
-  if (saved) {
-    setDetailData((prev) => {
-      const next = { ...defaultApproval, ...saved };
-      return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      return copy;
     });
-  } else {
-    const next =
-      mode === "TOR"
+
+    if (needsWrite) {
+      // persist migrated array and update context once
+      setData(migrated);
+      try {
+        localStorage.setItem("kegiatan", JSON.stringify(migrated));
+      } catch (e) {
+        console.error("Failed to persist migrated kegiatan", e);
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.length]); // run when data first loads (length change)
+
+  // ---------- SYNC detailData FROM approvalStatus (mode-aware, guarded) ----------
+  useEffect(() => {
+    if (!activity) return;
+
+    const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+    const saved = store[activity.id]?.[mode];
+
+    if (saved) {
+      setDetailData((prev) => {
+        const next = { ...defaultApproval, ...saved };
+        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
+      });
+    } else {
+      const next =
+        mode === "TOR"
+          ? {
+              ...defaultApproval,
+              approval1Status: "Pending",
+              approval2Status: "Pending",
+              approval3Status: "Pending",
+            }
+          : {
+              ...defaultApproval,
+              lpjApproval1Status: "Pending",
+              lpjApproval2Status: "Pending",
+              lpjApproval3Status: "Pending",
+            };
+
+      setDetailData((prev) =>
+        JSON.stringify(prev) === JSON.stringify(next) ? prev : next
+      );
+    }
+  }, [activity, mode]);
+
+  // ---------- HANDLE APPROVE (mode-aware, safe) ----------
+  const handleApprove = (field: keyof typeof defaultApproval) => {
+    if (!activity) return;
+
+    const key = `file-${mode}-${activity?.id ?? "noid"}`;
+
+    const approvalStore = JSON.parse(
+      localStorage.getItem("approvalStatus") || "{}"
+    );
+
+    // get mode chunk or fallback
+    const currentModeData =
+      approvalStore[key]?.[mode] ??
+      (mode === "TOR"
         ? {
-            ...defaultApproval,
             approval1Status: "Pending",
             approval2Status: "Pending",
             approval3Status: "Pending",
           }
         : {
-            ...defaultApproval,
             lpjApproval1Status: "Pending",
             lpjApproval2Status: "Pending",
             lpjApproval3Status: "Pending",
-          };
+          });
 
-    setDetailData((prev) =>
-      JSON.stringify(prev) === JSON.stringify(next) ? prev : next
+    // updated mode-only data
+    const updatedModeData = {
+      ...currentModeData,
+      [field]: "Approved",
+    };
+
+    const updatedAll = {
+      ...approvalStore,
+      [key]: {
+        ...approvalStore[key],
+        [mode]: updatedModeData,
+      },
+    };
+
+    // persist to context + localStorage
+    setApprovalStatus(updatedAll);
+    try {
+      localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+    } catch (e) {
+      console.error("Failed to persist approvalStatus", e);
+    }
+
+    // update local detailData (merge with default so shape stays full)
+    setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
+  };
+
+  // ---------- HANDLE REJECT (mode-aware, safe) ----------
+  const handleReject = (field: keyof typeof defaultApproval) => {
+    if (!activity) return;
+
+    const key = String(activity.id);
+    const approvalStore = JSON.parse(
+      localStorage.getItem("approvalStatus") || "{}"
     );
-  }
-}, [activity, mode]);
 
+    const currentModeData =
+      approvalStore[key]?.[mode] ??
+      (mode === "TOR"
+        ? {
+            approval1Status: "Pending",
+            approval2Status: "Pending",
+            approval3Status: "Pending",
+          }
+        : {
+            lpjApproval1Status: "Pending",
+            lpjApproval2Status: "Pending",
+            lpjApproval3Status: "Pending",
+          });
 
+    const updatedModeData = {
+      ...currentModeData,
+      [field]: "Rejected",
+    };
 
- // ---------- HANDLE APPROVE (mode-aware, safe) ----------
-const handleApprove = (field: keyof typeof defaultApproval) => {
-  if (!activity) return;
+    const updatedAll = {
+      ...approvalStore,
+      [key]: {
+        ...approvalStore[key],
+        [mode]: updatedModeData,
+      },
+    };
 
-  const key = String(activity.id);
-  const approvalStore = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+    setApprovalStatus(updatedAll);
+    try {
+      localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+    } catch (e) {
+      console.error("Failed to persist approvalStatus", e);
+    }
 
-  // get mode chunk or fallback
-  const currentModeData = approvalStore[key]?.[mode] ?? (mode === "TOR"
-    ? { approval1Status: "Pending", approval2Status: "Pending", approval3Status: "Pending" }
-    : { lpjApproval1Status: "Pending", lpjApproval2Status: "Pending", lpjApproval3Status: "Pending" });
-
-  // updated mode-only data
-  const updatedModeData = {
-    ...currentModeData,
-    [field]: "Approved",
+    setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
   };
-
-  const updatedAll = {
-    ...approvalStore,
-    [key]: {
-      ...approvalStore[key],
-      [mode]: updatedModeData,
-    },
-  };
-
-  // persist to context + localStorage
-  setApprovalStatus(updatedAll);
-  try {
-    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
-  } catch (e) {
-    console.error("Failed to persist approvalStatus", e);
-  }
-
-  // update local detailData (merge with default so shape stays full)
-  setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
-};
-
- // ---------- HANDLE REJECT (mode-aware, safe) ----------
-const handleReject = (field: keyof typeof defaultApproval) => {
-  if (!activity) return;
-
-  const key = String(activity.id);
-  const approvalStore = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
-
-  const currentModeData = approvalStore[key]?.[mode] ?? (mode === "TOR"
-    ? { approval1Status: "Pending", approval2Status: "Pending", approval3Status: "Pending" }
-    : { lpjApproval1Status: "Pending", lpjApproval2Status: "Pending", lpjApproval3Status: "Pending" });
-
-  const updatedModeData = {
-    ...currentModeData,
-    [field]: "Rejected",
-  };
-
-  const updatedAll = {
-    ...approvalStore,
-    [key]: {
-      ...approvalStore[key],
-      [mode]: updatedModeData,
-    },
-  };
-
-  setApprovalStatus(updatedAll);
-  try {
-    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
-  } catch (e) {
-    console.error("Failed to persist approvalStatus", e);
-  }
-
-  setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
-};
-
 
   const formatCurrency = (value: string) => {
     const numbersOnly = value.replace(/\D/g, "");
@@ -263,18 +284,22 @@ const handleReject = (field: keyof typeof defaultApproval) => {
   };
 
   // ==================== HANDLE INPUT FILE ====================
-  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file || !activity) return;
+  const handleFileChange = (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
 
-    setFiles((prev) => ({ ...prev, [String(activity.id)]: file }));
+    const id = activity?.id ?? "noid";
 
-    const reader = new FileReader();
-    reader.onload = () => {
-      localStorage.setItem(`file-${activity.id}`, reader.result as string);
-      localStorage.setItem(`file-name-${activity.id}`, file.name);
-    };
-    reader.readAsDataURL(file);
+    const key = `file-${mode}-${id}`;
+    const nameKey = `file-name-${mode}-${id}`;
+
+    localStorage.setItem(key, JSON.stringify(file));
+    localStorage.setItem(nameKey, file.name);
+
+    setFiles((prev) => ({
+      ...prev,
+      [key]: file,
+    }));
   };
 
   // ==================== LOAD FILE DARI LOCALSTORAGE ====================
@@ -325,12 +350,16 @@ const handleReject = (field: keyof typeof defaultApproval) => {
     if (!activity) return;
 
     const activityId = String(activity.id);
+    const modeKey = mode; // "TOR" atau "LPJ"
 
     const updated = {
       ...notes,
       [activityId]: {
         ...notes[activityId],
-        [roleType]: note,
+        [modeKey]: {
+          ...notes[activityId]?.[modeKey],
+          [roleType]: note,
+        },
       },
     };
 
@@ -339,7 +368,6 @@ const handleReject = (field: keyof typeof defaultApproval) => {
 
     alert("Catatan berhasil disimpan!");
   };
-
 
   const [hasDownloaded, setHasDownloaded] = useState(false);
 
@@ -384,14 +412,14 @@ const handleReject = (field: keyof typeof defaultApproval) => {
             <button
               onClick={() => setActiveTab("submit")}
               className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
-                ${
-                  activeTab === "submit"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-indigo-600 hover:text-[#6C74C6]"
-                }
-              `}
+              ${
+                activeTab === "submit"
+                  ? "bg-indigo-600 text-white shadow-sm"
+                  : "text-indigo-600 hover:text-[#6C74C6]"
+              }
+            `}
             >
-              Submit File
+              {role === "Pengaju" ? "Submit File" : "Unduh File"}
             </button>
 
             <button
@@ -613,14 +641,16 @@ const handleReject = (field: keyof typeof defaultApproval) => {
                           activeApproval.approval2Status === "Approved" ? (
                             <>
                               {/* === STATUS: APPROVED === */}
-                              {activeApproval.approval3Status === "Approved" && (
+                              {activeApproval.approval3Status ===
+                                "Approved" && (
                                 <span className="text-green-600 font-semibold">
                                   Disetujui ✔
                                 </span>
                               )}
 
                               {/* === STATUS: REJECTED === */}
-                              {activeApproval.approval3Status === "Rejected" && (
+                              {activeApproval.approval3Status ===
+                                "Rejected" && (
                                 <span className="text-red-600 font-semibold">
                                   Ditolak ✖
                                 </span>
@@ -676,11 +706,20 @@ const handleReject = (field: keyof typeof defaultApproval) => {
                   </table>
                 </div>
 
+                <div className="flex items-center gap-4 mt-10 mb-2">
+                  <div className="flex-1 h-[2px] bg-gray-300"></div>
+                  <span className="text-gray-400 text-sm tracking-wide">
+                    SECTION
+                  </span>
+                  <div className="flex-1 h-[2px] bg-gray-300"></div>
+                </div>
                 {/* Part Catatan */}
-                <h2 className="font-semibold py-4 pt-12">Catatan Revisi</h2>
+                <h2 className="font-semibold py-4 pt-6">Catatan Revisi</h2>
 
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* BAGIAN ADMIN / SEKJUR / KAJUR (boleh edit) */}
+                  {/* ============================
+                        ADMIN / SEKJUR / KAJUR (boleh edit)
+                      ============================ */}
                   {(role === "Admin" ||
                     role === "Sekjur" ||
                     role === "Kajur") && (
@@ -692,58 +731,80 @@ const handleReject = (field: keyof typeof defaultApproval) => {
                           ? "Catatan dari Sekjur"
                           : "Catatan dari Ketua Jurusan"}
                       </p>
+                      <div className="relative w-full">
+                        <textarea
+                          className="w-full border rounded-lg p-3 min-h-[12rem] pr-[5rem]"
+                          value={
+                            currentNote ??
+                            notes[String(activity?.id)]?.[mode]?.[userRole] ??
+                            ""
+                          }
+                          placeholder={`Catatan dari ${role.toLowerCase()}...`}
+                          aria-label={`Textarea catatan dari ${role}`}
+                          onChange={(e) => setCurrentNote(e.target.value)}
+                        />
 
-                      <textarea
-                        className="w-full border rounded-lg p-3 min-h-[12rem]"
-                        value={currentNote}
-                        placeholder={`Catatan dari ${role.toLowerCase()}...`}
-                        aria-label={`Textarea catatan dari ${role}`}
-                        onChange={(e) => setCurrentNote(e.target.value)}
-                      />
-
-                      <button
-                        className="mt-2 px-4 py-1 bg-[#4957B5] tracking-[0.10em] text-white rounded transition hover:scale-95"
-                        onClick={() => saveNote(userRole, currentNote)}
-                      >
-                        Simpan
-                      </button>
+                        {/* Tombol Simpan di kanan bawah */}
+                        <button
+                          className="
+                          absolute bottom-6 right-3 
+                          px-4 py-1 bg-[#4957B5] 
+                          text-white rounded tracking-[0.10em]
+                          hover:scale-95 transition
+                        "
+                          onClick={() => saveNote(userRole, currentNote)}
+                        >
+                          Simpan
+                        </button>
+                      </div>
                     </div>
                   )}
 
-                  {/* BAGIAN PENGAJU (read-only) */}
+                  {/* ============================
+                        PENGAJU (read only, per mode TOR/LPJ)
+                      ============================ */}
                   {role === "Pengaju" && (
                     <>
+                      {/* ADMIN */}
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
                           Catatan dari Admin
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={notes[String(activity?.id)]?.admin || ""}
+                          value={
+                            notes[String(activity?.id)]?.[mode]?.admin || ""
+                          }
                           placeholder="Belum ada catatan dari Admin..."
                           readOnly
                         />
                       </div>
 
+                      {/* SEKJUR */}
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
                           Catatan dari Sekjur
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={notes[String(activity?.id)]?.sekjur || ""}
+                          value={
+                            notes[String(activity?.id)]?.[mode]?.sekjur || ""
+                          }
                           placeholder="Belum ada catatan dari Sekjur..."
                           readOnly
                         />
                       </div>
 
+                      {/* KAJUR */}
                       <div>
                         <p className="text-xs font-semibold text-gray-600 mb-1">
                           Catatan dari Ketua Jurusan
                         </p>
                         <textarea
                           className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={notes[String(activity?.id)]?.kajur || ""}
+                          value={
+                            notes[String(activity?.id)]?.[mode]?.kajur || ""
+                          }
                           placeholder="Belum ada catatan dari Kajur..."
                           readOnly
                         />
@@ -767,43 +828,63 @@ const handleReject = (field: keyof typeof defaultApproval) => {
                   }`}
                 >
                   {!currentFile ? (
-                    // INPUT MODE
-                    <div className="flex flex-col items-center gap-4 p-10">
-                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
-                        <span className="text-2xl">⬆️</span>
+                    role === "Pengaju" ? (
+                      // ======================
+                      // MODE INPUT khusus PENGAJU
+                      // ======================
+                      <div className="flex flex-col items-center gap-4 p-10">
+                        <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
+                          <span className="text-2xl">⬆️</span>
+                        </div>
+
+                        <p className="font-medium text-gray-800">
+                          Unggah File {mode === "TOR" ? "TOR" : "LPJ"} di sini
+                          atau Telusuri Dokumen
+                        </p>
+                        <p className="text-xs text-gray-600">
+                          Format: PDF (max 10MB)
+                        </p>
+
+                        <button
+                          type="button"
+                          className="mt-2 px-4 py-2 rounded-full bg-white text-sm shadow border cursor-pointer"
+                          onClick={() =>
+                            document
+                              .getElementById(`file-input-${mode}`)
+                              ?.click()
+                          }
+                        >
+                          Telusuri Dokumen
+                        </button>
+
+                        <input
+                          id={`file-input-${mode}`}
+                          type="file"
+                          accept=".pdf,.doc,.docx"
+                          className="hidden"
+                          onChange={handleFileChange}
+                          aria-label="upload-file"
+                        />
                       </div>
-
-                      <p className="font-medium text-gray-800">
-                        Unggah File di sini atau Telusuri Dokumen
-                      </p>
-                      <p className="text-xs text-gray-600">
-                        Format: PDF (max 10MB)
-                      </p>
-
-                      <button
-                        type="button"
-                        className="mt-2 px-4 py-2 rounded-full bg-white text-sm shadow border cursor-pointer"
-                        onClick={() =>
-                          document.getElementById("file-input-tor")?.click()
-                        }
-                      >
-                        Telusuri Dokumen
-                      </button>
-
-                      <input
-                        id="file-input-tor"
-                        type="file"
-                        accept=".pdf,.doc,.docx"
-                        className="hidden"
-                        onChange={handleFileChange}
-                        aria-label="-"
-                      />
-                    </div>
+                    ) : (
+                      // ======================
+                      // ROLE LAIN (Admin/Sekjur/Kajur)
+                      // ======================
+                      <div className="text-center p-10 text-gray-600">
+                        Hanya <b>Pengaju</b> yang dapat mengunggah file.
+                        <br />
+                        Ose cuma bisa melihat atau mengunduh file kalau sudah
+                        ada.
+                      </div>
+                    )
                   ) : (
+                    // ======================
+                    // FILE SUDAH ADA
+                    // ======================
                     <div className="w-full flex justify-center mt-2">
                       <div className="flex items-center justify-between bg-[#A4CEB6] px-8 py-8 rounded-xl shadow-md w-full max-w-[900px]">
                         <p className="text-gray-100 font-semibold text-xl truncate max-w-[65%]">
-                          {currentFile.name ?? "–"}
+                          {currentFile.name ?? "—"}
                         </p>
 
                         <div className="flex items-center gap-3">
@@ -818,23 +899,18 @@ const handleReject = (field: keyof typeof defaultApproval) => {
                               a.click();
                               URL.revokeObjectURL(url);
 
-                              setHasDownloaded(true); // 🔥 Set status sudah unduh
+                              setHasDownloaded(true);
                             }}
                           >
                             Unduh
                           </button>
 
-                          {/* Tombol Hapus */}
-                          {localStorage.getItem("role") === "Pengaju" && (
+                          {/* Tombol Hapus - hanya PENGAJU */}
+                          {role === "Pengaju" && (
                             <button
                               aria-label="hapus"
                               className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white hover:scale-[0.97]"
                               onClick={() => {
-                                setFiles((prev) => ({
-                                  ...prev,
-                                  [String(activity?.id)]: null,
-                                }));
-
                                 if (
                                   !window.confirm(
                                     "Ose yakin mo hapus par data ini ka seng ?"
@@ -842,10 +918,15 @@ const handleReject = (field: keyof typeof defaultApproval) => {
                                 )
                                   return;
 
-                                // Gunakan key yang sesuai dengan yang dipakai saat simpan
-                                localStorage.removeItem(`file-${activity?.id}`);
+                                // set state kosong
+                                setFiles((prev) => ({
+                                  ...prev,
+                                  [`${mode}-${id}`]: null,
+                                }));
+
+                                localStorage.removeItem(`file-${mode}-${id}`);
                                 localStorage.removeItem(
-                                  `file-name-${activity?.id}`
+                                  `file-name-${mode}-${id}`
                                 );
                               }}
                             >
