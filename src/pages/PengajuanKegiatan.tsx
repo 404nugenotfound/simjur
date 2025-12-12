@@ -284,20 +284,10 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                   );
 
                   return paginatedData.map((item, index) => {
-                    // === TOR STATUS (buat ngecek tombol LPJ) ===
-                    const torStatus = approvalStore[item.id]?.TOR || {};
-
                     const isTorApproved =
-                      torStatus.approval1Status === "Approved" &&
-                      torStatus.approval2Status === "Approved" &&
-                      torStatus.approval3Status === "Approved";
-
-                    // === CURRENT APPROVAL DI LIST (optional) ===
-                    const currentApproval = approvalStatus[String(item.id)] ?? {
-                      approval1Status: "Pending",
-                      approval2Status: "Pending",
-                      approval3Status: "Pending",
-                    };
+                      item.torApproval1Status === "Approved" &&
+                      item.torApproval2Status === "Approved" &&
+                      item.torApproval3Status === "Approved";
 
                     return (
                       <tr

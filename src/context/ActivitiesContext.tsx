@@ -4,6 +4,7 @@ export type Kegiatan = {
   id: string | number;
   judul: string;
   tanggal: string;
+  isTorApproved?: boolean;
   dana?: number;
   deskripsi?: string;
   penanggung_jawab?: string;

@@ -147,8 +147,9 @@ const Detail: React.FC<DetailProps> = () => {
   useEffect(() => {
     if (!activity) return;
 
+    const key = `approval-${activity.id}`;
     const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
-    const saved = store[activity.id]?.[mode];
+    const saved = store[key]?.[mode];
 
     if (saved) {
       setDetailData((prev) => {
@@ -179,60 +180,86 @@ const Detail: React.FC<DetailProps> = () => {
 
   // ---------- HANDLE APPROVE (mode-aware, safe) ----------
   const handleApprove = (field: keyof typeof defaultApproval) => {
-    if (!activity) return;
+  if (!activity) return;
 
-    const key = `file-${mode}-${activity?.id ?? "noid"}`;
+  const key = `approval-${activity.id}`;
 
-    const approvalStore = JSON.parse(
-      localStorage.getItem("approvalStatus") || "{}"
-    );
+  const approvalStore = JSON.parse(
+    localStorage.getItem("approvalStatus") || "{}"
+  );
 
-    // get mode chunk or fallback
-    const currentModeData =
-      approvalStore[key]?.[mode] ??
-      (mode === "TOR"
-        ? {
-            approval1Status: "Pending",
-            approval2Status: "Pending",
-            approval3Status: "Pending",
-          }
-        : {
-            lpjApproval1Status: "Pending",
-            lpjApproval2Status: "Pending",
-            lpjApproval3Status: "Pending",
-          });
+  const currentModeData =
+    approvalStore[key]?.[mode] ??
+    (mode === "TOR"
+      ? {
+          approval1Status: "Pending",
+          approval2Status: "Pending",
+          approval3Status: "Pending",
+        }
+      : {
+          lpjApproval1Status: "Pending",
+          lpjApproval2Status: "Pending",
+          lpjApproval3Status: "Pending",
+        });
 
-    // updated mode-only data
-    const updatedModeData = {
-      ...currentModeData,
-      [field]: "Approved",
-    };
-
-    const updatedAll = {
-      ...approvalStore,
-      [key]: {
-        ...approvalStore[key],
-        [mode]: updatedModeData,
-      },
-    };
-
-    // persist to context + localStorage
-    setApprovalStatus(updatedAll);
-    try {
-      localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
-    } catch (e) {
-      console.error("Failed to persist approvalStatus", e);
-    }
-
-    // update local detailData (merge with default so shape stays full)
-    setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
+  const updatedModeData = {
+    ...currentModeData,
+    [field]: "Approved",
   };
+
+  const updatedAll = {
+    ...approvalStore,
+    [key]: {
+      ...approvalStore[key],
+      [mode]: updatedModeData,
+    },
+  };
+
+  setApprovalStatus(updatedAll);
+  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+
+  setDetailData((prev) => ({
+    ...prev,
+    ...updatedModeData,
+  }));
+
+  // 🔥 UPDATE KEGIATAN
+  setData((prev) => {
+    const updated = prev.map((d) => {
+      if (d.id !== activity.id) return d;
+
+      if (mode === "TOR") {
+        return {
+          ...d,
+          torApproval1Status: updatedModeData.approval1Status,
+          torApproval2Status: updatedModeData.approval2Status,
+          torApproval3Status: updatedModeData.approval3Status,
+        };
+      }
+
+      if (mode === "LPJ") {
+        return {
+          ...d,
+          lpjApproval1Status: updatedModeData.lpjApproval1Status,
+          lpjApproval2Status: updatedModeData.lpjApproval2Status,
+          lpjApproval3Status: updatedModeData.lpjApproval3Status,
+        };
+      }
+
+      return d;
+    });
+
+    localStorage.setItem("kegiatan", JSON.stringify(updated));
+    return updated;
+  });
+};
+
 
   // ---------- HANDLE REJECT (mode-aware, safe) ----------
   const handleReject = (field: keyof typeof defaultApproval) => {
     if (!activity) return;
 
-    const key = String(activity.id);
+    const key = `approval-${activity.id}`;
     const approvalStore = JSON.parse(
       localStorage.getItem("approvalStatus") || "{}"
     );

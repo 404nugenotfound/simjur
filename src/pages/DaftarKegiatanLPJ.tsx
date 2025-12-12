@@ -17,13 +17,26 @@ const DaftarKegiatanLPJ: React.FC = () => {
     const namaPengaju = roleToName["Pengaju"];
   
     // === FILTER + SORT UTAMA ===
-  const filtered = [...data]      // clone dulu biar aman
-  .reverse()                    // urutan terbaru paling atas
+  const filtered = [...data]
+  .reverse()
   .filter((item) => {
+    // === CEK TOR SUDAH APPROVED 3 ===
+    const isTorApproved =
+      item?.torApproval1Status === "Approved" &&
+      item?.torApproval2Status === "Approved" &&
+      item?.torApproval3Status === "Approved";
+
+    // === CEK JUDUL ===
     const matching = filter === "all" ? true : item.judul === filter;
+
+    // === SEARCH ===
     const searching = item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
-    return matching && searching;
+
+    // === RETURN UTAMA ===
+    return isTorApproved && matching && searching;
   });
+
+
 
   
     const startIndex = (page - 1) * limit;
