@@ -108,6 +108,7 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
 };
 
 
+
   // ====== SUMMARY ======
   const summary = {
     totalTor: data.filter((d) => d.kategori === "TOR").length,

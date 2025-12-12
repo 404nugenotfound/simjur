@@ -33,13 +33,7 @@ type ActivityStore = {
     TOR?: ModeData;
     LPJ?: ModeData;
   };
-};
-
-interface ApprovalData {
-  approval1Status: string;
-  approval2Status: string;
-  approval3Status: string;
-}
+};  
 
 interface DetailProps {
   mode?: "TOR" | "LPJ";
