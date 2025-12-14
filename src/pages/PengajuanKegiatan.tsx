@@ -258,7 +258,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
         </div>
 
         {/* Tabel */}
-        <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
+        <div className="border rounded-lg overflow-hidden font-poppins">
           <table className="w-full text-left">
             <thead className="bg-[#86BE9E] tracking-[0.1em] text-center text-white font-semibold">
               <tr className="[&>th]:font-semibold">

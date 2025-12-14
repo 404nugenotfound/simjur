@@ -1,6 +1,5 @@
 import { ApprovalField } from "@/utils/role";
 
-
 type Role = "Admin" | "Sekjur" | "Kajur" | "Pengaju";
 type UserRole = "admin" | "sekjur" | "kajur";
 
@@ -57,41 +56,54 @@ const ApprovalAndNoteSection = ({
   if (activeTab !== "approval") return null;
 
   const renderStatus = (status: string) => {
-  if (status === "Approved")
-    return <span className="text-green-600 font-semibold">Disetujui ✔</span>;
-  if (status === "Rejected")
-    return <span className="text-red-600 font-semibold">Ditolak ✖</span>;
-  if (status === "Revisi")
-    return <span className="text-orange-600 font-semibold">Revisi ✎</span>;
+    switch (status) {
+      case "Approved":
+        return (
+          <span className="text-green-600 font-semibold">Disetujui ✔</span>
+        );
 
-  return <span className="text-gray-500">Pending</span>;
-};
+      case "Rejected":
+        return <span className="text-red-800 font-semibold">Ditolak ✖</span>;
+
+      case "Revisi":
+        return <span className="text-orange-600 font-semibold">Revisi ✎</span>;
+
+      default:
+        return <span className="text-gray-500 font-medium">Pending</span>;
+    }
+  };
 
   const renderAction = (field: ApprovalField, status: string) => {
-  if (
-    ["Pending", "Revisi"].includes(status) &&
-    allowedField === field
-  ) {
+    const canTakeAction =
+      ["Pending", "Revisi"].includes(status) && allowedField === field;
+
+    if (!canTakeAction) return null;
+
     return (
-      <div className="flex gap-2 justify-center mt-1">
+      <div className="flex gap-2 justify-center py-2 font-medium">
         <button
+          disabled={!hasDownloaded}
           onClick={() => handleApprove(field)}
-          className="px-2 py-1 text-xs bg-green-600 text-white rounded"
+          className="px-3 py-[0.4rem] text-xs bg-[#4957B5] hover:scale-95 text-white rounded
+        disabled:bg-gray-600 disabled:cursor-not-allowed"
         >
           Setujui
         </button>
+
         <button
+          disabled={!hasDownloaded}
           onClick={() => handleReject(field)}
-          className="px-2 py-1 text-xs bg-red-600 text-white rounded"
+          className="px-3 py-[0.4rem] text-xs bg-[#9C1818] hover:scale-95 text-white rounded
+        disabled:bg-gray-500 disabled:cursor-not-allowed"
         >
           Tolak
         </button>
       </div>
     );
-  }
-  return null;
-};
+  };
 
+  const canTakeAction = (field: ApprovalField, status: string) =>
+    ["Pending", "Revisi"].includes(status) && allowedField === field;
 
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
@@ -103,50 +115,71 @@ const ApprovalAndNoteSection = ({
           <thead>
             <tr className="bg-[#86BE9E] text-white">
               <th className="p-2">Code</th>
-              <th>Tanggal</th>
+              <th className="max-w-xs">Tanggal Pengajuan</th>
               <th>Deskripsi</th>
-              <th>Status</th>
+              <th className="px-12">Status</th>
             </tr>
           </thead>
 
           <tbody>
             {/* APPROVAL 1 */}
             <tr className="bg-gray-50 text-center">
-              <td className="font-semibold">Persetujuan 1</td>
+              <td className="p-2 font-semibold">Persetujuan 1</td>
               <td>{detailInfo.tanggal}</td>
-              <td>Administrasi</td>
+              <td>Persetujuan dari Administrasi</td>
               <td>
-                {renderStatus(approvalState.approval1)}
-                {renderAction("torApproval1Status", approvalState.approval1)}
+                <div className="flex items-center justify-center gap-2">
+                  {canTakeAction("torApproval1Status", approvalState.approval1)
+                    ? renderAction(
+                        "torApproval1Status",
+                        approvalState.approval1
+                      )
+                    : renderStatus(approvalState.approval1)}
+                </div>
               </td>
             </tr>
 
             {/* APPROVAL 2 */}
             <tr className="bg-gray-100 text-center">
-              <td className="font-semibold">Persetujuan 2</td>
+              <td className="p-2 font-semibold">Persetujuan 2</td>
               <td>{detailInfo.tanggal}</td>
-              <td>Sekjur</td>
+              <td>Persetujuan dari Sekjur</td>
               <td>
-                {renderStatus(approvalState.approval2)}
-                {renderAction("torApproval2Status", approvalState.approval2)}
+                <div className="flex items-center justify-center gap-2">
+                  {canTakeAction("torApproval2Status", approvalState.approval2)
+                    ? renderAction(
+                        "torApproval2Status",
+                        approvalState.approval2
+                      )
+                    : renderStatus(approvalState.approval2)}
+                </div>
               </td>
             </tr>
 
             {/* APPROVAL 3 */}
             <tr className="bg-gray-50 text-center">
-              <td className="font-semibold">Persetujuan 3</td>
+              <td className="p-2 font-semibold">Persetujuan 3</td>
               <td>{detailInfo.tanggal}</td>
-              <td>Kajur</td>
+              <td>Persetujuan dari Kajur</td>
               <td>
-                {approvalState.approval1 === "Approved" &&
-                approvalState.approval2 === "Approved" ? (
-                  <>
-                    {renderStatus(approvalState.approval3)}
-                    {renderAction("torApproval3Status", approvalState.approval3)}
-                  </>
-                ) : (
-                  <span className="text-gray-500">Pending</span>
-                )}
+                <div className="flex items-center justify-center gap-2">
+                  {approvalState.approval1 === "Approved" &&
+                  approvalState.approval2 === "Approved" ? (
+                    canTakeAction(
+                      "torApproval3Status",
+                      approvalState.approval3
+                    ) ? (
+                      renderAction(
+                        "torApproval3Status",
+                        approvalState.approval3
+                      )
+                    ) : (
+                      renderStatus(approvalState.approval3)
+                    )
+                  ) : (
+                    <span className="text-gray-500 font-medium">Pending</span>
+                  )}
+                </div>
               </td>
             </tr>
           </tbody>
@@ -158,20 +191,24 @@ const ApprovalAndNoteSection = ({
         <>
           <div className="flex items-center gap-4 my-8">
             <div className="flex-1 h-[2px] bg-gray-300" />
-            <span className="text-gray-400 text-sm">PEMISAH SECTION</span>
+            <span className="text-gray-400 text-sm">PEMISAH ANTAR SECTION</span>
             <div className="flex-1 h-[2px] bg-gray-300" />
           </div>
 
+          <h2 className="font-semibold mb-3 text-lg">Catatan Revisi</h2>
+          <p className="text-sm font-medium mb-2">Catatan dari {role}</p>
+
           {role !== "Pengaju" ? (
-            <div>
+            <div className="relative w-full">
               <textarea
-                className="w-full border rounded-lg p-3 min-h-[12rem]"
+                className="w-full border rounded-lg p-3 min-h-[12rem] resize-none"
                 value={currentNote ?? ""}
                 onChange={(e) => setCurrentNote(e.target.value)}
+                placeholder="Tulis catatan revisi di sini..."
               />
               <button
                 onClick={() => saveNote(userRole, currentNote)}
-                className="mt-3 px-4 py-2 bg-[#4957B5] text-white rounded"
+                className="absolute bottom-5 right-4 px-4 py-1 bg-[#4957B5] hover:scale-[0.97] text-white font-medium tracking-[0.05em] rounded"
               >
                 Simpan
               </button>
