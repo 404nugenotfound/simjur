@@ -1,18 +1,30 @@
 // src/pages/Detail.tsx
-import React, { useState, DragEvent, ChangeEvent, useMemo } from "react";
-import { useParams, useLocation } from "react-router-dom";
+import React, {
+  useState,
+  DragEvent,
+  ChangeEvent,
+  useMemo,
+  useEffect,
+} from "react";
 import Layout from "./Layout";
-import { useEffect } from "react";
+import { useParams, useLocation } from "react-router-dom";
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { useActivities } from "../context/ActivitiesContext";
+import { formatCurrency } from "../utils/formatCurrency";
+import DetailPengajuan from "../components/DetailPengajuanSection";
+import SubmitFileSection from "../components/SubmitFileSection";
+import DanaSetujuSection from "../components/DanaSetujuSection";
+import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
+import TabButton from "../components/TabButton";
+import { Role, UserRole, ApprovalField, ApprovalStatus } from "@/utils/role";
+import { TabKey } from "@/utils/tab";
+import { saveFile } from "../utils/indexedDB";
 
 // ----------------- TYPES -----------------
-type TabKey = "detail" | "approval" | "submit";
-
 type ApprovalState = {
-  approval1Status: "Pending" | "Approved" | "Rejected";
-  approval2Status: "Pending" | "Approved" | "Rejected";
-  approval3Status: "Pending" | "Approved" | "Rejected";
+  approval1Status: ApprovalStatus;
+  approval2Status: ApprovalStatus;
+  approval3Status: ApprovalStatus;
 };
 
 type NotesState = {
@@ -33,28 +45,63 @@ type ActivityStore = {
     TOR?: ModeData;
     LPJ?: ModeData;
   };
-};  
+};
+
+type DetailApprovalData = {
+  torApproval1Status?: ApprovalStatus;
+  torApproval2Status?: ApprovalStatus;
+  torApproval3Status?: ApprovalStatus;
+  lpjApproval1Status?: ApprovalStatus;
+  lpjApproval2Status?: ApprovalStatus;
+  lpjApproval3Status?: ApprovalStatus;
+};
 
 interface DetailProps {
   mode?: "TOR" | "LPJ";
 }
 
-const STORAGE_KEY = "activityStore";
 
 const Detail: React.FC<DetailProps> = () => {
   const { id } = useParams<{ id: string }>();
-  const { data, files, setFiles, setData, approvalStatus, setApprovalStatus } =
+  const { data, setData, approvalStatus, setApprovalStatus } =
     useActivities();
+  const [files, setFiles] = useState<Record<string, File | null>>({});
+
   const [currentNote, setCurrentNote] = useState("");
   const location = useLocation();
+  const [activeTab, setActiveTab] = useState<TabKey>("detail");
+  const [hasSubmitted, setHasSubmitted] = useState(false);
+
+
+  // ---------- INI PART ROLE YA TUANGALA ----------
+  const rawRole = localStorage.getItem("role");
+
+  const roleTyped: Role =
+    rawRole === "Admin" || rawRole === "Sekjur" || rawRole === "Kajur"
+      ? rawRole
+      : "Pengaju";
+
+  const userRole: UserRole =
+    rawRole === "Admin"
+      ? "admin"
+      : rawRole === "Sekjur"
+      ? "sekjur"
+      : rawRole === "Kajur"
+      ? "kajur"
+      : "admin"; // fallback aman
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
 
-  // tunggu data siap
+  const [isDragging, setIsDragging] = useState(false);
+
+  // ---------- MENUNGGU DATA SIAP ----------
   const activity = useMemo(() => {
     if (!data.length || !id) return null;
     return data.find((x) => String(x.id) === id) || null;
   }, [id, data]);
+
+ const currentFile =
+  files[`file-${mode}-${activity?.id ?? "noid"}`] ?? null;
 
   console.log(
     "Detail activity ID:",
@@ -63,49 +110,241 @@ const Detail: React.FC<DetailProps> = () => {
     files[activity?.id || ""]
   );
 
+  // ---------- APPROVED DANA STATE ----------
+  const [approvedDana, setApprovedDana] = useState<number | "">("");
+  const [isDanaSaved, setIsDanaSaved] = useState(false);
+
+  const handleSaveDana = () => {
+    if (!approvedDana || approvedDana <= 0) return;
+    const key = `approved-dana-${activity?.id}`;
+    localStorage.setItem(key, String(approvedDana));
+    setIsDanaSaved(true);
+  };
+
+  const [detailData, setDetailData] = useState<DetailApprovalData>({});
+
+  const approvalState =
+    mode === "TOR"
+      ? {
+          approval1: detailData.torApproval1Status ?? "Pending",
+          approval2: detailData.torApproval2Status ?? "Pending",
+          approval3: detailData.torApproval3Status ?? "Pending",
+        }
+      : {
+          approval1: detailData.lpjApproval1Status ?? "Pending",
+          approval2: detailData.lpjApproval2Status ?? "Pending",
+          approval3: detailData.lpjApproval3Status ?? "Pending",
+        };
+
+  const allowedField: ApprovalField =
+  mode === "TOR"
+    ? roleTyped === "Admin"
+      ? "torApproval1Status"
+      : roleTyped === "Sekjur"
+      ? "torApproval2Status"
+      : "torApproval3Status"
+    : roleTyped === "Admin"
+    ? "lpjApproval1Status"
+    : roleTyped === "Sekjur"
+    ? "lpjApproval2Status"
+    : "lpjApproval3Status";
+
+
   const detailInfo = {
     nama: activity?.judul ?? "–",
     tanggal: activity?.tanggal ?? "–",
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
     dana:
       activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
-    catatanPengaju: activity?.catatanPengaju ?? "Belum ada catatan.",
     penanggung_jawab: activity?.penanggung_jawab ?? "-",
     sisaDana: activity?.lpj?.sisa_dana ?? "-",
     metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",
     total_peserta: activity?.lpj?.total_peserta ?? "[ Belum Ada Data ]",
   };
 
-  const [activeTab, setActiveTab] = useState<TabKey>("detail");
-  const [isDragging, setIsDragging] = useState(false);
+  const mapFieldToKey = (field: ApprovalField, mode: "TOR" | "LPJ") => {
+  if (mode === "TOR") {
+    if (field === "torApproval1Status") return "torApproval1Status";
+    if (field === "torApproval2Status") return "torApproval2Status";
+    return "torApproval3Status";
+  } else {
+    if (field === "lpjApproval1Status") return "lpjApproval1Status";
+    if (field === "lpjApproval2Status") return "lpjApproval2Status";
+    return "lpjApproval3Status";
+  }
+};
 
-  const currentFile = files[`file-${mode}-${activity?.id ?? "noid"}`] || null;
+const handleApprove = (field: ApprovalField) => {
+  if (!activity) return;
 
-  // ---------- DEFAULT (tetap) ----------
-  const defaultApproval = {
-    approval1Status: "Pending",
-    approval2Status: "Pending",
-    approval3Status: "Pending",
+  // mapping UI -> field DB
+  const mappedField = mapFieldToKey(field, mode);
 
-    lpjApproval1Status: "Pending",
-    lpjApproval2Status: "Pending",
-    lpjApproval3Status: "Pending",
-  };
+  const key = `approval-${activity.id}`;
 
-  const [detailData, setDetailData] = useState(defaultApproval);
+  const approvalStore = JSON.parse(
+    localStorage.getItem("approvalStatus") || "{}"
+  );
 
-  const activeApproval =
-    mode === "TOR"
+  const currentModeData =
+    approvalStore[key]?.[mode] ??
+    (mode === "TOR"
       ? {
-          approval1Status: detailData.approval1Status,
-          approval2Status: detailData.approval2Status,
-          approval3Status: detailData.approval3Status,
+          torApproval1Status: "Pending",
+          torApproval2Status: "Pending",
+          torApproval3Status: "Pending",
         }
       : {
-          approval1Status: detailData.lpjApproval1Status ?? "Pending",
-          approval2Status: detailData.lpjApproval2Status ?? "Pending",
-          approval3Status: detailData.lpjApproval3Status ?? "Pending",
-        };
+          lpjApproval1Status: "Pending",
+          lpjApproval2Status: "Pending",
+          lpjApproval3Status: "Pending",
+        });
+
+  const updatedModeData = {
+    ...currentModeData,
+    [mappedField]: "Approved",
+  };
+
+  const updatedAll = {
+    ...approvalStore,
+    [key]: {
+      ...approvalStore[key],
+      [mode]: updatedModeData,
+    },
+  };
+
+  // ===== SIMPAN STATUS =====
+  setApprovalStatus(updatedAll);
+  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+
+  // ===== UPDATE STATE LOKAL =====
+  setDetailData((prev) => ({
+    ...prev,
+    ...updatedModeData,
+  }));
+
+  // ===== UPDATE DATA KEGIATAN =====
+  setData((prev) => {
+    const updated = prev.map((d) => {
+      if (d.id !== activity.id) return d;
+
+      return {
+        ...d,
+        ...updatedModeData,
+      };
+    });
+
+    localStorage.setItem("kegiatan", JSON.stringify(updated));
+    return updated;
+  });
+};
+
+const handleReject = (field: ApprovalField) => {
+  if (!activity) return;
+
+  // mapping UI -> field DB
+  const mappedField = mapFieldToKey(field, mode);
+
+  const key = `approval-${activity.id}`;
+
+  const approvalStore = JSON.parse(
+    localStorage.getItem("approvalStatus") || "{}"
+  );
+
+  const currentModeData =
+    approvalStore[key]?.[mode] ??
+    (mode === "TOR"
+      ? {
+          torApproval1Status: "Pending",
+          torApproval2Status: "Pending",
+          torApproval3Status: "Pending",
+        }
+      : {
+          lpjApproval1Status: "Pending",
+          lpjApproval2Status: "Pending",
+          lpjApproval3Status: "Pending",
+        });
+
+  const updatedModeData = {
+    ...currentModeData,
+    [mappedField]: "Rejected",
+  };
+
+  const updatedAll = {
+    ...approvalStore,
+    [key]: {
+      ...approvalStore[key],
+      [mode]: updatedModeData,
+    },
+  };
+
+  // ===== SIMPAN STATUS =====
+  setApprovalStatus(updatedAll);
+  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+
+  // ===== UPDATE DETAIL =====
+  setDetailData((prev) => ({
+    ...prev,
+    ...updatedModeData,
+  }));
+
+  // ===== UPDATE DATA KEGIATAN =====
+  setData((prev) => {
+    const updated = prev.map((d) => {
+      if (d.id !== activity.id) return d;
+
+      return {
+        ...d,
+        ...updatedModeData,
+      };
+    });
+
+    localStorage.setItem("kegiatan", JSON.stringify(updated));
+    return updated;
+  });
+};
+
+const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (!file || !id) return;
+
+  const key = `file-${mode}-${id}`;
+  const nameKey = `file-name-${mode}-${id}`;
+
+  setFiles((prev) => ({
+    ...prev,
+    [key]: file,
+  }));
+
+  // Simpan file asli di IndexedDB
+  await saveFile(key, file);
+
+  localStorage.setItem(nameKey, file.name);
+  localStorage.setItem(`submitted-${mode}-${id}`, "true");
+  setHasDownloaded(false);
+};
+
+
+useEffect(() => {
+  if (!activity?.id) return;
+
+  const key = `file-${mode}-${activity?.id}`;
+  const nameKey = `file-name-${mode}-${activity?.id}`;
+
+  // Restore status submitted
+  const submitted = localStorage.getItem(`submitted-${mode}-${activity?.id}`);
+  if (submitted === "true") setHasSubmitted(true);
+
+  // Restore nama file untuk tampilan
+  const savedName = localStorage.getItem(nameKey);
+  if (savedName) {
+    setFiles((prev) => ({
+      ...prev,
+      [key]: { name: savedName } as any, // placeholder untuk tampilan
+    }));
+  }
+}, [activity?.id, mode]);
+
 
   // ---------- MIGRATE DATA ONCE (safe) ----------
   useEffect(() => {
@@ -139,224 +378,54 @@ const Detail: React.FC<DetailProps> = () => {
 
   // ---------- SYNC detailData FROM approvalStatus (mode-aware, guarded) ----------
   useEffect(() => {
-    if (!activity) return;
-
-    const key = `approval-${activity.id}`;
-    const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
-    const saved = store[key]?.[mode];
-
-    if (saved) {
-      setDetailData((prev) => {
-        const next = { ...defaultApproval, ...saved };
-        return JSON.stringify(prev) === JSON.stringify(next) ? prev : next;
-      });
-    } else {
-      const next =
-        mode === "TOR"
-          ? {
-              ...defaultApproval,
-              approval1Status: "Pending",
-              approval2Status: "Pending",
-              approval3Status: "Pending",
-            }
-          : {
-              ...defaultApproval,
-              lpjApproval1Status: "Pending",
-              lpjApproval2Status: "Pending",
-              lpjApproval3Status: "Pending",
-            };
-
-      setDetailData((prev) =>
-        JSON.stringify(prev) === JSON.stringify(next) ? prev : next
-      );
-    }
-  }, [activity, mode]);
-
-  // ---------- HANDLE APPROVE (mode-aware, safe) ----------
-  const handleApprove = (field: keyof typeof defaultApproval) => {
   if (!activity) return;
 
   const key = `approval-${activity.id}`;
+  const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+  const saved = store[key]?.[mode] as DetailApprovalData | undefined;
 
-  const approvalStore = JSON.parse(
-    localStorage.getItem("approvalStatus") || "{}"
-  );
+  if (saved) {
+    setDetailData((prev) =>
+      JSON.stringify(prev) === JSON.stringify(saved) ? prev : saved
+    );
+    return;
+  }
 
-  const currentModeData =
-    approvalStore[key]?.[mode] ??
-    (mode === "TOR"
+  const defaultData: DetailApprovalData =
+    mode === "TOR"
       ? {
-          approval1Status: "Pending",
-          approval2Status: "Pending",
-          approval3Status: "Pending",
+          torApproval1Status: "Pending",
+          torApproval2Status: "Pending",
+          torApproval3Status: "Pending",
         }
       : {
           lpjApproval1Status: "Pending",
           lpjApproval2Status: "Pending",
           lpjApproval3Status: "Pending",
-        });
-
-  const updatedModeData = {
-    ...currentModeData,
-    [field]: "Approved",
-  };
-
-  const updatedAll = {
-    ...approvalStore,
-    [key]: {
-      ...approvalStore[key],
-      [mode]: updatedModeData,
-    },
-  };
-
-  setApprovalStatus(updatedAll);
-  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
-
-  setDetailData((prev) => ({
-    ...prev,
-    ...updatedModeData,
-  }));
-
-  // 🔥 UPDATE KEGIATAN
-  setData((prev) => {
-    const updated = prev.map((d) => {
-      if (d.id !== activity.id) return d;
-
-      if (mode === "TOR") {
-        return {
-          ...d,
-          torApproval1Status: updatedModeData.approval1Status,
-          torApproval2Status: updatedModeData.approval2Status,
-          torApproval3Status: updatedModeData.approval3Status,
         };
-      }
 
-      if (mode === "LPJ") {
-        return {
-          ...d,
-          lpjApproval1Status: updatedModeData.lpjApproval1Status,
-          lpjApproval2Status: updatedModeData.lpjApproval2Status,
-          lpjApproval3Status: updatedModeData.lpjApproval3Status,
-        };
-      }
-
-      return d;
-    });
-
-    localStorage.setItem("kegiatan", JSON.stringify(updated));
-    return updated;
+  setDetailData((prev) => {
+    const merged = { ...prev, ...defaultData };
+    return JSON.stringify(prev) === JSON.stringify(merged) ? prev : merged;
   });
-};
+}, [activity, mode]);
 
 
-  // ---------- HANDLE REJECT (mode-aware, safe) ----------
-  const handleReject = (field: keyof typeof defaultApproval) => {
-    if (!activity) return;
 
-    const key = `approval-${activity.id}`;
-    const approvalStore = JSON.parse(
-      localStorage.getItem("approvalStatus") || "{}"
-    );
+  const kegiatanStore = JSON.parse(localStorage.getItem("kegiatan") || "[]");
 
-    const currentModeData =
-      approvalStore[key]?.[mode] ??
-      (mode === "TOR"
-        ? {
-            approval1Status: "Pending",
-            approval2Status: "Pending",
-            approval3Status: "Pending",
-          }
-        : {
-            lpjApproval1Status: "Pending",
-            lpjApproval2Status: "Pending",
-            lpjApproval3Status: "Pending",
-          });
+  const currentKegiatan = kegiatanStore.find(
+    (k: any) => String(k.id) === String(activity?.id)
+  );
 
-    const updatedModeData = {
-      ...currentModeData,
-      [field]: "Rejected",
-    };
+  const danaDiajukan = currentKegiatan?.dana || detailInfo.dana || 0;
 
-    const updatedAll = {
-      ...approvalStore,
-      [key]: {
-        ...approvalStore[key],
-        [mode]: updatedModeData,
-      },
-    };
-
-    setApprovalStatus(updatedAll);
-    try {
-      localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
-    } catch (e) {
-      console.error("Failed to persist approvalStatus", e);
-    }
-
-    setDetailData((prev) => ({ ...defaultApproval, ...updatedModeData }));
-  };
-
-  const formatCurrency = (value: string) => {
-    const numbersOnly = value.replace(/\D/g, "");
-    return new Intl.NumberFormat("id-ID", {
-      style: "currency",
-      currency: "IDR",
-      minimumFractionDigits: 0,
-    }).format(Number(numbersOnly));
-  };
-
-  // ==================== HANDLE INPUT FILE ====================
-  const handleFileChange = (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const id = activity?.id ?? "noid";
-
-    const key = `file-${mode}-${id}`;
-    const nameKey = `file-name-${mode}-${id}`;
-
-    localStorage.setItem(key, JSON.stringify(file));
-    localStorage.setItem(nameKey, file.name);
-
-    setFiles((prev) => ({
-      ...prev,
-      [key]: file,
-    }));
-  };
-
-  // ==================== LOAD FILE DARI LOCALSTORAGE ====================
-  useEffect(() => {
-    if (!activity) return;
-
-    const storedBase64 = localStorage.getItem(`file-${activity.id}`);
-    const storedName = localStorage.getItem(`file-name-${activity.id}`);
-    if (storedBase64 && storedName) {
-      const arr = storedBase64.split(",");
-      const mime = arr[0].match(/:(.*?);/)?.[1] || "application/octet-stream";
-      const bstr = atob(arr[1]);
-      const u8arr = new Uint8Array(bstr.length);
-      for (let i = 0; i < bstr.length; i++) u8arr[i] = bstr.charCodeAt(i);
-
-      const file = new File([u8arr], storedName, { type: mime });
-      setFiles((prev) => ({ ...prev, [String(activity.id)]: file }));
-    }
-  }, [activity]);
 
   // ===================== STATE CATATAN PER ID =====================
   const [notes, setNotes] = useState(() => {
     const saved = localStorage.getItem("notes");
     return saved ? JSON.parse(saved) : {};
   });
-
-  const role = localStorage.getItem("role") || "";
-  // Role mapping tetap sama
-  const roleToField = {
-    admin: "approval1Status",
-    sekjur: "approval2Status",
-    kajur: "approval3Status",
-  };
-
-  const userRole = (localStorage.getItem("role") || "").toLowerCase();
-  const allowedField = roleToField[userRole];
 
   // ===================== LOAD CATATAN SAAT COMPONENT MOUNT =====================
   useEffect(() => {
@@ -366,14 +435,25 @@ const Detail: React.FC<DetailProps> = () => {
     }
   }, []);
 
+  useEffect(() => {
+    const key = `approved-dana-${activity?.id}`;
+    const saved = localStorage.getItem(key);
+
+    if (saved) {
+      setApprovedDana(Number(saved));
+      setIsDanaSaved(true);
+    }
+  }, [activity?.id]);
+
   // ===================== SIMPAN CATATAN PER-ID & PER-ROLE =====================
   const saveNote = (roleType: string, note: string) => {
     if (!activity) return;
 
     const activityId = String(activity.id);
-    const modeKey = mode; // "TOR" atau "LPJ"
+    const modeKey = mode;
 
-    const updated = {
+    // ===== UPDATE CATATAN =====
+    const updatedNotes = {
       ...notes,
       [activityId]: {
         ...notes[activityId],
@@ -384,13 +464,24 @@ const Detail: React.FC<DetailProps> = () => {
       },
     };
 
-    setNotes(updated);
-    localStorage.setItem("notes", JSON.stringify(updated));
+    setNotes(updatedNotes);
+    localStorage.setItem("notes", JSON.stringify(updatedNotes));
 
-    alert("Catatan berhasil disimpan!");
+    alert("Catatan revisi dikirim!");
   };
 
   const [hasDownloaded, setHasDownloaded] = useState(false);
+
+  const roleApprovalStatus =
+    rawRole === "Admin"
+      ? approvalState.approval1
+      : rawRole === "Sekjur"
+      ? approvalState.approval2
+      : rawRole === "Kajur"
+      ? approvalState.approval3
+      : null;
+
+  const canShowNote = rawRole === "Pengaju" || roleApprovalStatus === "Pending";
 
   return (
     <Layout>
@@ -417,44 +508,35 @@ const Detail: React.FC<DetailProps> = () => {
         {/* Tabs container */}
         <div className="bg-white rounded-2xl shadow-md mb-6 px-4 py-3 font-poppins">
           <div className="flex justify-center gap-10 py-2">
-            <button
-              onClick={() => setActiveTab("detail")}
-              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
-                ${
-                  activeTab === "detail"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-indigo-600 hover:text-[#6C74C6]"
-                }
-              `}
-            >
-              Detail Kegiatan
-            </button>
+            <TabButton
+              label="Detail"
+              value="detail"
+              activeTab={activeTab}
+              onClick={setActiveTab}
+            />
 
-            <button
-              onClick={() => setActiveTab("submit")}
-              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
-              ${
-                activeTab === "submit"
-                  ? "bg-indigo-600 text-white shadow-sm"
-                  : "text-indigo-600 hover:text-[#6C74C6]"
-              }
-            `}
-            >
-              {role === "Pengaju" ? "Submit File" : "Unduh File"}
-            </button>
+            <TabButton
+              label={roleTyped === "Pengaju" ? "Submit File" : "Unduh File"}
+              value="submit"
+              activeTab={activeTab}
+              onClick={setActiveTab}
+            />
 
-            <button
-              onClick={() => setActiveTab("approval")}
-              className={`text-lg font-semibold tracking-wide px-6 py-2 rounded-md transition-all
-                ${
-                  activeTab === "approval"
-                    ? "bg-indigo-600 text-white shadow-sm"
-                    : "text-indigo-600 hover:text-[#6C74C6]"
-                }
-              `}
-            >
-              Status Persetujuan
-            </button>
+            <TabButton
+              label="Status"
+              value="approval"
+              activeTab={activeTab}
+              onClick={setActiveTab}
+            />
+
+            {roleTyped === "Sekjur" && (
+              <TabButton
+                label="Dana Disetujui"
+                value="danasetuju"
+                activeTab={activeTab}
+                onClick={setActiveTab}
+              />
+            )}
           </div>
         </div>
 
@@ -463,503 +545,56 @@ const Detail: React.FC<DetailProps> = () => {
           <div className="p-4">
             {/* DETAIL */}
             {activeTab === "detail" && (
-              <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
-                <h2 className="font-semibold mb-4">Detail Pengajuan</h2>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-500">Nama Kegiatan</p>
-                    <p className="font-medium">{detailInfo.nama}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Tanggal Pengajuan</p>
-                    <p className="font-medium">{detailInfo.tanggal}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Penanggung Jawab</p>
-                    <p className="font-medium">{detailInfo.penanggung_jawab}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Dana Diajukan</p>
-                    <p className="font-medium">{detailInfo.dana}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Jumlah Peserta</p>
-                    <p className="font-medium">
-                      {detailInfo.total_peserta} peserta
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Dana Tersisa</p>
-                    <p className="font-medium">
-                      {formatCurrency(String(detailInfo.sisaDana || 0))}
-                    </p>
-                  </div>
-                  <div>
-                    <p className="text-gray-500">Metode Pelaksanaan</p>
-                    <p className="font-medium">
-                      {detailInfo.metode_pelaksanaan}
-                    </p>
-                  </div>
-                </div>
-
-                <div className="mt-4">
-                  <p className="text-gray-500 text-sm mb-1">Deskripsi</p>
-                  <p className="text-sm leading-relaxed font-medium">
-                    {detailInfo.deskripsi}
-                  </p>
-                </div>
-              </div>
+              <DetailPengajuan activity={activity} detailInfo={detailInfo} />
             )}
 
             {/* APPROVAL & CATATAN */}
-
             {activeTab === "approval" && (
-              <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
-                {/* Part Approval */}
-                <h2 className="font-semibold mb-4">Status Persetujuan</h2>
-                <div className="overflow-hidden rounded-xl border border-sm">
-                  <table className="w-full text-sm text-gray-500">
-                    <thead>
-                      <tr className="bg-[#86BE9E] text-white">
-                        <th className="p-2 text-center">Code</th>
-                        <th className=" text-center">Tanggal Pengajuan</th>
-                        <th className=" text-center">Deskripsi</th>
-                        <th className="text-center">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {/* Approval 1 */}
-                      <tr className="bg-gray-50 text-center">
-                        <td className="p-2 font-semibold">Persetujuan 1</td>
-                        <td className="p-2">{detailInfo.tanggal}</td>
-                        <td className="p-2">Persetujuan dari Administrasi</td>
-
-                        <td className="p-2">
-                          {/* === STATUS: APPROVED === */}
-                          {activeApproval.approval1Status === "Approved" && (
-                            <span className="text-green-600 font-semibold">
-                              Disetujui ✔
-                            </span>
-                          )}
-
-                          {/* === STATUS: REJECTED === */}
-                          {activeApproval.approval1Status === "Rejected" && (
-                            <span className="text-red-600 font-semibold">
-                              Ditolak ✖
-                            </span>
-                          )}
-
-                          {/* === STATUS: PENDING — ROLE BERWENANG === */}
-                          {activeApproval.approval1Status === "Pending" &&
-                            allowedField === "approval1Status" && (
-                              <div className="flex gap-2 justify-center">
-                                <button
-                                  disabled={!hasDownloaded}
-                                  onClick={() =>
-                                    handleApprove("approval1Status")
-                                  }
-                                  className="px-3 py-1 bg-[#4957B5] text-white 
-                                  rounded-md transition hover:scale-95
-                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
-                                >
-                                  Setujui
-                                </button>
-
-                                <button
-                                  disabled={!hasDownloaded}
-                                  onClick={() =>
-                                    handleReject("approval1Status")
-                                  }
-                                  className="px-3 py-1 bg-red-800 text-white 
-                                  rounded-md transition hover:scale-95
-                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
-                                >
-                                  Tolak
-                                </button>
-                              </div>
-                            )}
-
-                          {/* === STATUS: PENDING — TIDAK BERWENANG === */}
-                          {activeApproval.approval1Status === "Pending" &&
-                            allowedField !== "approval1Status" && (
-                              <span className="text-gray-500 font-medium">
-                                Pending
-                              </span>
-                            )}
-                        </td>
-                      </tr>
-
-                      {/* Approval 2 */}
-                      <tr className="bg-gray-100 text-center">
-                        <td className="p-2 font-semibold">Persetujuan 2</td>
-                        <td className="p-2">{detailInfo.tanggal}</td>
-                        <td className="p-2">Persetujuan dari Sekjur</td>
-
-                        <td className="p-2">
-                          {/* === STATUS: APPROVED === */}
-                          {activeApproval.approval2Status === "Approved" && (
-                            <span className="text-green-600 font-semibold">
-                              Disetujui ✔
-                            </span>
-                          )}
-
-                          {/* === STATUS: REJECTED === */}
-                          {activeApproval.approval2Status === "Rejected" && (
-                            <span className="text-red-600 font-semibold">
-                              Ditolak ✖
-                            </span>
-                          )}
-
-                          {/* === STATUS: PENDING — ROLE BERWENANG === */}
-                          {activeApproval.approval2Status === "Pending" &&
-                            allowedField === "approval2Status" && (
-                              <div className="flex gap-2 justify-center">
-                                <button
-                                  disabled={!hasDownloaded}
-                                  onClick={() =>
-                                    handleApprove("approval2Status")
-                                  }
-                                  className="px-3 py-1 bg-[#4957B5] text-white 
-                                  rounded-md transition hover:scale-95
-                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
-                                >
-                                  Setujui
-                                </button>
-
-                                <button
-                                  disabled={!hasDownloaded}
-                                  onClick={() =>
-                                    handleReject("approval2Status")
-                                  }
-                                  className="px-3 py-1 bg-red-800 text-white 
-                                  rounded-md transition hover:scale-95
-                                  disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
-                                >
-                                  Tolak
-                                </button>
-                              </div>
-                            )}
-
-                          {/* === STATUS: PENDING — TIDAK BERWENANG === */}
-                          {activeApproval.approval2Status === "Pending" &&
-                            allowedField !== "approval2Status" && (
-                              <span className="text-gray-500 font-medium">
-                                Pending
-                              </span>
-                            )}
-                        </td>
-                      </tr>
-
-                      {/* Approval 3 muncul hanya jika Approval 1 & 2 sudah Approved */}
-                      <tr className="bg-gray-50 text-center">
-                        <td className="p-2 font-semibold">Persetujuan 3</td>
-                        <td className="p-2">{detailInfo.tanggal}</td>
-                        <td className="p-2">Persetujuan dari Kajur</td>
-
-                        <td className="p-2">
-                          {/* === CEK: Approval 1 & 2 harus Approved dulu === */}
-                          {activeApproval.approval1Status === "Approved" &&
-                          activeApproval.approval2Status === "Approved" ? (
-                            <>
-                              {/* === STATUS: APPROVED === */}
-                              {activeApproval.approval3Status ===
-                                "Approved" && (
-                                <span className="text-green-600 font-semibold">
-                                  Disetujui ✔
-                                </span>
-                              )}
-
-                              {/* === STATUS: REJECTED === */}
-                              {activeApproval.approval3Status ===
-                                "Rejected" && (
-                                <span className="text-red-600 font-semibold">
-                                  Ditolak ✖
-                                </span>
-                              )}
-
-                              {/* === STATUS: PENDING — ROLE BERWENANG === */}
-                              {activeApproval.approval3Status === "Pending" &&
-                                allowedField === "approval3Status" && (
-                                  <div className="flex gap-2 justify-center">
-                                    <button
-                                      disabled={!hasDownloaded}
-                                      onClick={() =>
-                                        handleApprove("approval3Status")
-                                      }
-                                      className="px-3 py-1 bg-[#4957B5] text-white 
-                                      rounded-md transition hover:scale-95
-                                      disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
-                                    >
-                                      Setujui
-                                    </button>
-
-                                    <button
-                                      disabled={!hasDownloaded}
-                                      onClick={() =>
-                                        handleReject("approval3Status")
-                                      }
-                                      className="px-3 py-1 bg-red-800 text-white 
-                                      rounded-md transition hover:scale-95
-                                      disabled:bg-gray-400 disabled:text-gray-200 disabled:cursor-not-allowed"
-                                    >
-                                      Tolak
-                                    </button>
-                                  </div>
-                                )}
-
-                              {/* === STATUS: PENDING — TIDAK BERWENANG === */}
-                              {activeApproval.approval3Status === "Pending" &&
-                                allowedField !== "approval3Status" && (
-                                  <span className="text-gray-500 font-medium">
-                                    Pending
-                                  </span>
-                                )}
-                            </>
-                          ) : (
-                            // Approval 1 & 2 belum disetujui
-                            <span className="text-gray-500 font-medium">
-                              Pending
-                            </span>
-                          )}
-                        </td>
-                      </tr>
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="flex items-center gap-4 mt-10 mb-2">
-                  <div className="flex-1 h-[2px] bg-gray-300"></div>
-                  <span className="text-gray-400 text-sm tracking-wide">
-                    SECTION
-                  </span>
-                  <div className="flex-1 h-[2px] bg-gray-300"></div>
-                </div>
-                {/* Part Catatan */}
-                <h2 className="font-semibold py-4 pt-6">Catatan Revisi</h2>
-
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                  {/* ============================
-                        ADMIN / SEKJUR / KAJUR (boleh edit)
-                      ============================ */}
-                  {(role === "Admin" ||
-                    role === "Sekjur" ||
-                    role === "Kajur") && (
-                    <div className="col-span-1 md:col-span-3">
-                      <p className="text-xs font-semibold text-gray-600 mb-1">
-                        {role === "Admin"
-                          ? "Catatan dari Admin"
-                          : role === "Sekjur"
-                          ? "Catatan dari Sekjur"
-                          : "Catatan dari Ketua Jurusan"}
-                      </p>
-                      <div className="relative w-full">
-                        <textarea
-                          className="w-full border rounded-lg p-3 min-h-[12rem] pr-[5rem]"
-                          value={
-                            currentNote ??
-                            notes[String(activity?.id)]?.[mode]?.[userRole] ??
-                            ""
-                          }
-                          placeholder={`Catatan dari ${role.toLowerCase()}...`}
-                          aria-label={`Textarea catatan dari ${role}`}
-                          onChange={(e) => setCurrentNote(e.target.value)}
-                        />
-
-                        {/* Tombol Simpan di kanan bawah */}
-                        <button
-                          className="
-                          absolute bottom-6 right-3 
-                          px-4 py-1 bg-[#4957B5] 
-                          text-white rounded tracking-[0.10em]
-                          hover:scale-95 transition
-                        "
-                          onClick={() => saveNote(userRole, currentNote)}
-                        >
-                          Simpan
-                        </button>
-                      </div>
-                    </div>
-                  )}
-
-                  {/* ============================
-                        PENGAJU (read only, per mode TOR/LPJ)
-                      ============================ */}
-                  {role === "Pengaju" && (
-                    <>
-                      {/* ADMIN */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan dari Admin
-                        </p>
-                        <textarea
-                          className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={
-                            notes[String(activity?.id)]?.[mode]?.admin || ""
-                          }
-                          placeholder="Belum ada catatan dari Admin..."
-                          readOnly
-                        />
-                      </div>
-
-                      {/* SEKJUR */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan dari Sekjur
-                        </p>
-                        <textarea
-                          className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={
-                            notes[String(activity?.id)]?.[mode]?.sekjur || ""
-                          }
-                          placeholder="Belum ada catatan dari Sekjur..."
-                          readOnly
-                        />
-                      </div>
-
-                      {/* KAJUR */}
-                      <div>
-                        <p className="text-xs font-semibold text-gray-600 mb-1">
-                          Catatan dari Ketua Jurusan
-                        </p>
-                        <textarea
-                          className="w-full border rounded-lg p-3 min-h-80 text-gray-400"
-                          value={
-                            notes[String(activity?.id)]?.[mode]?.kajur || ""
-                          }
-                          placeholder="Belum ada catatan dari Kajur..."
-                          readOnly
-                        />
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
+              <ApprovalAndNoteSection
+                activeTab={activeTab}
+                detailInfo={detailInfo}
+                approvalState={approvalState}
+                allowedField={allowedField}
+                hasDownloaded={hasDownloaded}
+                handleApprove={(field) => handleApprove(field)}
+                handleReject={(field) => handleReject(field)}
+                canShowNote={canShowNote}
+                role={roleTyped}
+                userRole={userRole}
+                notes={notes}
+                activity={activity}
+                mode={mode}
+                currentNote={currentNote}
+                setCurrentNote={setCurrentNote}
+                saveNote={saveNote}
+              />
             )}
 
             {/* SUBMIT FILE */}
             {activeTab === "submit" && (
-              <div className="bg-gray-50 rounded-xl shadow-inner">
-                <div
-                  className={`rounded-3xl min-h-[180px] flex flex-col items-center justify-center px-6 transition ${
-                    currentFile
-                      ? "border-none bg-transparent p-0"
-                      : isDragging
-                      ? "border-2 border-indigo-500 border-dashed bg-indigo-50"
-                      : "border-2 border-green-300 border-dashed bg-green-100/70"
-                  }`}
-                >
-                  {!currentFile ? (
-                    role === "Pengaju" ? (
-                      // ======================
-                      // MODE INPUT khusus PENGAJU
-                      // ======================
-                      <div className="flex flex-col items-center gap-4 p-10">
-                        <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
-                          <span className="text-2xl">⬆️</span>
-                        </div>
+              <SubmitFileSection
+                role={roleTyped}
+                mode={mode}
+                id={activity?.id}
+                currentFile={currentFile}
+                hasSubmitted={hasSubmitted}
+                isDragging={isDragging}
+                handleFileChange={handleFileChange}
+                setFiles={setFiles}
+                setHasDownloaded={setHasDownloaded}
+              />
+            )}
 
-                        <p className="font-medium text-gray-800">
-                          Unggah File {mode === "TOR" ? "TOR" : "LPJ"} di sini
-                          atau Telusuri Dokumen
-                        </p>
-                        <p className="text-xs text-gray-600">
-                          Format: PDF (max 10MB)
-                        </p>
-
-                        <button
-                          type="button"
-                          className="mt-2 px-4 py-2 rounded-full bg-white text-sm shadow border cursor-pointer"
-                          onClick={() =>
-                            document
-                              .getElementById(`file-input-${mode}`)
-                              ?.click()
-                          }
-                        >
-                          Telusuri Dokumen
-                        </button>
-
-                        <input
-                          id={`file-input-${mode}`}
-                          type="file"
-                          accept=".pdf,.doc,.docx"
-                          className="hidden"
-                          onChange={handleFileChange}
-                          aria-label="upload-file"
-                        />
-                      </div>
-                    ) : (
-                      // ======================
-                      // ROLE LAIN (Admin/Sekjur/Kajur)
-                      // ======================
-                      <div className="text-center p-10 text-gray-600">
-                        Hanya <b>Pengaju</b> yang dapat mengunggah file.
-                        <br />
-                        Ose cuma bisa melihat atau mengunduh file kalau sudah
-                        ada.
-                      </div>
-                    )
-                  ) : (
-                    // ======================
-                    // FILE SUDAH ADA
-                    // ======================
-                    <div className="w-full flex justify-center mt-2">
-                      <div className="flex items-center justify-between bg-[#A4CEB6] px-8 py-8 rounded-xl shadow-md w-full max-w-[900px]">
-                        <p className="text-gray-100 font-semibold text-xl truncate max-w-[65%]">
-                          {currentFile.name ?? "—"}
-                        </p>
-
-                        <div className="flex items-center gap-3">
-                          {/* Tombol Unduh */}
-                          <button
-                            className="px-6 py-2.5 text-sm rounded-lg bg-[#4957B5] text-white font-semibold tracking-[0.05em] hover:scale-[0.97]"
-                            onClick={() => {
-                              const url = URL.createObjectURL(currentFile);
-                              const a = document.createElement("a");
-                              a.href = url;
-                              a.download = currentFile.name;
-                              a.click();
-                              URL.revokeObjectURL(url);
-
-                              setHasDownloaded(true);
-                            }}
-                          >
-                            Unduh
-                          </button>
-
-                          {/* Tombol Hapus - hanya PENGAJU */}
-                          {role === "Pengaju" && (
-                            <button
-                              aria-label="hapus"
-                              className="px-5 py-2 text-sm rounded-lg bg-[#9C1818] text-white hover:scale-[0.97]"
-                              onClick={() => {
-                                if (
-                                  !window.confirm(
-                                    "Ose yakin mo hapus par data ini ka seng ?"
-                                  )
-                                )
-                                  return;
-
-                                // set state kosong
-                                setFiles((prev) => ({
-                                  ...prev,
-                                  [`${mode}-${id}`]: null,
-                                }));
-
-                                localStorage.removeItem(`file-${mode}-${id}`);
-                                localStorage.removeItem(
-                                  `file-name-${mode}-${id}`
-                                );
-                              }}
-                            >
-                              <TrashIcon className="w-6 h-6" />
-                            </button>
-                          )}
-                        </div>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
+            {/* DANA DISETUJUI - SEKJUR */}
+            {activeTab === "danasetuju" && (
+              <DanaSetujuSection
+                danaDiajukan={danaDiajukan}
+                approvedDana={approvedDana}
+                isDanaSaved={isDanaSaved}
+                formatCurrency={formatCurrency}
+                setApprovedDana={setApprovedDana}
+                handleSaveDana={handleSaveDana}
+              />
             )}
           </div>
         </div>

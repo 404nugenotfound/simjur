@@ -4,6 +4,7 @@ import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 import { ChevronDownIcon } from "@heroicons/react/24/solid";
 import { useActivities } from "../context/ActivitiesContext";
+import InfoButton from "../components/ButtonInfo/InfoButton";
 
 // Definisi tipe TOR
 interface Tor {
@@ -282,8 +283,9 @@ export default function FormPengajuanLPJ({ setMode }) {
 
               {/* ngambil ID*/}
               <div className="col-span-2 w-full">
-                <label className="block text-black font-semibold mb-2">
+                <label className="flex items-center gap-2 text-black font-semibold mb-1">
                   Nama Kegiatan
+                  <InfoButton text="Pilih judul kegiatan sesuai TOR yang telah disetujui. Lalu data kegiatan akan ditarik otomatis dari TOR terkait." />
                 </label>
 
                 <div className="flex items-center gap-3">
@@ -323,7 +325,7 @@ export default function FormPengajuanLPJ({ setMode }) {
 
               {/* Metode Pelaksanaan */}
               <div className="w-full">
-                <label className="block text-black font-semibold mb-2">
+                <label className="flex items-center gap-2 text-black font-semibold mb-1">
                   Metode Pelaksanaan
                 </label>
 
@@ -411,8 +413,9 @@ export default function FormPengajuanLPJ({ setMode }) {
             {/* Jumlah Dana */}
             <div className="flex items-end gap-4">
               <div className="flex-1">
-                <label className="block text-black font-semibold mb-2">
+                <label className="flex items-center gap-2 text-black font-semibold mb-1">
                   Jumlah Dana Yang Digunakan
+                  <InfoButton text="Masukkan dana yang benar-benar digunakan. Jika lebih kecil dari dana TOR, sisa dana akan otomatis dikembalikan ke dana tersedia." />
                 </label>
 
                 <div className="flex items-center gap-3">

@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
+import InfoButton from "../components/ButtonInfo/InfoButton";
 
 export default function FormPengajuan({ addData, setMode }) {
   const [namaKegiatan, setNamaKegiatan] = useState("");
@@ -199,8 +200,9 @@ export default function FormPengajuan({ addData, setMode }) {
           <div className="space-y-5 pb-[1rem] font-poppins">
             {/* Nama Kegiatan */}
             <div>
-              <label className="block text-black font-semibold mb-1">
+              <label className="flex items-center gap-2 text-black font-semibold mb-1">
                 Nama Kegiatan
+                <InfoButton text="Gunakan nama kegiatan resmi sesuai proposal. Nama ini akan digunakan juga pada LPJ dan arsip kegiatan." />
               </label>
               <input
                 type="text"
@@ -214,8 +216,9 @@ export default function FormPengajuan({ addData, setMode }) {
             {/* Tanggal mulai & berakhir */}
             <div className="grid grid-cols-2 gap-4">
               <div>
-                <label className="block text-black font-semibold mb-1">
+                <label className="flex items-center gap-2 text-black font-semibold mb-1">
                   Tanggal Kegiatan Dimulai
+                  <InfoButton text="Isi dengan tanggal dimulainya kegiatan utama, bukan tanggal persiapan." />
                 </label>
                 <input
                   type="date"
@@ -227,8 +230,9 @@ export default function FormPengajuan({ addData, setMode }) {
               </div>
 
               <div>
-                <label className="block text-black font-semibold mb-1">
+                <label className="flex items-center gap-2 text-black font-semibold mb-1">
                   Tanggal Kegiatan Berakhir
+                  <InfoButton text="Tanggal berakhirnya kegiatan utama. Harus sama atau setelah tanggal dimulai." />
                 </label>
                 <input
                   type="date"
@@ -242,8 +246,9 @@ export default function FormPengajuan({ addData, setMode }) {
 
             {/* Penanggung Jawab */}
             <div>
-              <label className="block text-black font-semibold mb-1">
+              <label className="flex items-center gap-2 text-black font-semibold mb-1">
                 Penanggung Jawab
+                <InfoButton text="Isi dengan nama penanggung jawab data dokumen kegiatan (contoh: Ketua Panitia atau Dosen Pembimbing)." />
               </label>
               <div className="flex gap-2">
                 <input
@@ -272,8 +277,9 @@ export default function FormPengajuan({ addData, setMode }) {
             {/* Dana */}
             <div className="flex items-end gap-4">
               <div className="flex-1">
-                <label className="block text-black font-semibold mb-1">
+                <label className="flex items-center gap-2 text-black font-semibold mb-1">
                   Total Dana Dibutuhkan
+                  <InfoButton text="Total dana yang diajukan pada TOR. Nilai ini akan menjadi acuan awal dan dibandingkan dengan LPJ." />
                 </label>
                 <input
                   type="text"

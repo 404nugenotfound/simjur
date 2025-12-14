@@ -55,7 +55,8 @@ export default function Sidebar({
   }, []);
 
   const handleMenuClick = (path: string) => {
-  navigate(path); // navigasi aja, tanpa ubah open
+  navigate(path);
+  setMode("list"); // navigasi aja, tanpa ubah open
 };
 
   return (
