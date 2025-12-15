@@ -27,8 +27,6 @@ const SubmitFileSection = ({
 }: Props) => {
   /** 🔒 GUARD */
   const isValidId = typeof id === "string" || typeof id === "number";
-  const fileKey = isValidId ? `file-${mode}-${id}` : "";
-  const nameKey = isValidId ? `file-name-${mode}-${id}` : "";
 
   const handleDownload = async () => {
     if (!isValidId) return;

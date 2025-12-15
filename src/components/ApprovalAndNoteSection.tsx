@@ -205,7 +205,6 @@ const ApprovalAndNoteSection = ({
           </div>
 
           <h2 className="font-semibold mb-3 text-lg">Catatan Revisi</h2>
-          <p className="text-sm font-medium mb-2">Catatan dari {role}</p>
 
           {role !== "Pengaju" ? (
             <div className="relative w-full">
@@ -216,23 +215,40 @@ const ApprovalAndNoteSection = ({
                 placeholder="Tulis catatan revisi di sini..."
               />
               <button
+                disabled={!hasDownloaded}
                 onClick={handleSaveNoteWithRevisi}
-                className="absolute bottom-5 right-4 px-4 py-1 bg-[#4957B5] hover:scale-[0.97] text-white font-medium tracking-[0.05em] rounded"
+                className="absolute bottom-5 right-4 px-4 py-1 bg-[#4957B5] hover:scale-[0.97] 
+                text-white font-medium tracking-[0.05em] rounded
+                disabled:bg-gray-600 disabled:cursor-not-allowed"
               >
                 Simpan
               </button>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              {["admin", "sekjur", "kajur"].map((r) => (
-                <textarea
-                  key={r}
-                  readOnly
-                  className="border rounded-lg p-3 min-h-80 text-gray-400"
-                  value={notes[String(activity?.id)]?.[mode]?.[r] || ""}
-                />
-              ))}
-            </div>
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {[
+              { key: "admin", label: "Catatan dari Admin" },
+              { key: "sekjur", label: "Catatan dari Sekjur" },
+              { key: "kajur", label: "Catatan dari Kajur" },
+            ].map((r) => {
+              const note = notes[String(activity?.id)]?.[mode]?.[r.key];
+
+              return (
+                <div key={r.key} className="flex flex-col gap-2">
+                  <span className="text-sm font-semibold text-gray-600">
+                    {r.label}
+                  </span>
+
+                  <textarea
+                    readOnly
+                    placeholder={`Belum ada catatan dari ${r.label.replace("Catatan dari ", "")}`}
+                    className="border rounded-lg p-3 min-h-80 text-gray-400 placeholder:text-gray-300"
+                    value={note || undefined}
+                  />
+                </div>
+              );
+            })}
+          </div>
           )}
         </>
       )}
