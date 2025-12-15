@@ -1,15 +1,9 @@
 import Layout from "./Layout";
 import { useContext } from "react";
 import { DashboardContext } from "../context/DashboardContext";
-import {
-  PieChart,
-  Pie,
-  Tooltip,
-  Cell,
-  ResponsiveContainer,
-  Legend,
-} from "recharts";
+import { ResponsiveContainer } from "recharts";
 import LineChart from "../components/Charts/LineChart";
+import VisxPieResponsive from "../components/Charts/VisxPieResponsive";
 
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
@@ -58,27 +52,25 @@ export default function Dashboard() {
   );
 
   // Data Dana dari context
-  const { dana } = useContext(DashboardContext);
-
-  const danaSisa = dana.danaRegular - dana.danaTerpakai;
+  const { dana, approvedDanaTotal, TotalDanaTerpakai, danaJurusan } =
+    useContext(DashboardContext);
 
   const danaStats = [
-    { label: "Dana Regular", value: `Rp ${dana.danaRegular.toLocaleString()}` },
+    { label: "Dana dari Jurusan", value: `Rp ${danaJurusan.toLocaleString()}` },
     {
-      label: "Dana Terpakai",
-      value: `Rp ${dana.danaTerpakai.toLocaleString()}`,
+      label: "Total Dana yang Disetujui",
+      value: `Rp ${approvedDanaTotal.toLocaleString()}`,
     },
-    { label: "Dana Sisa", value: `Rp ${danaSisa.toLocaleString()}` },
+    {
+      label: "Total Dana yang Terpakai",
+      value: `Rp ${TotalDanaTerpakai.toLocaleString()}`,
+    },
   ];
 
-  const danaChart = [
-    { name: "Terpakai", value: dana.danaTerpakai },
-    { name: "Sisa", value: danaSisa },
-  ];
 
   return (
     <Layout>
-      <div className="flex-1 p-6 md:p-12 transition-all duration-300 space-y-8">
+      <div className="flex-1 p-6 md:p-12 transition-all duration-300 space-y-8 font-poppins">
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
           DASHBOARD PENGAJUAN KEGIATAN
         </h1>
@@ -94,30 +86,19 @@ export default function Dashboard() {
               key={i}
               className="border bg-white rounded-xl p-5 text-center text-black shadow"
             >
-              <p className="font-medium">{item.label}</p>
-              <p className="text-3xl font-bold mt-3">{item.value}</p>
+              <p className="font-medium text-lg">{item.label}</p>
+              <p className="text-3xl font-semibold mt-3">{item.value}</p>
             </div>
           ))}
         </div>
 
         {/* ====== PIE CHART DANA ====== */}
         <div className="border bg-white rounded-xl p-6 shadow-md text-black mt-6">
-          <h2 className="text-lg font-medium mb-5">
-            Grafik Dana (Terpakai vs Sisa)
-          </h2>
+          <h2 className="text-lg font-medium mb-5">Grafik Dana Jurusan</h2>
 
           {/* Wrapper fleksibel */}
           <div className="w-full h-72 flex-1">
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie dataKey="value" data={danaChart} outerRadius={90} label>
-                  <Cell fill="#FF6B6B" />
-                  <Cell fill="#4CAF50" />
-                </Pie>
-                <Tooltip />
-                <Legend />
-              </PieChart>
-            </ResponsiveContainer>
+              <VisxPieResponsive />
           </div>
         </div>
 

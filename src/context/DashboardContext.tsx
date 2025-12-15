@@ -16,11 +16,14 @@ interface DashboardContextType {
   dana: {
     danaRegular: number;
     danaTerpakai: number;
+    danaDisetujui: number;
     tahun: number;
   };
-
+  danaJurusan: number;
+  TotalDanaTerpakai: number;
+  approvedDanaTotal: number;
   updateDana: (regular: number, terpakai: number) => void;
-  resetDanaRegular: () => void; // ⬅️ INI YANG BELUM ADA
+  addDanaDisetujui: (nominal: number) => void;
 }
 
 export const DashboardContext = createContext<DashboardContextType>(
@@ -61,24 +64,34 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
 
   // ====== DANA ======
   const [dana, setDana] = useState(() => {
-    try {
-      const saved = localStorage.getItem("dana");
-      if (saved) {
-        const parsed = JSON.parse(saved);
-        return {
-          danaRegular: Number(parsed.danaRegular) || 0,
-          danaTerpakai: Number(parsed.danaTerpakai) || 0,
-          tahun: parsed.tahun || new Date().getFullYear(),
-        };
-      }
-    } catch {}
+  try {
+    const saved = localStorage.getItem("dana");
+    if (saved) {
+      const parsed = JSON.parse(saved);
+      return {
+        danaRegular: Number(parsed.danaRegular) || 0,
+        danaTerpakai: Number(parsed.danaTerpakai) || 0,
+        danaDisetujui: Number(parsed.danaDisetujui) || 0,
+        tahun: parsed.tahun || new Date().getFullYear(),
+      };
+    }
+  } catch {}
 
-    return {
-      danaRegular: 0,
-      danaTerpakai: 0,
-      tahun: new Date().getFullYear(),
-    };
-  });
+  return {
+    danaRegular: 0,
+    danaTerpakai: 0,
+    danaDisetujui: 0,
+    tahun: new Date().getFullYear(),
+  };
+});
+
+  const addDanaDisetujui = (nominal: number) => {
+  setDana((prev) => ({
+    ...prev,
+    danaDisetujui: prev.danaDisetujui + nominal,
+  }));
+};
+
 
   // Simpan dana ke localStorage setiap kali berubah
   useEffect(() => {
@@ -89,25 +102,34 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [dana]);
 
-  const updateDana = (regular: number, terpakai: number) => {
-    setDana((prev) => {
-      const newDana = {
-        ...prev,
-        danaRegular: regular,
-        danaTerpakai: terpakai,
-      };
-      return newDana;
-    });
-  };
+  const updateDana = (tambahan: number, terpakai: number) => {
+  setDana((prev) => {
+    const newDana = {
+      ...prev,
+      danaRegular: prev.danaRegular + tambahan, // ✅ AKUMULASI
+      danaTerpakai: terpakai,
+    };
 
-  const resetDanaRegular = () => {
-  setDana((prev) => ({
-    ...prev,
-    danaRegular: 0,     // cuma ini yang direset
-  }));
+    return newDana;
+  });
 };
 
 
+  const approvedDanaTotal = data.reduce((acc, kegiatan) => {
+  const key = `approved-dana-${kegiatan.id}`;
+  const stored = localStorage.getItem(key);
+  return acc + (stored ? Number(stored) : 0);
+}, 0);
+
+   const TotalDanaTerpakai = data.reduce((acc, kegiatan) => {
+  const danaStr = kegiatan.lpj?.dana_terpakai;
+  if (!danaStr) return acc;
+
+  const dana = Number(danaStr.replace(/[^0-9]/g, ""));
+  return acc + dana;
+}, 0);
+
+const danaJurusan = dana.danaRegular - TotalDanaTerpakai;
 
   // ====== SUMMARY ======
   const summary = {
@@ -124,7 +146,10 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
         summary,
         dana,
         updateDana,
-        resetDanaRegular,
+        approvedDanaTotal,
+        addDanaDisetujui,
+        TotalDanaTerpakai,
+        danaJurusan,
       }}
     >
       {children}

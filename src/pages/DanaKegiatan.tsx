@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 
 export default function KelolaDana() {
-  const { dana, updateDana, data, resetDanaRegular } =
+  const { dana, data, updateDana } =
     useContext(DashboardContext);
 
   // hitung dana terpakai dari semua kegiatan
@@ -13,16 +13,8 @@ export default function KelolaDana() {
     0
   );
   // form input untuk dana regular
-  const [regular, setRegular] = useState(Number(dana.danaRegular) || 0);
-  const [regularDisplay, setRegularDisplay] = useState(
-    dana.danaRegular
-      ? new Intl.NumberFormat("id-ID", {
-          style: "currency",
-          currency: "IDR",
-          minimumFractionDigits: 0,
-        }).format(dana.danaRegular)
-      : ""
-  );
+  const [regular, setRegular] = useState(0);
+  const [regularDisplay, setRegularDisplay] = useState("");
 
   const navigate = useNavigate();
 
@@ -71,13 +63,13 @@ export default function KelolaDana() {
         {/* INFO */}
         <div className="bg-gray-100 p-4 rounded-lg shadow mb-6">
           <p className="mb-1">
-            Total Dana Terpakai:{" "}
-            <b className="text-red-700">{formatRupiah(totalTerpakai)}</b>
+            Total Dana Saat Ini:{" "}
+            <b className="text-red-700">{formatRupiah(dana.danaRegular)}</b>
           </p>
           <p>
-            Sisa Dana:{" "}
+            Total Dana Jurusan:{" "}
             <b className="text-green-700">
-              {formatRupiah(regular - totalTerpakai)}
+              {formatRupiah(dana.danaRegular + regular)}
             </b>
           </p>
         </div>
@@ -86,7 +78,6 @@ export default function KelolaDana() {
         <div className="flex justify-center gap-5 mt-6 font-medium">
           <button
             onClick={() => {
-              resetDanaRegular();
               window.location.reload();
             }}
             className="bg-[#9C1818] px-5 py-1.5 rounded-md text-white hover:scale-95 transition"

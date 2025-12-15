@@ -41,6 +41,12 @@ export default function FormPengajuanLPJ({ setMode }) {
   const [selectorTorId, setSelectorTorId] = useState(); // var di simpan di sini
   const [selectedTor, setSelectedTor] = useState<Tor | null>(null);
   const { updateData } = useActivities();
+  const approvedDana = React.useMemo(() => {
+  if (!selectedTor?.id) return 0;
+  const stored = localStorage.getItem(`approved-dana-${selectedTor.id}`);
+  return stored ? Number(stored) : 0;
+}, [selectedTor]);
+
 
   // === [ SET DATA TOR GENERATE ] ===
 
@@ -94,11 +100,8 @@ export default function FormPengajuanLPJ({ setMode }) {
   useEffect(() => {
     if (!selectedTor) return;
 
-    // ambil dana dari TOR, bersihkan simbol dan spasi
-    const torDana = Number(selectedTor.dana?.replace(/\D/g, "") || 0);
-
-    setSisaDana(torDana - danaTerpakaiNumber);
-  }, [selectedTor, danaTerpakaiNumber]);
+    setSisaDana(approvedDana - danaTerpakaiNumber);
+  }, [approvedDana, danaTerpakaiNumber, selectedTor]);
 
   const handleDanaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const numbersOnly = e.target.value.replace(/\D/g, "");
@@ -241,10 +244,10 @@ export default function FormPengajuanLPJ({ setMode }) {
 
     const update = {
       lpj: {
-        dana_terpakai: selectedTor?.lpj?.dana_terpakai ?? "", // default string
-        peserta_mahasiswa: selectedTor?.lpj?.peserta_mahasiswa ?? 0,
-        peserta_alumni: selectedTor?.lpj?.peserta_alumni ?? 0,
-        peserta_dosen: selectedTor?.lpj?.peserta_dosen ?? 0,
+        dana_terpakai: danaTerpakai, // default string
+        peserta_mahasiswa: pesertaMahasiswa ?? 0,
+        peserta_alumni: pesertaAlumni ?? 0,
+        peserta_dosen: pesertaDosen ?? 0,
         created_at: selectedTor?.lpj?.created_at ?? new Date().toISOString(),
 
         // field yang lu update

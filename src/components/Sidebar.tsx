@@ -147,14 +147,6 @@ export default function Sidebar({
             {open && dropdownState.kelola && (
               <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white shadow-lg rounded-md py-2 w-full border border-white/10">
                 <button
-                  onClick={() => navigate("/kelola")}
-                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
-                >
-                  <CreditCardIcon className="w-5 h-5" />
-                  Update Dana
-                </button>
-
-                <button
                   onClick={() => navigate("/Input")}
                   className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
                 >

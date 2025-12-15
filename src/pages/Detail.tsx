@@ -19,6 +19,9 @@ import TabButton from "../components/TabButton";
 import { Role, UserRole, ApprovalField, ApprovalStatus } from "@/utils/role";
 import { TabKey } from "@/utils/tab";
 import { saveFile } from "../utils/indexedDB";
+import { useContext } from "react";
+import { DashboardContext } from "../context/DashboardContext";
+
 
 // ----------------- TYPES -----------------
 type ApprovalState = {
@@ -115,13 +118,22 @@ const Detail: React.FC<DetailProps> = () => {
   // ---------- APPROVED DANA STATE ----------
   const [approvedDana, setApprovedDana] = useState<number | "">("");
   const [isDanaSaved, setIsDanaSaved] = useState(false);
+  const { addDanaDisetujui } = useContext(DashboardContext);
 
-  const handleSaveDana = () => {
-    if (!approvedDana || approvedDana <= 0) return;
-    const key = `approved-dana-${activity?.id}`;
-    localStorage.setItem(key, String(approvedDana));
-    setIsDanaSaved(true);
-  };
+
+ const handleSaveDana = () => {
+  if (!approvedDana || approvedDana <= 0) return;
+
+  // simpan ke localStorage per kegiatan
+  const key = `approved-dana-${activity?.id}`;
+  localStorage.setItem(key, approvedDana.toString());
+
+  // update context
+  addDanaDisetujui(approvedDana);
+
+  setIsDanaSaved(true);
+};
+
 
   const [detailData, setDetailData] = useState<DetailApprovalData>({});
 
@@ -157,7 +169,7 @@ const Detail: React.FC<DetailProps> = () => {
     tanggal: activity?.tanggal ?? "–",
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
     dana:
-      activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
+    activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
     penanggung_jawab: activity?.penanggung_jawab ?? "-",
     sisaDana: activity?.lpj?.sisa_dana ?? "-",
     metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",

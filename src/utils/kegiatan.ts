@@ -1,8 +1,27 @@
+export interface LPJ {
+  dana_terpakai?: string;
+  peserta_mahasiswa?: number;
+  peserta_alumni?: number;
+  peserta_dosen?: number;
+  total_peserta?: number;
+  metode_pelaksanaan?: string;
+  sisa_dana?: number;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export interface Kegiatan {
-  id: string;
+  id: number | string;
+  judul: string;
   nama: string;
   isTorApproved?: boolean;
-  kategori: "TOR" | "LPJ" | "Selesai";
+  dana: string;
+  tanggal: string;
+  penanggung_jawab: string;
   nominal: number;
-  status: "pending" | "approved" | "done";
+
+  lpj?: LPJ;
+
+  kategori?: "TOR" | "LPJ" | "Selesai";
+  status?: "pending" | "approved" | "done";
 }

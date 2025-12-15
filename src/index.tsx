@@ -9,14 +9,12 @@ import Dashboard from "./pages/Dashboard";
 import DaftarKegiatan from "./pages/DaftarKegiatan";
 import Detail from "./pages/Detail";
 import DaftarKegiatanLPJ from "./pages/DaftarKegiatanLPJ";
-import KelolaDashboard from "./pages/KelolaDashboard";
 import { DashboardProvider } from "./context/DashboardContext";
 import Profile from "./pages/Profile";
-import PengajuanKegiatan from "./pages/PengajuanKegiatan";
-import Layout from "./pages/Layout";
 import PengajuanContext from "./context/PengajuanContext";
 import { ActivitiesProvider } from "./context/ActivitiesContext";
 import KelolaDana from "./pages/DanaKegiatan";
+
 
 const root = ReactDOM.createRoot(
   document.getElementById("root") as HTMLElement
@@ -39,7 +37,6 @@ root.render(
               <Route path="/daftar" element={<DaftarKegiatan />} />
               <Route path="/detail/:id" element={<Detail />} />
               <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
-              <Route path="/kelola" element={<KelolaDashboard />} />
               <Route path="/profile" element={<Profile />} />
               <Route path="/Input" element={<KelolaDana />} />
             </Route>
