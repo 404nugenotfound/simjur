@@ -20,6 +20,7 @@ type Props = {
 
   handleApprove: (field: ApprovalField) => void;
   handleReject: (field: ApprovalField) => void;
+  handleRevisi: (field: ApprovalField) => void;
 
   canShowNote: boolean;
 
@@ -43,6 +44,7 @@ const ApprovalAndNoteSection = ({
   hasDownloaded,
   handleApprove,
   handleReject,
+  handleRevisi,
   canShowNote,
   role,
   userRole,
@@ -54,6 +56,17 @@ const ApprovalAndNoteSection = ({
   saveNote,
 }: Props) => {
   if (activeTab !== "approval") return null;
+
+  const getApprovalField = (
+    mode: "TOR" | "LPJ",
+    level: 1 | 2 | 3
+  ): ApprovalField => {
+    return `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
+  };
+
+  const getApprovalStatus = (state: ApprovalStateUI, level: 1 | 2 | 3) => {
+    return state[`approval${level}` as keyof ApprovalStateUI];
+  };
 
   const renderStatus = (status: string) => {
     switch (status) {
@@ -75,7 +88,7 @@ const ApprovalAndNoteSection = ({
 
   const renderAction = (field: ApprovalField, status: string) => {
     const canTakeAction =
-      ["Pending", "Revisi"].includes(status) && allowedField === field;
+      ["Pending"].includes(status) && allowedField === field;
 
     if (!canTakeAction) return null;
 
@@ -102,8 +115,23 @@ const ApprovalAndNoteSection = ({
     );
   };
 
+  const handleSaveNoteWithRevisi = () => {
+    saveNote(userRole, currentNote);
+
+    const roleLevelMap: Record<UserRole, 1 | 2 | 3> = {
+      admin: 1,
+      sekjur: 2,
+      kajur: 3,
+    };
+
+    const level = roleLevelMap[userRole];
+    const field = getApprovalField(mode, level);
+
+    handleRevisi(field);
+  };
+
   const canTakeAction = (field: ApprovalField, status: string) =>
-    ["Pending", "Revisi"].includes(status) && allowedField === field;
+    ["Pending"].includes(status) && allowedField === field;
 
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
@@ -120,68 +148,49 @@ const ApprovalAndNoteSection = ({
               <th className="px-12">Status</th>
             </tr>
           </thead>
-
           <tbody>
-            {/* APPROVAL 1 */}
-            <tr className="bg-gray-50 text-center">
-              <td className="p-2 font-semibold">Persetujuan 1</td>
-              <td>{detailInfo.tanggal}</td>
-              <td>Persetujuan dari Administrasi</td>
-              <td>
-                <div className="flex items-center justify-center gap-2">
-                  {canTakeAction("torApproval1Status", approvalState.approval1)
-                    ? renderAction(
-                        "torApproval1Status",
-                        approvalState.approval1
-                      )
-                    : renderStatus(approvalState.approval1)}
-                </div>
-              </td>
-            </tr>
+            {[1, 2, 3].map((level) => {
+              const field = getApprovalField(mode, level as 1 | 2 | 3);
+              const status = getApprovalStatus(
+                approvalState,
+                level as 1 | 2 | 3
+              );
 
-            {/* APPROVAL 2 */}
-            <tr className="bg-gray-100 text-center">
-              <td className="p-2 font-semibold">Persetujuan 2</td>
-              <td>{detailInfo.tanggal}</td>
-              <td>Persetujuan dari Sekjur</td>
-              <td>
-                <div className="flex items-center justify-center gap-2">
-                  {canTakeAction("torApproval2Status", approvalState.approval2)
-                    ? renderAction(
-                        "torApproval2Status",
-                        approvalState.approval2
-                      )
-                    : renderStatus(approvalState.approval2)}
-                </div>
-              </td>
-            </tr>
+              const isLocked =
+                level === 3 &&
+                (approvalState.approval1 !== "Approved" ||
+                  approvalState.approval2 !== "Approved");
 
-            {/* APPROVAL 3 */}
-            <tr className="bg-gray-50 text-center">
-              <td className="p-2 font-semibold">Persetujuan 3</td>
-              <td>{detailInfo.tanggal}</td>
-              <td>Persetujuan dari Kajur</td>
-              <td>
-                <div className="flex items-center justify-center gap-2">
-                  {approvalState.approval1 === "Approved" &&
-                  approvalState.approval2 === "Approved" ? (
-                    canTakeAction(
-                      "torApproval3Status",
-                      approvalState.approval3
-                    ) ? (
-                      renderAction(
-                        "torApproval3Status",
-                        approvalState.approval3
-                      )
-                    ) : (
-                      renderStatus(approvalState.approval3)
-                    )
-                  ) : (
-                    <span className="text-gray-500 font-medium">Pending</span>
-                  )}
-                </div>
-              </td>
-            </tr>
+              return (
+                <tr
+                  key={level}
+                  className={level % 2 ? "bg-gray-50" : "bg-gray-100"}
+                >
+                  <td className="p-2 font-semibold text-center">
+                    Persetujuan {level}
+                  </td>
+                  <td className="text-center">{detailInfo.tanggal}</td>
+                  <td className="text-center">
+                    {level === 1 && "Persetujuan dari Administrasi"}
+                    {level === 2 && "Persetujuan dari Sekjur"}
+                    {level === 3 && "Persetujuan dari Kajur"}
+                  </td>
+                  <td>
+                    <div className="flex items-center justify-center gap-2">
+                      {isLocked ? (
+                        <span className="text-gray-500 font-medium">
+                          Pending
+                        </span>
+                      ) : canTakeAction(field, status) ? (
+                        renderAction(field, status)
+                      ) : (
+                        renderStatus(status)
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>
@@ -207,7 +216,7 @@ const ApprovalAndNoteSection = ({
                 placeholder="Tulis catatan revisi di sini..."
               />
               <button
-                onClick={() => saveNote(userRole, currentNote)}
+                onClick={handleSaveNoteWithRevisi}
                 className="absolute bottom-5 right-4 px-4 py-1 bg-[#4957B5] hover:scale-[0.97] text-white font-medium tracking-[0.05em] rounded"
               >
                 Simpan

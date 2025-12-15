@@ -71,6 +71,8 @@ const Detail: React.FC<DetailProps> = () => {
   const location = useLocation();
   const [activeTab, setActiveTab] = useState<TabKey>("detail");
   const [hasSubmitted, setHasSubmitted] = useState(false);
+  const [hasFile, setHasFile] = useState<boolean>(false);
+
 
 
   // ---------- INI PART ROLE YA TUANGALA ----------
@@ -174,12 +176,13 @@ const Detail: React.FC<DetailProps> = () => {
   }
 };
 
-const handleApprove = (field: ApprovalField) => {
+const updateAll = (
+  field: ApprovalField,
+  status: "Approved" | "Rejected" | "Revisi" | "Pending"
+) => {
   if (!activity) return;
 
-  // mapping UI -> field DB
   const mappedField = mapFieldToKey(field, mode);
-
   const key = `approval-${activity.id}`;
 
   const approvalStore = JSON.parse(
@@ -202,7 +205,7 @@ const handleApprove = (field: ApprovalField) => {
 
   const updatedModeData = {
     ...currentModeData,
-    [mappedField]: "Approved",
+    [mappedField]: status, // ✅ DINAMIS
   };
 
   const updatedAll = {
@@ -213,61 +216,46 @@ const handleApprove = (field: ApprovalField) => {
     },
   };
 
-  // ===== SIMPAN STATUS =====
   setApprovalStatus(updatedAll);
   localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
 
-  // ===== UPDATE STATE LOKAL =====
   setDetailData((prev) => ({
     ...prev,
     ...updatedModeData,
   }));
 
-  // ===== UPDATE DATA KEGIATAN =====
   setData((prev) => {
-    const updated = prev.map((d) => {
-      if (d.id !== activity.id) return d;
-
-      return {
-        ...d,
-        ...updatedModeData,
-      };
-    });
+    const updated = prev.map((d) =>
+      d.id !== activity.id ? d : { ...d, ...updatedModeData }
+    );
 
     localStorage.setItem("kegiatan", JSON.stringify(updated));
     return updated;
   });
 };
 
-const handleReject = (field: ApprovalField) => {
+const removeFile = (
+  id: number,
+  mode: "TOR" | "LPJ"
+) => {
+  const key = `file-${id}-${mode}`;
+
+  localStorage.removeItem(key);
+};
+
+const resetApprovalToPending = (field: ApprovalField) => {
   if (!activity) return;
 
-  // mapping UI -> field DB
   const mappedField = mapFieldToKey(field, mode);
-
   const key = `approval-${activity.id}`;
 
   const approvalStore = JSON.parse(
     localStorage.getItem("approvalStatus") || "{}"
   );
 
-  const currentModeData =
-    approvalStore[key]?.[mode] ??
-    (mode === "TOR"
-      ? {
-          torApproval1Status: "Pending",
-          torApproval2Status: "Pending",
-          torApproval3Status: "Pending",
-        }
-      : {
-          lpjApproval1Status: "Pending",
-          lpjApproval2Status: "Pending",
-          lpjApproval3Status: "Pending",
-        });
-
   const updatedModeData = {
-    ...currentModeData,
-    [mappedField]: "Rejected",
+    ...(approvalStore[key]?.[mode] ?? {}),
+    [mappedField]: "Pending",
   };
 
   const updatedAll = {
@@ -278,50 +266,89 @@ const handleReject = (field: ApprovalField) => {
     },
   };
 
-  // ===== SIMPAN STATUS =====
   setApprovalStatus(updatedAll);
   localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
 
-  // ===== UPDATE DETAIL =====
   setDetailData((prev) => ({
     ...prev,
     ...updatedModeData,
   }));
 
-  // ===== UPDATE DATA KEGIATAN =====
   setData((prev) => {
-    const updated = prev.map((d) => {
-      if (d.id !== activity.id) return d;
-
-      return {
-        ...d,
-        ...updatedModeData,
-      };
-    });
-
+    const updated = prev.map((d) =>
+      d.id === activity.id ? { ...d, ...updatedModeData } : d
+    );
     localStorage.setItem("kegiatan", JSON.stringify(updated));
     return updated;
   });
 };
 
-const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+const getApprovalField = (
+  mode: "TOR" | "LPJ",
+  level: 1 | 2 | 3
+): ApprovalField => {
+  return `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
+};
+
+
+
+const handleApprove = (field: ApprovalField) =>
+  updateAll(field, "Approved");
+
+const handleReject = (field: ApprovalField) =>
+  updateAll(field, "Rejected");
+
+const handleRevisi = async (field: ApprovalField) => {
+  if (!activity || typeof activity.id !== "number") return;
+
+   // 1. ubah status ke Revisi
+  await updateAll(field, "Revisi");
+
+  // 2. hapus file biar wajib upload ulang
+  removeFile(activity.id, mode);
+
+  // 3. reset flag file
+  setHasFile(false);
+};
+
+
+const handleUploadSuccess = async () => {
+  if (!activity || typeof activity.id !== "number") return;
+
+  setHasFile(true);
+
+  for (const level of [1, 2, 3] as const) {
+    const field = getApprovalField(mode, level);
+    resetApprovalToPending(field); // ✅ BUKAN updateAll
+  }
+};
+
+const handleFileChange = async (
+  e: React.ChangeEvent<HTMLInputElement>
+) => {
   const file = e.target.files?.[0];
-  if (!file || !id) return;
+  if (!file || !activity || typeof activity.id !== "number") return;
 
-  const key = `file-${mode}-${id}`;
-  const nameKey = `file-name-${mode}-${id}`;
+  const key = `file-${mode}-${activity.id}`;
+  const nameKey = `file-name-${mode}-${activity.id}`;
 
   setFiles((prev) => ({
     ...prev,
     [key]: file,
   }));
 
-  // Simpan file asli di IndexedDB
+  // simpan file
   await saveFile(key, file);
 
   localStorage.setItem(nameKey, file.name);
-  localStorage.setItem(`submitted-${mode}-${id}`, "true");
+  localStorage.setItem(`submitted-${mode}-${activity.id}`, "true");
+
   setHasDownloaded(false);
+
+  // 🔥 RESET APPROVAL KALAU HABIS REVISI
+  // 🔥 RESET SEMUA KARENA UPLOAD ULANG
+  resetNotes(activity.id, mode);
+  await handleUploadSuccess();
 };
 
 
@@ -470,6 +497,30 @@ useEffect(() => {
     alert("Catatan revisi dikirim!");
   };
 
+  const resetNotes = (activityId: number, mode: "TOR" | "LPJ") => {
+  const stored = JSON.parse(localStorage.getItem("notes") || "{}");
+
+  if (!stored[activityId]) return;
+
+  const updated = {
+    ...stored,
+    [activityId]: {
+      ...stored[activityId],
+      [mode]: {
+        admin: "",
+        sekjur: "",
+        kajur: "",
+      },
+    },
+  };
+
+  localStorage.setItem("notes", JSON.stringify(updated));
+
+  // kalau lu punya state notes
+  setNotes(updated);
+};
+
+
   const [hasDownloaded, setHasDownloaded] = useState(false);
 
   const roleApprovalStatus =
@@ -558,6 +609,7 @@ useEffect(() => {
                 hasDownloaded={hasDownloaded}
                 handleApprove={(field) => handleApprove(field)}
                 handleReject={(field) => handleReject(field)}
+                handleRevisi={(field)=> handleRevisi(field)}
                 canShowNote={canShowNote}
                 role={roleTyped}
                 userRole={userRole}
@@ -576,6 +628,7 @@ useEffect(() => {
                 role={roleTyped}
                 mode={mode}
                 id={activity?.id}
+                onSuccess={handleUploadSuccess}
                 currentFile={currentFile}
                 hasSubmitted={hasSubmitted}
                 isDragging={isDragging}

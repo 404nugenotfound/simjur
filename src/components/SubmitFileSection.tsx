@@ -11,6 +11,7 @@ type Props = {
   handleFileChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   setFiles: React.Dispatch<React.SetStateAction<Record<string, File | null>>>;
   setHasDownloaded: (value: boolean) => void;
+  onSuccess: () => void;
 };
 
 const SubmitFileSection = ({
