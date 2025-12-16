@@ -47,7 +47,6 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const navigate = useNavigate();
 
   // get data TOR
-  const [selectedTorId, setSelectedTorId] = useState(null);
   const [torItems, setTorItems] = useState<Tor[]>([]);
 
   // === LOAD DATA TOR (DIBALIK URUTANNYA) ===

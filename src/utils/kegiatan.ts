@@ -20,6 +20,14 @@ export interface Kegiatan {
   penanggung_jawab: string;
   nominal: number;
 
+  torApproval1Status?: "Approved" | "Pending";
+  torApproval2Status?: "Approved" | "Pending";
+  torApproval3Status?: "Approved" | "Pending";
+
+  lpjApproval1Status?: "Approved" | "Pending";
+  lpjApproval2Status?: "Approved" | "Pending";
+  lpjApproval3Status?: "Approved" | "Pending";
+
   lpj?: LPJ;
 
   kategori?: "TOR" | "LPJ" | "Selesai";

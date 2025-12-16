@@ -51,7 +51,9 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
   }, [data]);
 
   const addKegiatan = (item: Omit<Kegiatan, "id">) => {
-    const newKegiatan: Kegiatan = { ...item, id: uuid() };
+    const newKegiatan: Kegiatan = { ...item, id: uuid() ,
+      kategori: item.kategori ?? "TOR",
+    };
     // update list kegiatan
     setData((prev) => [...prev, newKegiatan]);
 
@@ -61,6 +63,8 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
       danaTerpakai: prev.danaTerpakai + newKegiatan.nominal,
     }));
   };
+
+
 
   // ====== DANA ======
   const [dana, setDana] = useState(() => {
@@ -133,10 +137,25 @@ const danaJurusan = dana.danaRegular - TotalDanaTerpakai;
 
   // ====== SUMMARY ======
   const summary = {
-    totalTor: data.filter((d) => d.kategori === "TOR").length,
-    totalLpj: data.filter((d) => d.kategori === "LPJ").length,
-    totalSelesai: data.filter((d) => d.kategori === "Selesai").length,
-  };
+    // TOR masuk saat kegiatan dibuat
+    totalTor: data.length,
+
+  // LPJ dihitung saat masuk tahap LPJ
+   totalLpj: data.filter(
+    (d) =>
+      d.torApproval1Status === "Approved" &&
+      d.torApproval2Status === "Approved" &&
+      d.torApproval3Status === "Approved"
+  ).length,
+
+  // SELESAI = LPJ APPROVE 3
+  totalSelesai: data.filter(
+    (d) =>
+      d.lpjApproval1Status === "Approved" &&
+      d.lpjApproval2Status === "Approved" &&
+      d.lpjApproval3Status === "Approved"
+  ).length,
+};
 
   return (
     <DashboardContext.Provider

@@ -8,11 +8,21 @@ import VisxPieResponsive from "../components/Charts/VisxPieResponsive";
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
 
-  const stats = [
-    { label: "Total Pengajuan TOR", value: summary?.totalTor ?? 0 },
-    { label: "Total Kegiatan Disetujui", value: summary?.totalLpj ?? 0 },
-    { label: "Kegiatan Selesai Tahun Ini", value: summary?.totalSelesai ?? 0 },
-  ];
+ const stats = [
+  {
+    label: "Total Pengajuan TOR",
+    value: summary?.totalTor ?? 0,
+  },
+  {
+    label: "Total Kegiatan Disetujui",
+    value: summary?.totalLpj ?? 0,
+  },
+  {
+    label: "Kegiatan Selesai Tahun Ini",
+    value: summary?.totalSelesai ?? 0,
+  },
+];
+
 
   const generateDateData = (
     tor: number[],
