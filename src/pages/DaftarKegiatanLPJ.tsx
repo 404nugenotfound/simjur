@@ -73,7 +73,7 @@ const DaftarKegiatanLPJ: React.FC = () => {
           </div>
 
           {/* Tabel */}
-          <div className="border border-[#86BE9E] rounded-lg overflow-hidden font-poppins">
+          <div className="border rounded-lg overflow-hidden font-poppins">
             <table className="w-full text-left">
               <thead className="bg-[#86BE9E] text-white tracking-[0.1em] font-semibold">
                 <tr className="text-center [&>th]:font-semibold">
