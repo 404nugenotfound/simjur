@@ -121,8 +121,16 @@ const Detail: React.FC<DetailProps> = () => {
   const { addDanaDisetujui } = useContext(DashboardContext);
 
 
+  const parseRupiah = (value: string | number) => {
+  if (typeof value === "number") return value;
+  return Number(value.replace(/[^\d]/g, ""));
+};
+
+
  const handleSaveDana = () => {
+  const mdana = parseRupiah(activity?.dana ?? 0);
   if (!approvedDana || approvedDana <= 0) return;
+  if (approvedDana > mdana) return; // ⛔ STOP TOTAL
 
   // simpan ke localStorage per kegiatan
   const key = `approved-dana-${activity?.id}`;
@@ -474,15 +482,25 @@ useEffect(() => {
     }
   }, []);
 
-  useEffect(() => {
-    const key = `approved-dana-${activity?.id}`;
-    const saved = localStorage.getItem(key);
+useEffect(() => {
+  if (!activity?.id) return;
 
-    if (saved) {
-      setApprovedDana(Number(saved));
-      setIsDanaSaved(true);
-    }
-  }, [activity?.id]);
+  const key = `approved-dana-${String(activity.id)}`;
+  const saved = localStorage.getItem(key);
+  if (!saved) return;
+
+  const savedDana = Number(saved);
+  const mdana = parseRupiah(activity.dana ?? 0);
+
+  if (savedDana > 0 && savedDana <= mdana) {
+    setApprovedDana(savedDana);
+    setIsDanaSaved(true);
+  } else {
+    localStorage.removeItem(key);
+    setApprovedDana("");
+    setIsDanaSaved(false);
+  }
+}, [activity?.id]);
 
   // ===================== SIMPAN CATATAN PER-ID & PER-ROLE =====================
   const saveNote = (roleType: string, note: string) => {
@@ -653,7 +671,7 @@ useEffect(() => {
             {/* DANA DISETUJUI - SEKJUR */}
             {activeTab === "danasetuju" && (
               <DanaSetujuSection
-                danaDiajukan={danaDiajukan}
+                dana={danaDiajukan}
                 approvedDana={approvedDana}
                 isDanaSaved={isDanaSaved}
                 formatCurrency={formatCurrency}
