@@ -55,7 +55,7 @@ export class PushNotificationService {
       notification: 'Notification' in window,
       showNotification: 'showNotification' in Notification,
       vibrate: 'vibrate' in navigator,
-      clients: 'clients' in self
+      clients: false // This is only available in service worker context
     };
 
     console.log('🌐 Browser Support:', support);
@@ -433,7 +433,7 @@ export class PushNotificationService {
       notification: 'Notification' in window,
       showNotification: 'showNotification' in Notification,
       vibrate: 'vibrate' in navigator,
-      clients: 'clients' in self
+      clients: false // This is only available in service worker context
     };
   }
 

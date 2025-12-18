@@ -33,13 +33,6 @@ export const usePushNotification = (token?: string | null): UsePushNotification 
     }
   }, []);
 
-  // Check current subscription on mount
-  useEffect(() => {
-    if (isSupported) {
-      checkSubscription();
-    }
-  }, [isSupported]);
-
   const checkSubscription = useCallback(async () => {
     try {
       const currentSub = await PushNotificationService.getCurrentSubscription();
@@ -49,6 +42,13 @@ export const usePushNotification = (token?: string | null): UsePushNotification 
       setError(error.message);
     }
   }, []);
+
+  // Check current subscription on mount
+  useEffect(() => {
+    if (isSupported) {
+      checkSubscription();
+    }
+  }, [isSupported, checkSubscription]);
 
   const subscribe = useCallback(async () => {
     if (!isSupported) {

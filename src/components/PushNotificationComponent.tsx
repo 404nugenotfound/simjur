@@ -29,14 +29,6 @@ const PushNotificationComponent: React.FC = () => {
     }
   }, [isAuthenticated, isSupported, subscribed, loading, permission, subscribe]);
 
-  const handleSubscribe = async () => {
-    await subscribe();
-  };
-
-  const handleUnsubscribe = async () => {
-    await unsubscribe();
-  };
-
   const handleToggle = async () => {
     await toggle();
   };
