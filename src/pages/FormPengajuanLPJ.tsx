@@ -77,10 +77,10 @@ export default function FormPengajuanLPJ({ setMode }) {
   const [metode, setMetode] = useState("Luring");
   const [danaTerpakai, setDanaTerpakai] = useState("");
   const [danaTerpakaiNumber, setDanaTerpakaiNumber] = useState(0); // angka bersih
-  const [pesertaMahasiswa, setPesertaMahasiswa] = useState<number>(0);
-  const [pesertaAlumni, setPesertaAlumni] = useState<number>(0);
-  const [pesertaDosen, setPesertaDosen] = useState<number>(0);
-  const [totalPeserta, setTotalPeserta] = useState<number>(0);
+  const [pesertaMahasiswa, setPesertaMahasiswa] = useState("");
+  const [pesertaAlumni, setPesertaAlumni] = useState("");
+  const [pesertaDosen, setPesertaDosen] = useState("");
+  const [totalPeserta, setTotalPeserta] = useState("");
   const [sisaDana, setSisaDana] = useState(0);
 
   const formatCurrency = (value: string) => {
@@ -204,9 +204,9 @@ export default function FormPengajuanLPJ({ setMode }) {
   const resetForm = () => {
     setMetode("Luring");
     setDanaTerpakai("");
-    setPesertaMahasiswa(0);
-    setPesertaAlumni(0);
-    setPesertaDosen(0);
+    setPesertaMahasiswa("");
+    setPesertaAlumni("");
+    setPesertaDosen("");
   };
 
   const handleSubmit = async () => {
@@ -214,6 +214,7 @@ export default function FormPengajuanLPJ({ setMode }) {
       alert("Pilih TOR terlebih dahulu!");
       return;
     }
+    
 
     const formData = {
       tor_id: selectedTor.id,
@@ -244,18 +245,20 @@ export default function FormPengajuanLPJ({ setMode }) {
 
     const update = {
       lpj: {
-        dana_terpakai: danaTerpakai, // default string
-        peserta_mahasiswa: pesertaMahasiswa ?? 0,
-        peserta_alumni: pesertaAlumni ?? 0,
-        peserta_dosen: pesertaDosen ?? 0,
-        created_at: selectedTor?.lpj?.created_at ?? new Date().toISOString(),
-
-        // field yang lu update
-        metode_pelaksanaan: metode,
-        sisa_dana: sisaDana,
-        total_peserta: totalPeserta,
-        updated_at: new Date().toISOString(),
-      },
+          dana_terpakai: danaTerpakai, // string OK (buat display)
+      peserta_mahasiswa: Number(pesertaMahasiswa || 0),
+      peserta_alumni: Number(pesertaAlumni || 0),
+      peserta_dosen: Number(pesertaDosen || 0),
+      total_peserta:
+        Number(pesertaMahasiswa || 0) +
+        Number(pesertaAlumni || 0) +
+        Number(pesertaDosen || 0),
+      sisa_dana: sisaDana,
+      metode_pelaksanaan: metode,
+      created_at:
+        selectedTor?.lpj?.created_at ?? new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+    },
     };
     updateData(selectedTor.id, update);
 
@@ -373,42 +376,46 @@ export default function FormPengajuanLPJ({ setMode }) {
                 <div>
                   <label className="text-sm">Mahasiswa</label>
                   <input
-                    type="number"
-                    className="appearance-none border border-black rounded-lg w-full p-2 text-black
-                    [&::-webkit-inner-spin-button]:appearance-none 
-                    [&::-webkit-outer-spin-button]:appearance-none"
-                    placeholder="0"
-                    value={pesertaMahasiswa}
-                    onChange={(e) =>
-                      setPesertaMahasiswa(Number(e.target.value))
-                    }
-                  />
+                  type="text"
+                  inputMode="numeric"
+                  className="appearance-none border border-black rounded-lg w-full p-2 text-black"
+                  placeholder="0"
+                  value={pesertaMahasiswa}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "");
+                    setPesertaMahasiswa(v);
+                  }}
+                />
                 </div>
 
                 <div>
                   <label className="text-sm">Alumni</label>
                   <input
-                    type="number"
-                    className="appearance-none border border-black rounded-lg w-full p-2 text-black
-                    [&::-webkit-inner-spin-button]:appearance-none 
-                    [&::-webkit-outer-spin-button]:appearance-none"
+                    type="text"
+                    inputMode="numeric"
+                    className="appearance-none border border-black rounded-lg w-full p-2 text-black"
                     placeholder="0"
                     value={pesertaAlumni}
-                    onChange={(e) => setPesertaAlumni(Number(e.target.value))}
+                    onChange={(e) => {
+                      const v = e.target.value.replace(/\D/g, "");
+                      setPesertaAlumni(v);
+                    }}
                   />
                 </div>
 
                 <div>
                   <label className="text-sm">Dosen</label>
-                  <input
-                    type="number"
-                    className="appearance-none border border-black rounded-lg w-full p-2 text-black
-                    [&::-webkit-inner-spin-button]:appearance-none 
-                    [&::-webkit-outer-spin-button]:appearance-none"
-                    placeholder="0"
-                    value={pesertaDosen}
-                    onChange={(e) => setPesertaDosen(Number(e.target.value))}
-                  />
+                 <input
+                  type="text"
+                  inputMode="numeric"
+                  className="appearance-none border border-black rounded-lg w-full p-2 text-black"
+                  placeholder="0"
+                  value={pesertaDosen}
+                  onChange={(e) => {
+                    const v = e.target.value.replace(/\D/g, "");
+                    setPesertaDosen(v);
+                  }}
+                />
                 </div>
               </div>
             </div>

@@ -77,15 +77,6 @@ export default function KelolaDana() {
         {/* BUTTONS */}
         <div className="flex justify-center gap-5 mt-6 font-medium">
           <button
-            onClick={() => {
-              window.location.reload();
-            }}
-            className="bg-[#9C1818] px-5 py-1.5 rounded-md text-white hover:scale-95 transition"
-          >
-            Reset
-          </button>
-
-          <button
             onClick={handleSubmit}
             className="bg-blue-600 px-4 py-1.5 rounded-md text-white hover:scale-95 transition"
           >

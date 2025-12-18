@@ -107,6 +107,7 @@ export default function Sidebar({
           onClick={() => {
             setOpenClick(!openClick);
             navigate("/dashboard");
+            window.location.reload();
           }}
           className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
           ${!open ? "justify-center" : "justify-start"} hover:bg-black/20`}
@@ -161,7 +162,10 @@ export default function Sidebar({
         {/* ====================== PENGAJU: PENGAJUAN KEGIATAN ====================== */}
         {role === "Pengaju" && (
           <a
-            onClick={() => handleMenuClick("/pengajuan")}
+            onClick={() => {
+              handleMenuClick("/pengajuan");
+              window.location.reload();
+            }}
             className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
               ${!open && "justify-center"} hover:bg-black/20`}
           >
@@ -202,7 +206,10 @@ export default function Sidebar({
             {open && dropdownState.kegiatan && (
               <div className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white shadow-lg rounded-md py-2 w-full z-50 border border-white/10">
                 <button
-                  onClick={() => navigate("/daftar")}
+                  onClick={() =>{ navigate("/daftar");
+                    window.location.reload();
+                  }}
+                  
                   className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
                 >
                   <DocumentArrowUpIcon className="w-5 h-5" />
@@ -210,7 +217,9 @@ export default function Sidebar({
                 </button>
 
                 <button
-                  onClick={() => navigate("/daftar-LPJ")}
+                  onClick={() => {navigate("/daftar-LPJ")
+                    window.location.reload();
+                  }}
                   className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
                 >
                   <DocumentArrowDownIcon className="w-5 h-5" />
