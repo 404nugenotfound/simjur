@@ -300,12 +300,41 @@ export const authApi = {
   /**
    * Logout user (if API supports it)
    * POST /auth/logout
+   * Note: Endpoint mungkin tidak ada, implementasi graceful fallback
    */
   logout: async (token: string): Promise<void> => {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    await apiClient.post<void>("/auth/logout", {}, headers);
+    
+    try {
+      await apiClient.post<void>("/auth/logout", {}, headers);
+      console.log('✅ Server logout successful');
+    } catch (error: any) {
+      // Log error tapi jangan throw karena logout tidak critical
+      console.warn('Logout API call failed, proceeding with local logout:', error.message);
+      
+      // Jika 405 (Method Not Allowed), 404 (Not Found), atau CORS error, anggap sebagai normal
+      if (error.status === 405 || error.status === 404 || error.code === 'CORS_ERROR') {
+        console.info('Logout endpoint tidak tersedia atau CORS error, proceeding with local logout only');
+        return;
+      }
+      
+      // Untuk error lain yang critical, tetap throw
+      if (error.status >= 500) {
+        console.error('Server error during logout, proceeding with local logout:', error);
+        return;
+      }
+      
+      throw error;
+    }
+  },
+
+  /**
+   * Local logout fallback (tanpa API call)
+   */
+  localLogout: (): void => {
+    console.log('🔄 Performing local logout only');
   },
 };
 // ========================================
@@ -362,7 +391,70 @@ export const generalApi = {
 };
 
 // ========================================
-// 8. Kegiatan API
+// 8. Push Notification API
+// ========================================
+export const pushApi = {
+  /**
+   * Subscribe to push notifications
+   * POST /auth/push/subscribe
+   */
+  subscribe: async (
+    subscription: any,
+    token?: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    return apiClient.post("/auth/push/subscribe", { subscription }, headers);
+  },
+
+  /**
+   * Unsubscribe from push notifications
+   * POST /auth/push/unsubscribe
+   */
+  unsubscribe: async (
+    endpoint: string,
+    token?: string,
+  ): Promise<{ success: boolean; message: string }> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    return apiClient.post("/auth/push/unsubscribe", { endpoint }, headers);
+  },
+
+  /**
+   * Send push notification
+   * POST /auth/push
+   */
+  send: async (
+    notification: {
+      title: string;
+      message: string;
+      url?: string;
+      icon?: string;
+    },
+    token?: string,
+  ): Promise<{ success: boolean; message: string; sent: number }> => {
+    const headers = token ? { Authorization: `Bearer ${token}` } : undefined;
+    return apiClient.post("/auth/push", notification, headers);
+  },
+
+  /**
+   * Broadcast to all subscribers
+   * POST /auth/push/broadcast
+   */
+  broadcast: async (
+    notification: {
+      title: string;
+      message: string;
+      url?: string;
+      icon?: string;
+    },
+    token: string,
+  ): Promise<{ success: boolean; message: string; sent: number }> => {
+    const headers = { Authorization: `Bearer ${token}` };
+    return apiClient.post("/auth/push/broadcast", notification, headers);
+  },
+};
+
+// ========================================
+// 9. Kegiatan API
 // ========================================
 export const kegiatanApi = {
   getAll: async (token: string): Promise<Kegiatan[]> => {
