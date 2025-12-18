@@ -1,8 +1,10 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { usePushNotification } from '../hooks/usePushNotification';
+import { useAuth } from '../context/AuthContext';
 import { BellIcon, BellSlashIcon } from '@heroicons/react/24/solid';
 
 const PushNotificationComponent: React.FC = () => {
+  const { token, isAuthenticated } = useAuth();
   const {
     isSupported,
     subscribed,
@@ -15,7 +17,17 @@ const PushNotificationComponent: React.FC = () => {
     toggle,
     sendNotification,
     showLocalNotification
-  } = usePushNotification();
+  } = usePushNotification(token);
+
+  // Auto-subscribe when user logs in and hasn't subscribed yet
+  useEffect(() => {
+    if (isAuthenticated && isSupported && !subscribed && !loading && permission === 'default') {
+      // Auto-request permission and subscribe
+      subscribe().catch(() => {
+        // Silently fail auto-subscription, let user manually trigger
+      });
+    }
+  }, [isAuthenticated, isSupported, subscribed, loading, permission, subscribe]);
 
   const handleSubscribe = async () => {
     await subscribe();
@@ -50,6 +62,11 @@ const PushNotificationComponent: React.FC = () => {
       console.error('Gagal mengirim notifikasi:', error);
     }
   };
+
+  // Only show component if user is authenticated
+  if (!isAuthenticated) {
+    return null;
+  }
 
   if (!isSupported) {
     return (

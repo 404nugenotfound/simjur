@@ -15,7 +15,7 @@ export interface UsePushNotification {
   toggle: () => Promise<void>;
 }
 
-export const usePushNotification = (): UsePushNotification => {
+export const usePushNotification = (token?: string | null): UsePushNotification => {
   const [isSupported, setIsSupported] = useState(false);
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -50,7 +50,7 @@ export const usePushNotification = (): UsePushNotification => {
     }
   }, []);
 
-  const subscribe = useCallback(async (token?: string) => {
+  const subscribe = useCallback(async () => {
     if (!isSupported) {
       setError('Push notifications not supported in this browser');
       return;
@@ -60,7 +60,7 @@ export const usePushNotification = (): UsePushNotification => {
     setError(null);
 
     try {
-      await PushNotificationService.subscribe(token);
+      await PushNotificationService.subscribe(token || undefined);
       await checkSubscription();
       const newPermission = await PushNotificationService.getNotificationPermission();
       setPermission(newPermission);
@@ -69,9 +69,9 @@ export const usePushNotification = (): UsePushNotification => {
     } finally {
       setLoading(false);
     }
-  }, [isSupported, checkSubscription]);
+  }, [isSupported, checkSubscription, token]);
 
-  const unsubscribe = useCallback(async (token?: string) => {
+  const unsubscribe = useCallback(async () => {
     if (!isSupported) {
       setError('Push notifications not supported in this browser');
       return;
@@ -81,14 +81,14 @@ export const usePushNotification = (): UsePushNotification => {
     setError(null);
 
     try {
-      await PushNotificationService.unsubscribe(token);
+      await PushNotificationService.unsubscribe(token || undefined);
       await checkSubscription();
     } catch (error: any) {
       setError(error.message);
     } finally {
       setLoading(false);
     }
-  }, [isSupported, checkSubscription]);
+  }, [isSupported, checkSubscription, token]);
 
   const toggle = useCallback(async () => {
     if (subscribed) {

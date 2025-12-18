@@ -7,6 +7,7 @@ import { Group } from "@visx/group";
 import { useActivities } from "../context/ActivitiesContext";
 import { useNavigate } from "react-router-dom";
 import { roleToName } from "../utils/roleToName";
+import PushNotificationComponent from "../components/PushNotificationComponent";
 
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
@@ -104,6 +105,9 @@ export default function Dashboard() {
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
           DASHBOARD PENGAJUAN KEGIATAN
         </h1>
+
+        {/* Push Notification Component */}
+        <PushNotificationComponent />
 
         {/* ====== CARD DANA ====== */}
         <div className="border bg-white rounded-xl p-6 shadow-md text-black mt-6">
