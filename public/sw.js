@@ -4,22 +4,16 @@ const NOTIFICATION_TAG = 'simjur-notification';
 
 // Install Event
 self.addEventListener('install', (event) => {
-  console.log('🔧 Service Worker installing...');
   event.waitUntil(
     caches.open(CACHE_NAME)
-      .then(cache => {
-        console.log('✅ Cache created');
-      })
-      .catch(error => {
-        console.error('❌ Failed to create cache:', error);
-      })
+      .then(() => {})
+      .catch(() => {})
       .then(() => self.skipWaiting())
   );
 });
 
 // Activate Event
 self.addEventListener('activate', (event) => {
-  console.log('🚀 Service Worker activating...');
   event.waitUntil(
     caches.keys()
       .then(cacheNames => {
@@ -30,33 +24,26 @@ self.addEventListener('activate', (event) => {
         );
       })
       .then(() => {
-        console.log('✅ Service Worker activated');
         return self.clients.claim();
       })
   );
 });
 
-// Push Event - Enhanced error handling
+// Push Event
 self.addEventListener('push', (event) => {
-  console.log('📱 Push event received:', event);
-  
   try {
     if (!event.data) {
-      console.warn('⚠️ No data in push event');
       return;
     }
     
     let data;
     try {
       data = event.data.json();
-      console.log('📊 Parsed push data:', data);
     } catch (parseError) {
-      console.error('❌ Failed to parse push data:', parseError);
       return;
     }
     
     if (!data.title) {
-      console.error('❌ Missing title in push data');
       return;
     }
     
@@ -77,13 +64,9 @@ self.addEventListener('push', (event) => {
       }
     };
     
-    console.log('🔔 Showing notification:', { title: data.title, options });
-    
     event.waitUntil(
       self.registration.showNotification(data.title, options)
-        .then(notification => {
-          console.log('✅ Notification shown successfully');
-          
+        .then(() => {
           // Store notification reference
           if (data.tag) {
             event.waitUntil(
@@ -97,57 +80,35 @@ self.addEventListener('push', (event) => {
                     timestamp: options.data.timestamp
                   });
                 })
-                .then(() => {
-                  console.log('✅ Notification stored in cache');
-                })
-                .catch(cacheError => {
-                  console.error('❌ Failed to store notification in cache:', cacheError);
-                })
+                .catch(() => {})
             );
           }
         })
-        .catch(showError => {
-          console.error('❌ Failed to show notification:', showError);
-          
+        .catch(() => {
+          // Fallback notification
           try {
-            const fallbackNotification = new Notification(data.title, {
+            new Notification(data.title, {
               body: options.body,
               icon: options.icon
             });
-            console.log('✅ Fallback notification shown');
           } catch (fallbackError) {
-            console.error('❌ Even fallback notification failed:', fallbackError);
+            // Silent fail
           }
         })
     );
     
   } catch (error) {
-    console.error('🚨 Critical error in push handler:', error);
-    
-    try {
-      self.registration.showNotification('Push Notification Error', {
-        body: 'Failed to display notification',
-        icon: '/favicon-32x32.png',
-        tag: 'push-error',
-        data: { error: error.message, timestamp: Date.now() }
-      });
-    } catch (fallbackError) {
-      console.error('❌ Even fallback notification failed:', fallbackError);
-    }
+    // Silent fail for critical errors
   }
 });
 
 // Notification Click Event
 self.addEventListener('notificationclick', (event) => {
-  console.log('🖱️ Notification clicked:', event);
-  
   try {
     event.notification.close();
     
     const notificationData = event.notification.data || {};
     const targetUrl = notificationData.url || '/';
-    
-    console.log('🌐 Opening URL:', targetUrl);
     
     event.waitUntil(
       clients.matchAll({
@@ -155,28 +116,21 @@ self.addEventListener('notificationclick', (event) => {
         includeUncontrolled: true
       })
         .then(clientList => {
-          console.log('📋 Found clients:', clientList.length);
-          
           for (const client of clientList) {
             if (client.url === targetUrl && 'focus' in client) {
-              console.log('🎯 Focusing existing client');
               return client.focus();
             }
           }
           
           for (const client of clientList) {
             if ('focus' in client && client.focused) {
-              console.log('📱 Focusing already focused client');
               return client.navigate(targetUrl);
             }
           }
           
-          console.log('🪟 Opening new window');
           return clients.openWindow(targetUrl);
         })
-        .catch(openError => {
-          console.error('❌ Failed to open client:', openError);
-          
+        .catch(() => {
           if (self.clients.openWindow) {
             return self.clients.openWindow(targetUrl);
           }
@@ -184,8 +138,6 @@ self.addEventListener('notificationclick', (event) => {
     );
     
   } catch (error) {
-    console.error('🚨 Critical error in notification click handler:', error);
-    
     try {
       if (event.notification.data?.url) {
         event.waitUntil(
@@ -193,15 +145,13 @@ self.addEventListener('notificationclick', (event) => {
         );
       }
     } catch (fallbackError) {
-      console.error('❌ Even fallback failed:', fallbackError);
+      // Silent fail
     }
   }
 });
 
 // Notification Close Event
 self.addEventListener('notificationclose', (event) => {
-  console.log('🔕 Notification closed:', event.notification.tag);
-  
   try {
     if (event.notification.tag) {
       event.waitUntil(
@@ -209,26 +159,16 @@ self.addEventListener('notificationclose', (event) => {
           .then(cache => {
             return cache.delete(`/notification-${event.notification.tag}`);
           })
-          .then(() => {
-            console.log('✅ Notification data cleaned up');
-          })
-          .catch(error => {
-            console.error('❌ Failed to cleanup notification data:', error);
-          })
+          .catch(() => {})
       );
     }
   } catch (error) {
-    console.error('❌ Error in notification close handler:', error);
+    // Silent fail
   }
 });
 
 // Push Subscription Change Event
 self.addEventListener('pushsubscriptionchange', (event) => {
-  console.log('🔄 Subscription changed:', {
-    oldSubscription: event.oldSubscription,
-    newSubscription: event.newSubscription
-  });
-  
   try {
     // Notify clients about subscription change
     event.waitUntil(
@@ -249,25 +189,21 @@ self.addEventListener('pushsubscriptionchange', (event) => {
         })
     );
   } catch (error) {
-    console.error('❌ Failed to notify clients about subscription change:', error);
+    // Silent fail
   }
 });
 
 // Message Event
 self.addEventListener('message', (event) => {
-  console.log('💬 Message received from client:', event.data);
-  
   try {
     const { type, payload } = event.data;
     
     switch (type) {
       case 'SKIP_WAITING':
-        console.log('⏭ Skipping waiting for service worker');
         event.waitUntil(self.skipWaiting());
         break;
         
       case 'GET_SUBSCRIPTION':
-        console.log('📋 Getting subscription for client');
         event.waitUntil(
           self.registration.pushManager.getSubscription()
             .then(subscription => {
@@ -276,9 +212,9 @@ self.addEventListener('message', (event) => {
                   endpoint: subscription.endpoint,
                   keys: {
                     p256dh: subscription.getKey('p256dh') ? 
-                      btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh')))) : '',
+                      btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('p256dh'))))) : '',
                     auth: subscription.getKey('auth') ? 
-                      btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth')))) : ''
+                      btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(subscription.getKey('auth'))))) : ''
                   }
                 };
               }
@@ -296,24 +232,21 @@ self.addEventListener('message', (event) => {
         break;
         
       default:
-        console.log('ℹ️ Unknown message type:', type);
+        // Unknown message type, ignore
+        break;
     }
   } catch (error) {
-    console.error('❌ Error handling message from client:', error);
+    // Silent fail for message errors
   }
 });
 
 // Background Sync Event
 self.addEventListener('sync', (event) => {
-  console.log('🔄 Background sync event:', event.tag);
-  
   if (event.tag === 'sync-subscriptions') {
     event.waitUntil(
       self.registration.pushManager.getSubscription()
         .then(subscription => {
-          if (subscription) {
-            console.log('📤 Syncing subscription with server...');
-          }
+          // Subscription sync logic
         })
     );
   }
@@ -321,8 +254,6 @@ self.addEventListener('sync', (event) => {
 
 // Periodic Sync
 setInterval(() => {
-  console.log('🕐 Periodic service worker check');
-  
   const cutoffTime = Date.now() - (24 * 60 * 60 * 1000);
   
   caches.open(CACHE_NAME)
@@ -349,15 +280,5 @@ setInterval(() => {
           );
         })
     })
-    .then(() => {
-      console.log('✅ Periodic cleanup completed');
-    })
-    .catch(error => {
-      console.error('❌ Periodic cleanup failed:', error);
-    });
+    .catch(() => {});
 }, 60 * 60 * 1000); // Every hour
-
-// Console logging
-console.log('🔧 Simjur Service Worker loaded');
-console.log('🔧 Cache name:', CACHE_NAME);
-console.log('🔧 Notification tag:', NOTIFICATION_TAG);
