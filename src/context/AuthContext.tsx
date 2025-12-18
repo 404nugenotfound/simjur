@@ -1,13 +1,11 @@
-// NEW: src/context/AuthContext.tsx
-import React, {
+import {
   createContext,
   useContext,
   useState,
   useEffect,
   ReactNode,
 } from "react";
-import { authApi, User, LoginResponse } from "../service/api";
-import { TokenManager } from "../utils/tokenManager";
+import { authApi, LoginResponse, User } from "../service/api";
 import { mapRoleIdToRole } from "../utils/roleMapping";
 import { Role } from "../utils/role";
 
@@ -17,46 +15,56 @@ interface AuthContextType {
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
-  login: (username: string, password: string) => Promise<LoginResponse>;
+  login: (identifier: string, password: string) => Promise<LoginResponse>;
   logout: () => Promise<void>;
   refreshToken: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | null>(null);
+
+
+
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+
   // Check existing token on mount
   useEffect(() => {
     const initializeAuth = async () => {
-      const storedToken = TokenManager.getToken();
+      const storedToken = localStorage.getItem("auth_token");
 
-      if (storedToken && !TokenManager.isTokenExpired(storedToken)) {
+      if (storedToken) {
         try {
+          // Validate token dengan real API
           const userData = await authApi.getCurrentUser(storedToken);
           setUser(userData);
           setRole(mapRoleIdToRole(userData.roles_id));
           setToken(storedToken);
         } catch {
           // Token invalid, clear it
-          TokenManager.removeToken();
+          localStorage.removeItem("auth_token");
+          localStorage.removeItem("user_data");
         }
       }
 
       setIsLoading(false);
     };
+
     initializeAuth();
   }, []);
+
   const login = async (
-    username: string,
+    identifier: string,
     password: string,
   ): Promise<LoginResponse> => {
-    const response = await authApi.login(username, password);
+    // Gunakan fallback auth yang auto-switch ke mock jika CORS error
+    const response = await authApi.login(identifier, password);
 
     // Save token
-    TokenManager.setToken(response.token);
+    localStorage.setItem("auth_token", response.token);
+    localStorage.setItem("user_data", JSON.stringify(response.user));
 
     // Update state
     setUser(response.user);
@@ -65,6 +73,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     return response;
   };
+
+  
+
   const logout = async (): Promise<void> => {
     try {
       if (token) {
@@ -72,17 +83,21 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     } finally {
       // Always clear local data
-      TokenManager.removeToken();
+      localStorage.removeItem("auth_token");
+      localStorage.removeItem("user_data");
+      localStorage.removeItem("user_role");
       setUser(null);
       setRole(null);
       setToken(null);
     }
   };
+
   const refreshToken = async (): Promise<void> => {
-    // Implementation for token refresh if API supports it
+    // Implementation untuk token refresh jika API supports it
     // For now, just logout
     await logout();
   };
+
   return (
     <AuthContext.Provider
       value={{
@@ -100,6 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     </AuthContext.Provider>
   );
 };
+
 export const useAuth = () => {
   const context = useContext(AuthContext);
   if (!context) {

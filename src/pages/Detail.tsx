@@ -1,8 +1,6 @@
 // src/pages/Detail.tsx
 import React, {
   useState,
-  DragEvent,
-  ChangeEvent,
   useMemo,
   useEffect,
 } from "react";
@@ -16,7 +14,7 @@ import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
 import TabButton from "../components/TabButton";
-import { Role, UserRole, ApprovalField, ApprovalStatus } from "@/utils/role";
+import { Role, ApprovalField, ApprovalStatus } from "@/utils/role";
 import { TabKey } from "@/utils/tab";
 import { saveFile } from "../utils/indexedDB";
 import { useContext } from "react";
@@ -79,21 +77,22 @@ const Detail: React.FC<DetailProps> = () => {
 
 
   // ---------- INI PART ROLE YA TUANGALA ----------
-  const rawRole = localStorage.getItem("role");
+  const userData = localStorage.getItem("user_data");
+const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "4";
 
   const roleTyped: Role =
-    rawRole === "Admin" || rawRole === "Sekjur" || rawRole === "Kajur"
-      ? rawRole
+    rawRole === "1" || rawRole === "2" || rawRole === "3"
+      ? rawRole === "1" ? "Admin" : rawRole === "2" ? "Sekjur" : "Kajur"
       : "Pengaju";
 
-  const userRole: UserRole =
-    rawRole === "Admin"
+  const userRole =
+    rawRole === "1"
       ? "admin"
-      : rawRole === "Sekjur"
+      : rawRole === "2"
       ? "sekjur"
-      : rawRole === "Kajur"
+      : rawRole === "3"
       ? "kajur"
-      : "admin"; // fallback aman
+      : "pengaju"; // fallback aman
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
 
@@ -383,7 +382,7 @@ useEffect(() => {
   if (submitted === "true") setHasSubmitted(true);
 
   // Restore nama file untuk tampilan
-  const savedName = localStorage.getItem(nameKey);
+  const savedName = localStorage.getItem(nameKey) || "";
   if (savedName) {
     setFiles((prev) => ({
       ...prev,
@@ -641,8 +640,8 @@ useEffect(() => {
                 handleReject={(field) => handleReject(field)}
                 handleRevisi={(field)=> handleRevisi(field)}
                 canShowNote={canShowNote}
-                role={roleTyped}
-                userRole={userRole}
+role={roleTyped}
+                 userRole={userRole}
                 notes={notes}
                 activity={activity}
                 mode={mode}

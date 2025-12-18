@@ -5,10 +5,12 @@ import {
 import LogoutIcon from "../assets/Icons/LogoutIcon";
 import { useEffect, useRef } from "react";
 import { motion } from "framer-motion";
+import { useAuth } from "../context/AuthContext";
 
 export default function UserDropdown({ close }: { close: () => void }) {
   const navigate = useNavigate();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const { logout } = useAuth();
 
   // Close when clicking outside
   useEffect(() => {
@@ -46,6 +48,7 @@ export default function UserDropdown({ close }: { close: () => void }) {
         className="flex items-center gap-[1.2rem] px-[1.4rem] py-3 hover:bg-gray-100 w-full text-[#9C1818] font-medium"
         onClick={() => {
           close();
+          logout();
           navigate("/");
         }}
       >

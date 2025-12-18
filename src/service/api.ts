@@ -2,23 +2,28 @@
 // 1. IMPORTS & CONFIGURATION
 
 import { Kegiatan } from "@/utils/kegiatan";
-import { data } from "react-router-dom";
 
 // ========================================
-const API_BASE_URL = "https://simjur-api.vercel.app/api";
+const API_BASE_URL =
+  process.env.REACT_APP_API_URL || "https://simjur-api.vercel.app/api";
 // Configurable Object
 const apiConfig = {
   baseURL: API_BASE_URL,
   timeout: 10000,
   headers: {
     "Content-Type": "application/json",
+    Accept: "application/json",
   },
 };
+
+// CORS SETUP
+//
+
 // ========================================
 // 2. TYPE DEFINITIONS
 // ========================================
 export interface LoginRequest {
-  name: string;
+  identifier: string;
   password: string;
 }
 export interface LoginResponse {
@@ -32,13 +37,16 @@ export interface LoginResponse {
 }
 export interface RegisterRequest {
   name: string;
+  email: string;
+  nim: string;
+  program_studi: string;
   roles_id: number;
-  description: string;
   password: string;
 }
+
 export interface RegisterResponse {
   message: string;
-  data: User[];
+  user: User;
 }
 export interface User {
   id: number;
@@ -77,6 +85,15 @@ class ApiClient {
     this.baseURL = config.baseURL;
     this.defaultHeaders = config.headers;
     this.timeout = config.timeout;
+    
+    // Log API configuration for debugging
+    if (process.env.REACT_APP_DEBUG === 'true') {
+      console.log('🔧 API Configuration:', {
+        baseURL: this.baseURL,
+        mode: process.env.REACT_APP_ENV || 'unknown',
+        timeout: this.timeout
+      });
+    }
   }
   private async request<T>(
     endpoint: string,
@@ -96,6 +113,9 @@ class ApiClient {
         ...options,
         headers,
         signal: controller.signal,
+        mode: "cors",
+        credentials: "same-origin",
+        cache: "no-cache",
       });
 
       clearTimeout(timeoutId);
@@ -129,12 +149,60 @@ class ApiClient {
         if (error.name === "AbortError") {
           throw new ApiError("Request timeout", 408, "TIMEOUT");
         }
+
+        // Enhanced CORS error handling
+        if (
+          error.message.includes("CORS") ||
+          error.message.includes("Cross-Origin") ||
+          error.message.includes("Failed to fetch")
+        ) {
+          throw new ApiError(
+            "CORS Error: Tidak dapat mengakses API. Pastikan CORS sudah di konfigurasi dengan benar di server.",
+            0,
+            "CORS_ERROR",
+          );
+        }
+
         throw new ApiError(error.message, 0, "NETWORK_ERROR");
       }
 
       throw new ApiError("Unknown error occurred", 0, "UNKNOWN");
     }
   }
+
+  // Utility method for debugging API connectivity
+  public async testConnection(): Promise<{
+    success: boolean;
+    url: string;
+    message: string;
+  }> {
+    try {
+      const response = await fetch(`${this.baseURL}/auth/login`, {
+        method: "OPTIONS",
+        mode: "cors",
+        headers: {
+          Origin: window.location.origin,
+          "Access-Control-Request-Method": "POST",
+          "Access-Control-Request-Headers": "Content-Type",
+        },
+      });
+
+      return {
+        success: response.ok || response.status === 204,
+        url: this.baseURL,
+        message: response.ok
+          ? "CORS OK"
+          : `HTTP ${response.status}: ${response.statusText}`,
+      };
+    } catch (error: any) {
+      return {
+        success: false,
+        url: this.baseURL,
+        message: error.message || "Connection failed",
+      };
+    }
+  }
+
   // HTTP method helpers
   public async get<T>(
     endpoint: string,
@@ -153,6 +221,9 @@ class ApiClient {
       body: data ? JSON.stringify(data) : undefined,
     });
   }
+
+  
+
   public async put<T>(
     endpoint: string,
     data?: any,
@@ -176,6 +247,7 @@ class ApiClient {
 // ========================================
 const apiClient = new ApiClient(apiConfig);
 // ========================================
+
 // 6. AUTHENTICATION API
 // ========================================
 export const authApi = {
@@ -198,23 +270,26 @@ export const authApi = {
 
   /**
    * User login
-   * POST /api/auth/login
+   * POST /auth/login
    */
-  login: async (name: string, password: string): Promise<LoginResponse> => {
-    const loginData: LoginRequest = { name, password };
+  login: async (
+    identifier: string,
+    password: string,
+  ): Promise<LoginResponse> => {
+    const loginData: LoginRequest = { identifier, password };
     return apiClient.post<LoginResponse>("/auth/login", loginData);
   },
 
   /**
    * User registration
-   * POST /api/auth/register
+   * POST /auth/register
    */
   register: async (userData: RegisterRequest): Promise<RegisterResponse> => {
     return apiClient.post<RegisterResponse>("/auth/register", userData);
   },
   /**
    * Get current user information
-   * GET /api/user
+   * GET /user
    */
   getCurrentUser: async (token: string): Promise<User> => {
     const headers = {
@@ -224,7 +299,7 @@ export const authApi = {
   },
   /**
    * Logout user (if API supports it)
-   * POST /api/auth/logout
+   * POST /auth/logout
    */
   logout: async (token: string): Promise<void> => {
     const headers = {
@@ -316,3 +391,10 @@ export const kegiatanApi = {
 // ========================================
 export default apiClient;
 export { API_BASE_URL };
+
+// ========================================
+// 8.1. API CONNECTION TEST EXPORT
+// ========================================
+export const testApiConnection = async () => {
+  return await apiClient.testConnection();
+};

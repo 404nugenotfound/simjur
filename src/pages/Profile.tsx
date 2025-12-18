@@ -2,10 +2,11 @@ import Layout from "./Layout";
 import ProfilePic from "../assets/2X.svg";
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function Profile() {
-  const storedName = localStorage.getItem("name") || "";
-  const [name, setName] = useState(storedName);
+  const { user } = useAuth();
+  const [name, setName] = useState(user?.name || "");
   const [email, setEmail] = useState("tik-23@example.com");
   const [nim, setNIM] = useState("123456789");
 

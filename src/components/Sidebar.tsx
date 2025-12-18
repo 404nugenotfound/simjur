@@ -29,7 +29,8 @@ export default function Sidebar({
   const [open, setOpen] = useState(true);
   const [openClick, setOpenClick] = useState(false); // state mental untuk toggle dropdown
   
-  const role = localStorage.getItem("role"); 
+  const userData = localStorage.getItem("user_data");
+const role = userData ? JSON.parse(userData).roles_id?.toString() : "4"; 
 
   const toggleDropdown = (type: "kegiatan" | "kelola") => {
     setDropdown((prev) => ({
@@ -117,7 +118,7 @@ export default function Sidebar({
         </a>
 
         {/* ====================== SEKJUR: KELOLA DASHBOARD ====================== */}
-        {role === "Admin" && (
+        {role === "1" && (
           <div className="relative" ref={kelolaRef}>
             <button
               onClick={() => {
@@ -160,7 +161,7 @@ export default function Sidebar({
         )}
 
         {/* ====================== PENGAJU: PENGAJUAN KEGIATAN ====================== */}
-        {role === "Pengaju" && (
+        {role === "4" && (
           <a
             onClick={() => {
               handleMenuClick("/pengajuan");
@@ -175,7 +176,7 @@ export default function Sidebar({
         )}
 
         {/* ====================== ADMIN, KAJUR, SEKJUR: DAFTAR KEGIATAN ====================== */}
-        {(role === "Admin" || role === "Kajur" || role === "Sekjur") && (
+        {(role === "1" || role === "3" || role === "2") && (
           <div className="relative" ref={kegiatanRef}>
             <button
               onClick={() => {

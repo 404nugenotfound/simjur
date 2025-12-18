@@ -14,6 +14,7 @@ import Profile from "./pages/Profile";
 import PengajuanContext from "./context/PengajuanContext";
 import { ActivitiesProvider } from "./context/ActivitiesContext";
 import KelolaDana from "./pages/DanaKegiatan";
+import { AuthProvider } from "./context/AuthContext";
 
 
 const root = ReactDOM.createRoot(
@@ -22,28 +23,30 @@ const root = ReactDOM.createRoot(
 
 root.render(
   <React.StrictMode>
-    <DashboardProvider>
-      <ActivitiesProvider>
-        <BrowserRouter>
-          <Routes>
-            {/* Pagina tanpa layout (ex: login) */}
-            <Route path="/" element={<App />} />
+    <AuthProvider>
+      <DashboardProvider>
+        <ActivitiesProvider>
+          <BrowserRouter>
+            <Routes>
+              {/* Pagina tanpa layout (ex: login) */}
+              <Route path="/" element={<App />} />
 
-            {/* Semua halaman dalam layout */}
-            <Route>
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/user" element={<UserPage />} />
-              <Route path="/pengajuan" element={<PengajuanContext />} />
-              <Route path="/daftar" element={<DaftarKegiatan />} />
-              <Route path="/detail/:id" element={<Detail />} />
-              <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/Input" element={<KelolaDana />} />
-            </Route>
-          </Routes>
-        </BrowserRouter>
-      </ActivitiesProvider>
-    </DashboardProvider>
+              {/* Semua halaman dalam layout */}
+              <Route>
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/user" element={<UserPage />} />
+                <Route path="/pengajuan" element={<PengajuanContext />} />
+                <Route path="/daftar" element={<DaftarKegiatan />} />
+                <Route path="/detail/:id" element={<Detail />} />
+                <Route path="/daftar-LPJ" element={<DaftarKegiatanLPJ />} />
+                <Route path="/profile" element={<Profile />} />
+                <Route path="/Input" element={<KelolaDana />} />
+              </Route>
+            </Routes>
+          </BrowserRouter>
+        </ActivitiesProvider>
+      </DashboardProvider>
+    </AuthProvider>
   </React.StrictMode>
 );
 

@@ -1,5 +1,5 @@
 export type Role = "Admin" | "Sekjur" | "Kajur" | "Pengaju";
-export type UserRole = "admin" | "sekjur" | "kajur";
+export type UserRole = "admin" | "sekjur" | "kajur" | "pengaju";
 
 export type TorApprovalField = {
   torApproval1Status?: string;

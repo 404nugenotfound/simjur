@@ -1,7 +1,7 @@
 import { ApprovalField } from "@/utils/role";
 
 type Role = "Admin" | "Sekjur" | "Kajur" | "Pengaju";
-type UserRole = "admin" | "sekjur" | "kajur";
+type UserRole = "admin" | "sekjur" | "kajur" | "pengaju";
 
 type ApprovalStateUI = {
   approval1: "Pending" | "Approved" | "Rejected" | "Revisi";
@@ -115,19 +115,22 @@ const ApprovalAndNoteSection = ({
     );
   };
 
-  const handleSaveNoteWithRevisi = () => {
+const handleSaveNoteWithRevisi = () => {
     saveNote(userRole, currentNote);
 
     const roleLevelMap: Record<UserRole, 1 | 2 | 3> = {
       admin: 1,
       sekjur: 2,
       kajur: 3,
+      pengaju: 1,
     };
 
-    const level = roleLevelMap[userRole];
-    const field = getApprovalField(mode, level);
-
-    handleRevisi(field);
+    // Only allow revisi for non-pengaju roles
+    if (userRole !== "pengaju") {
+      const level = roleLevelMap[userRole];
+      const field = getApprovalField(mode, level);
+      handleRevisi(field);
+    }
   };
 
   const canTakeAction = (field: ApprovalField, status: string) =>
