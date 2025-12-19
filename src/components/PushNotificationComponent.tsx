@@ -5,7 +5,7 @@ import { BellIcon, BellSlashIcon } from '@heroicons/react/24/solid';
 import { usePushNotificationLifecycle } from '../hooks/usePushNotificationLifecycle';
 
 const PushNotificationComponent: React.FC = () => {
-  const { token, isAuthenticated } = useAuth();
+  const { token, isAuthenticated, user, role } = useAuth();
   const {
     isSupported,
     subscribed,
@@ -20,6 +20,17 @@ const PushNotificationComponent: React.FC = () => {
 
   // Auto-unsubscribe saat logout
   usePushNotificationLifecycle(token, isAuthenticated);
+
+  // Permission check berdasarkan role
+  const canSubscribeToNotifications = (): boolean => {
+    // Semua roles bisa subscribe, tapi hanya admin/administrasi yang bisa broadcast
+    return !!role; // Semua authenticated users bisa subscribe
+  };
+
+  const canBroadcastNotifications = (): boolean => {
+    // Hanya admin dan administrasi yang bisa broadcast
+    return role === 'admin' || role === 'administrasi';
+  };
 
   // Check subscription status saat login (tanpa auto-subscribe)
   useEffect(() => {

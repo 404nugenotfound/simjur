@@ -13,10 +13,9 @@ import DetailPengajuan from "../components/DetailPengajuanSection";
 import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
-import { Role } from "../utils/role";
+import { Role, ApprovalField, ApprovalStatus, TabKey } from "@/utils/role";
 import TabButton from "../components/TabButton";
-import { Role, ApprovalField, ApprovalStatus } from "@/utils/role";
-import { TabKey } from "@/utils/tab";
+
 import { saveFile } from "../utils/indexedDB";
 import { useContext } from "react";
 import { DashboardContext } from "../context/DashboardContext";
@@ -71,7 +70,7 @@ const Detail: React.FC<DetailProps> = () => {
 
   const [currentNote, setCurrentNote] = useState("");
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<TabKey>("detail");
+  const [activeTab, setActiveTab] = useState<"detail">("detail");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [hasFile, setHasFile] = useState<boolean>(false);
 

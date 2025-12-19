@@ -49,3 +49,6 @@ export const ROLE_HIERARCHY = {
 export const canAccess = (userRole: Role, requiredRole: Role): boolean => {
   return ROLE_HIERARCHY[userRole] >= ROLE_HIERARCHY[requiredRole];
 };
+
+// TabKey exports untuk consistency
+export type TabKey = "detail" | "submit" | "approval" | "danasetuju";
