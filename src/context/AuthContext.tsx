@@ -79,7 +79,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const logout = async (): Promise<void> => {
     try {
       if (token) {
-        console.log('🔄 Attempting server logout...');
         await authApi.logout(token);
       }
     } catch (error: any) {
@@ -91,15 +90,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       });
     } finally {
       // Selalu clear local data untuk memastikan logout berhasil
-      console.log('🧹 Clearing local authentication data...');
       localStorage.removeItem("auth_token");
       localStorage.removeItem("user_data");
       localStorage.removeItem("user_role");
       setUser(null);
       setRole(null);
       setToken(null);
-      
-      console.log('✅ Logout completed successfully');
     }
   };
 

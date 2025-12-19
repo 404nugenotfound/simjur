@@ -154,7 +154,12 @@ export class PushNotificationService {
   // Subscribe to push notifications
   async subscribe(token?: string): Promise<PushSubscription> {
     if (!this.isSupported()) {
-      throw new Error('Push notifications not supported in this browser');
+      throw new Error('Push notifications tidak didukung di browser ini');
+    }
+
+    // Validate token sebelum melanjutkan
+    if (!token) {
+      throw new Error('Token autentikasi diperlukan untuk subscribe push notifications');
     }
 
     try {
@@ -162,7 +167,12 @@ export class PushNotificationService {
       const permission = await this.requestPermission();
       
       if (permission !== 'granted') {
-        throw new Error(`Notification permission denied: ${permission}`);
+        throw new Error(`Izin notifikasi ditolak: ${permission}`);
+      }
+
+      // Validasi VAPID key
+      if (!this.testVapidKey()) {
+        throw new Error('Kunci VAPID tidak valid. Hubungi administrator.');
       }
 
       const subscription = await registration.pushManager.subscribe({
@@ -170,13 +180,24 @@ export class PushNotificationService {
         applicationServerKey: this.urlB64ToUint8Array(this.vapidPublicKey)
       });
 
-      // Send subscription to server
+      // Send subscription to server dengan validasi token
       await this.sendSubscriptionToServer(subscription, token);
       
       return subscription;
       
     } catch (error: any) {
-      throw new Error(`Push subscription failed: ${error.message}`);
+      // Handle error spesifik
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        throw new Error('Gagal subscribe: Token tidak valid. Silakan login kembali.');
+      }
+      if (error.message.includes('403') || error.message.includes('Forbidden')) {
+        throw new Error('Gagal subscribe: Anda tidak memiliki izin untuk fitur ini.');
+      }
+      if (error.message.includes('CORS')) {
+        throw new Error('Gagal koneksi ke server. Periksa jaringan Anda atau coba lagi nanti.');
+      }
+      
+      throw new Error(`Gagal subscribe: ${error.message}`);
     }
   }
 
@@ -195,12 +216,24 @@ export class PushNotificationService {
       if (actualSubscription) {
         await actualSubscription.unsubscribe();
         
-        // Remove from server
-        await this.removeSubscriptionFromServer(subscription, token);
+        // Remove from server jika token tersedia
+        if (token) {
+          await this.removeSubscriptionFromServer(subscription, token);
+        }
       }
       
     } catch (error: any) {
-      throw new Error(`Push unsubscribe failed: ${error.message}`);
+      // Handle error spesifik untuk unsubscribe
+      if (error.message.includes('401') || error.message.includes('Unauthorized')) {
+        // Silent fail untuk unsubscribe jika token invalid
+        return;
+      }
+      if (error.message.includes('CORS')) {
+        // Silent fail untuk CORS error
+        return;
+      }
+      
+      throw new Error(`Gagal unsubscribe: ${error.message}`);
     }
   }
 
@@ -347,14 +380,28 @@ export class PushNotificationService {
   testVapidKey(): boolean {
     try {
       const key = this.vapidPublicKey;
-      if (!key) {
+      if (!key || key.length < 50) {
+        console.error('❌ VAPID key tidak valid atau terlalu pendek');
+        return false;
+      }
+
+      // Valid format: harus diawali dengan 'B' atau 'M' untuk URL-safe base64
+      if (!key.startsWith('B') && !key.startsWith('M')) {
+        console.error('❌ Format VAPID key tidak valid');
         return false;
       }
 
       const decoded = this.urlB64ToUint8Array(key);
-      return decoded.length > 0;
+      const isValid = decoded.length > 0;
+      
+      if (!isValid) {
+        console.error('❌ Gagal decode VAPID key');
+      }
+      
+      return isValid;
       
     } catch (error) {
+      console.error('❌ Error saat validasi VAPID key:', error);
       return false;
     }
   }

@@ -22,6 +22,7 @@ export const usePushNotification = (token?: string | null): UsePushNotification 
   const [permission, setPermission] = useState<NotificationPermission>('default');
   const [error, setError] = useState<string | null>(null);
   const [subscription, setSubscription] = useState<MyPushSubscription | null>(null);
+  const [lastAttemptTime, setLastAttemptTime] = useState<number>(0);
 
   // Check support on mount
   useEffect(() => {
@@ -52,10 +53,24 @@ export const usePushNotification = (token?: string | null): UsePushNotification 
 
   const subscribe = useCallback(async () => {
     if (!isSupported) {
-      setError('Push notifications not supported in this browser');
+      setError('Push notifications tidak didukung di browser ini');
       return;
     }
 
+    if (!token) {
+      setError('Anda harus login untuk mengaktifkan notifikasi');
+      return;
+    }
+
+    // Rate limiting: maksimal 1 attempt per 5 detik
+    const now = Date.now();
+    const timeSinceLastAttempt = now - lastAttemptTime;
+    if (timeSinceLastAttempt < 5000) {
+      setError('Mohon tunggu 5 detik sebelum mencoba lagi.');
+      return;
+    }
+
+    setLastAttemptTime(now);
     setLoading(true);
     setError(null);
 
@@ -65,15 +80,28 @@ export const usePushNotification = (token?: string | null): UsePushNotification 
       const newPermission = await PushNotificationService.getNotificationPermission();
       setPermission(newPermission);
     } catch (error: any) {
-      setError(error.message);
+      // Handle error spesifik dengan pesan user-friendly
+      let errorMessage = error.message;
+      
+      if (error.message.includes('Token')) {
+        errorMessage = 'Gagal subscribe: Sesi login Anda telah berakhir. Silakan login kembali.';
+      } else if (error.message.includes('izin') || error.message.includes('permission')) {
+        errorMessage = 'Izin notifikasi dibukakan. Silakan izinkan notifikasi di browser Anda.';
+      } else if (error.message.includes('VAPID')) {
+        errorMessage = 'Konfigurasi notifikasi bermasalah. Silakan hubungi administrator.';
+      } else if (error.message.includes('CORS') || error.message.includes('koneksi')) {
+        errorMessage = 'Gagal terhubung ke server. Periksa koneksi internet Anda.';
+      }
+      
+      setError(errorMessage);
     } finally {
       setLoading(false);
     }
-  }, [isSupported, checkSubscription, token]);
+  }, [isSupported, checkSubscription, token, lastAttemptTime]);
 
   const unsubscribe = useCallback(async () => {
     if (!isSupported) {
-      setError('Push notifications not supported in this browser');
+      setError('Push notifications tidak didukung di browser ini');
       return;
     }
 
@@ -84,7 +112,9 @@ export const usePushNotification = (token?: string | null): UsePushNotification 
       await PushNotificationService.unsubscribe(token || undefined);
       await checkSubscription();
     } catch (error: any) {
-      setError(error.message);
+      // Silent error untuk unsubscribe (tidak krusial)
+      console.warn('Gagal unsubscribe:', error.message);
+      setError(null); // Clear error untuk unsubscribe
     } finally {
       setLoading(false);
     }

@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { usePushNotification } from '../hooks/usePushNotification';
 import { useAuth } from '../context/AuthContext';
 import { BellIcon, BellSlashIcon } from '@heroicons/react/24/solid';
+import { usePushNotificationLifecycle } from '../hooks/usePushNotificationLifecycle';
 
 const PushNotificationComponent: React.FC = () => {
   const { token, isAuthenticated } = useAuth();
@@ -12,34 +13,41 @@ const PushNotificationComponent: React.FC = () => {
     permission,
     error,
     subscription,
-    subscribe,
-    unsubscribe,
     toggle,
     sendNotification,
     showLocalNotification
   } = usePushNotification(token);
 
-  // Auto-subscribe when user logs in and hasn't subscribed yet
+  // Auto-unsubscribe saat logout
+  usePushNotificationLifecycle(token, isAuthenticated);
+
+  // Check subscription status saat login (tanpa auto-subscribe)
   useEffect(() => {
-    if (isAuthenticated && isSupported && !subscribed && !loading && permission === 'default') {
-      // Auto-request permission and subscribe
-      subscribe().catch(() => {
-        // Silently fail auto-subscription, let user manually trigger
-      });
+    if (isAuthenticated && isSupported) {
+      // Hanya check status subscription, tidak auto-subscribe
+      // Ini untuk mencegah error 401 saat belum ada token valid
     }
-  }, [isAuthenticated, isSupported, subscribed, loading, permission, subscribe]);
+  }, [isAuthenticated, isSupported]);
 
   const handleToggle = async () => {
-    await toggle();
+    try {
+      await toggle();
+    } catch (error: any) {
+      console.error('Gagal toggle subscription:', error);
+    }
   };
 
   const handleTestNotification = () => {
-    showLocalNotification({
-      title: 'Notifikasi Test',
-      message: 'Ini adalah notifikasi test dari Simjur',
-      icon: '/favicon-32x32.png',
-      url: window.location.href
-    });
+    try {
+      showLocalNotification({
+        title: 'Notifikasi Test',
+        message: 'Ini adalah notifikasi test dari Simjur',
+        icon: '/favicon-32x32.png',
+        url: window.location.href
+      });
+    } catch (error) {
+      console.error('Gagal menampilkan notifikasi test:', error);
+    }
   };
 
   const handleSendNotification = async () => {
@@ -75,23 +83,43 @@ const PushNotificationComponent: React.FC = () => {
 
   return (
     <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-      <div className="flex items-center justify-between mb-4">
+        <div className="flex items-center justify-between mb-4">
         <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
           <BellIcon className="w-5 h-5 text-blue-600" />
           Notifikasi Push
+          {/* Connection Status Indicator */}
+          <div className={`w-2 h-2 rounded-full ${
+            subscribed && permission === 'granted' ? 'bg-green-500' : 
+            permission === 'denied' ? 'bg-red-500' : 
+            loading ? 'bg-yellow-500' : 'bg-gray-400'
+          }`} title={
+            subscribed && permission === 'granted' ? 'Terhubung' :
+            permission === 'denied' ? 'Izin ditolak' :
+            loading ? 'Menghubungkan...' : 'Tidak terhubung'
+          } />
         </h3>
         <div className="flex items-center gap-2">
-          <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
-            subscribed 
-              ? 'bg-green-100 text-green-800' 
-              : 'bg-gray-100 text-gray-800'
-          }`}>
-            {subscribed ? 'Aktif' : 'Non-aktif'}
-          </span>
-          {permission !== 'granted' && (
-            <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-              Perlu Izin
-            </span>
+          {loading && (
+            <div className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+              <div className="w-3 h-3 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mr-1" />
+              Memproses...
+            </div>
+          )}
+          {!loading && (
+            <>
+              <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                subscribed 
+                  ? 'bg-green-100 text-green-800' 
+                  : 'bg-gray-100 text-gray-800'
+              }`}>
+                {subscribed ? 'Aktif' : 'Non-aktif'}
+              </span>
+              {permission !== 'granted' && (
+                <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
+                  Perlu Izin
+                </span>
+              )}
+            </>
           )}
         </div>
       </div>
