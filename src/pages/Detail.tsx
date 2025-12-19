@@ -13,6 +13,7 @@ import DetailPengajuan from "../components/DetailPengajuanSection";
 import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
+import { Role } from "../utils/role";
 import TabButton from "../components/TabButton";
 import { Role, ApprovalField, ApprovalStatus } from "@/utils/role";
 import { TabKey } from "@/utils/tab";
@@ -78,20 +79,20 @@ const Detail: React.FC<DetailProps> = () => {
 
   // ---------- INI PART ROLE YA TUANGALA ----------
   const userData = localStorage.getItem("user_data");
-const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "4";
+  const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "4";
 
   const roleTyped: Role =
     rawRole === "1" || rawRole === "2" || rawRole === "3"
-      ? rawRole === "1" ? "Admin" : rawRole === "2" ? "Sekjur" : "Kajur"
-      : "Pengaju";
-
+      ? rawRole === "1" ? "admin" : rawRole === "2" ? "administrasi" : "pengaju"
+      : "pengaju";
+  
   const userRole =
     rawRole === "1"
       ? "admin"
       : rawRole === "2"
-      ? "sekjur"
+      ? "administrasi"
       : rawRole === "3"
-      ? "kajur"
+      ? "pengaju"
       : "pengaju"; // fallback aman
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
@@ -158,17 +159,17 @@ const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "4";
         };
 
   const allowedField: ApprovalField =
-  mode === "TOR"
-    ? roleTyped === "Admin"
-      ? "torApproval1Status"
-      : roleTyped === "Sekjur"
-      ? "torApproval2Status"
-      : "torApproval3Status"
-    : roleTyped === "Admin"
-    ? "lpjApproval1Status"
-    : roleTyped === "Sekjur"
-    ? "lpjApproval2Status"
-    : "lpjApproval3Status";
+    mode === "TOR"
+      ? roleTyped === "admin"
+        ? "torApproval1Status"
+        : roleTyped === "administrasi"
+        ? "torApproval2Status"
+        : "torApproval3Status"
+      : roleTyped === "admin"
+      ? "lpjApproval1Status"
+      : roleTyped === "administrasi"
+      ? "lpjApproval2Status"
+      : "lpjApproval3Status";
 
 
   const detailInfo = {
@@ -596,7 +597,7 @@ useEffect(() => {
             />
 
             <TabButton
-              label={roleTyped === "Pengaju" ? "Submit File" : "Unduh File"}
+              label={roleTyped === "pengaju" ? "Submit File" : "Unduh File"}
               value="submit"
               activeTab={activeTab}
               onClick={setActiveTab}
@@ -609,7 +610,7 @@ useEffect(() => {
               onClick={setActiveTab}
             />
 
-            {roleTyped === "Sekjur" && (
+            {roleTyped === "administrasi" && (
               <TabButton
                 label="Dana Disetujui"
                 value="danasetuju"

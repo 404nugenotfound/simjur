@@ -1,7 +1,7 @@
 import { ApprovalField } from "@/utils/role";
 
-type Role = "Admin" | "Sekjur" | "Kajur" | "Pengaju";
-type UserRole = "admin" | "sekjur" | "kajur" | "pengaju";
+type Role = "admin" | "administrasi" | "pengaju" | "sekretaris" | "ketua_jurusan";
+type UserRole = "admin" | "administrasi" | "pengaju" | "sekretaris" | "ketua_jurusan";
 
 type ApprovalStateUI = {
   approval1: "Pending" | "Approved" | "Rejected" | "Revisi";
@@ -120,9 +120,10 @@ const handleSaveNoteWithRevisi = () => {
 
     const roleLevelMap: Record<UserRole, 1 | 2 | 3> = {
       admin: 1,
-      sekjur: 2,
-      kajur: 3,
+      administrasi: 2,
       pengaju: 1,
+      sekretaris: 2,
+      ketua_jurusan: 3,
     };
 
     // Only allow revisi for non-pengaju roles
@@ -209,7 +210,7 @@ const handleSaveNoteWithRevisi = () => {
 
           <h2 className="font-semibold mb-3 text-lg">Catatan Revisi</h2>
 
-          {role !== "Pengaju" ? (
+          {role !== "pengaju" ? (
             <div className="relative w-full">
               <textarea
                 className="w-full border rounded-lg p-3 min-h-[12rem] resize-none"

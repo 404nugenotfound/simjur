@@ -74,7 +74,7 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const limit = 5;
   const navigate = useNavigate();
-  const namaPengaju = roleToName["Pengaju"];
+  const namaPengaju = roleToName["pengaju"];
 
   // === FILTER + SORT UTAMA ===
   const filtered = [...data]      // clone dulu biar aman
