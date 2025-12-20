@@ -13,12 +13,15 @@ import DetailPengajuan from "../components/DetailPengajuanSection";
 import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
-import { Role, ApprovalField, ApprovalStatus, TabKey } from "@/utils/role";
+import { Role, ApprovalField, ApprovalStatus } from "@/utils/role";
+import { TabKey } from "../utils/tab";
 import TabButton from "../components/TabButton";
-
 import { saveFile } from "../utils/indexedDB";
 import { useContext } from "react";
 import { DashboardContext } from "../context/DashboardContext";
+
+import { createApprovalNotification, createRejectionNotification } from "../services/notificationService";
+import { useAuth } from "../context/AuthContext";
 
 
 // ----------------- TYPES -----------------
@@ -70,29 +73,31 @@ const Detail: React.FC<DetailProps> = () => {
 
   const [currentNote, setCurrentNote] = useState("");
   const location = useLocation();
-  const [activeTab, setActiveTab] = useState<"detail">("detail");
+  const [activeTab, setActiveTab] = useState<TabKey>("detail");
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [hasFile, setHasFile] = useState<boolean>(false);
 
 
 
-  // ---------- INI PART ROLE YA TUANGALA ----------
-  const userData = localStorage.getItem("user_data");
-  const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "4";
-
-  const roleTyped: Role =
-    rawRole === "1" || rawRole === "2" || rawRole === "3"
-      ? rawRole === "1" ? "admin" : rawRole === "2" ? "administrasi" : "pengaju"
-      : "pengaju";
+  // ---------- GET ROLE DARI AUTHCONTEXT ----------
+  const { role: roleTyped, roleId, user } = useAuth() as { role: Role; roleId: number; user: any; };
   
-  const userRole =
-    rawRole === "1"
-      ? "admin"
-      : rawRole === "2"
-      ? "administrasi"
-      : rawRole === "3"
-      ? "pengaju"
-      : "pengaju"; // fallback aman
+  // Simple permission checks based on role ID
+  const canApprove = roleId === 1 || roleId === 2 || roleId === 4 || roleId === 5; // admin, administrasi, sekretaris, ketua_jurusan
+  const canManage = roleId === 1; // admin only
+  const hasPermission = (permission: string) => {
+    const permissionMap = {
+      1: ['view_activities', 'approve_activity', 'manage_activities'], // admin
+      2: ['view_activities', 'approve_activity'], // administrasi
+      3: ['view_activities'], // pengaju
+      4: ['view_activities', 'approve_activity'], // sekretaris
+      5: ['view_activities', 'approve_activity'], // ketua_jurusan
+    };
+    return permissionMap[roleId as keyof typeof permissionMap]?.includes(permission) || false;
+  };
+  
+  const userData = localStorage.getItem("user_data");
+  const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "3";
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
 
@@ -177,7 +182,7 @@ const Detail: React.FC<DetailProps> = () => {
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
     dana:
     activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
-    penanggung_jawab: activity?.penanggung_jawab ?? "-",
+     penanggung_jawab: user?.name ?? "-",
     sisaDana: activity?.lpj?.sisa_dana ?? "-",
     metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",
     total_peserta: activity?.lpj?.total_peserta ?? "[ Belum Ada Data ]",
@@ -311,11 +316,36 @@ const getApprovalField = (
 
 
 
-const handleApprove = (field: ApprovalField) =>
+const handleApprove = (field: ApprovalField) => {
   updateAll(field, "Approved");
+  
+  // Trigger notification
+  if (activity) {
+    const approverName = userData ? JSON.parse(userData).name : 'System';
+    createApprovalNotification(
+      activity.judul || 'Pengajuan Kegiatan',
+      mode,
+      approverName,
+      1, // Approval level (simplify untuk demo)
+      'approved'
+    );
+  }
+};
 
-const handleReject = (field: ApprovalField) =>
+const handleReject = (field: ApprovalField) => {
   updateAll(field, "Rejected");
+  
+  // Trigger notification
+  if (activity) {
+    const approverName = userData ? JSON.parse(userData).name : 'System';
+    createRejectionNotification(
+      activity.judul || 'Pengajuan Kegiatan',
+      mode,
+      approverName,
+      1 // Rejection level
+    );
+  }
+};
 
 const handleRevisi = async (field: ApprovalField) => {
   if (!activity || typeof activity.id !== "number") return;
@@ -561,7 +591,7 @@ useEffect(() => {
       ? approvalState.approval3
       : null;
 
-  const canShowNote = rawRole === "Pengaju" || roleApprovalStatus === "Pending";
+  const canShowNote = roleTyped === "pengaju" || roleApprovalStatus === "Pending";
 
   return (
     <Layout>
@@ -592,29 +622,36 @@ useEffect(() => {
               label="Detail"
               value="detail"
               activeTab={activeTab}
-              onClick={setActiveTab}
+              onClick={() => setActiveTab("detail")}
             />
-
+            
             <TabButton
               label={roleTyped === "pengaju" ? "Submit File" : "Unduh File"}
               value="submit"
               activeTab={activeTab}
-              onClick={setActiveTab}
+              onClick={() => setActiveTab("submit")}
             />
-
+            
             <TabButton
               label="Status"
               value="approval"
               activeTab={activeTab}
-              onClick={setActiveTab}
+              onClick={() => setActiveTab("approval")}
             />
-
+            
+            <TabButton
+              label="Dana Disetujui"
+              value="danasetuju"
+              activeTab={activeTab}
+              onClick={() => setActiveTab("danasetuju")}
+            />
+            
             {roleTyped === "administrasi" && (
               <TabButton
                 label="Dana Disetujui"
-                value="danasetuju"
-                activeTab={activeTab}
-                onClick={setActiveTab}
+              value="danasetuju"
+              activeTab={activeTab}
+              onClick={() => setActiveTab("danasetuju")}
               />
             )}
           </div>
@@ -641,7 +678,7 @@ useEffect(() => {
                 handleRevisi={(field)=> handleRevisi(field)}
                 canShowNote={canShowNote}
 role={roleTyped}
-                 userRole={userRole}
+                 userRole={roleTyped}
                 notes={notes}
                 activity={activity}
                 mode={mode}

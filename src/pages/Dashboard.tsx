@@ -1,4 +1,4 @@
-import Layout from "./Layout";
+// Layout dihandle oleh parent route, tidak perlu import di sini
 import { useContext, useEffect, useState } from "react";
 import { DashboardContext } from "../context/DashboardContext";
 import { ParentSize } from "@visx/responsive";
@@ -8,6 +8,8 @@ import { useActivities } from "../context/ActivitiesContext";
 import { useNavigate } from "react-router-dom";
 import { roleToName } from "../utils/roleToName";
 import PushNotificationComponent from "../components/PushNotificationComponent";
+import NotificationPanel from "../components/NotificationPanel";
+import Layout from "./Layout";
 
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
@@ -77,27 +79,23 @@ export default function Dashboard() {
   const namaPengaju = roleToName["pengaju"];
 
   // === FILTER + SORT UTAMA ===
-  const filtered = [...data]      // clone dulu biar aman
-    .reverse()                    // urutan terbaru paling atas
+  const filtered = [...data] // clone dulu biar aman
+    .reverse() // urutan terbaru paling atas
     .filter((item) => {
       const matching = filter === "all" ? true : item.judul === filter;
-      const searching = item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
+      const searching =
+        item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
       return matching && searching;
     });
-  
-  
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-  
-    const paginatedData = filtered.slice(startIndex, endIndex);
-  
-     useEffect(() => {
-        setPage(1);
-      }, [search]);
-  
-    {
-      /* Tabel */
-    }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   return (
     <Layout>
@@ -105,6 +103,9 @@ export default function Dashboard() {
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
           DASHBOARD PENGAJUAN KEGIATAN
         </h1>
+
+        {/* Notification Panel */}
+        <NotificationPanel />
 
         {/* Push Notification Component */}
         <PushNotificationComponent />
@@ -180,13 +181,13 @@ export default function Dashboard() {
                 <div
                   key={i}
                   className="
-                  grid grid-cols-[1fr_auto]
-                  items-center
-                  bg-gray-50
-                  rounded-2xl
-                  px-6 py-5
-                  border
-                "
+                    grid grid-cols-[1fr_auto]
+                    items-center
+                    bg-gray-50
+                    rounded-2xl
+                    px-6 py-5
+                    border
+                  "
                 >
                   {/* LABEL */}
                   <span className="text-gray-600 font-medium leading-snug">

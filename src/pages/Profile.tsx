@@ -55,7 +55,7 @@ export default function Profile() {
 
                 <label className="text-sm font-medium">Nama</label>
                 <input
-                  className="w-full border rounded bg-[#D5D5D5] text-black text-opacity-60 
+                  className="w-full border rounded bg-[#D5D5D5] text-black text-opacity-60
                   font-medium px-3 py-2 mb-3"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
@@ -65,7 +65,7 @@ export default function Profile() {
 
                 <label className="text-sm font-medium">Email</label>
                 <input
-                  className="w-full border rounded bg-[#D5D5D5] text-black text-opacity-60 
+                  className="w-full border rounded bg-[#D5D5D5] text-black text-opacity-60
                   font-medium px-3 py-2 mb-4"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
@@ -75,7 +75,7 @@ export default function Profile() {
 
                 <label className="text-sm font-medium">NIM</label>
                 <input
-                  className="w-full border rounded bg-[#D5D5D5] text-black text-opacity-60 
+                  className="w-full border rounded bg-[#D5D5D5] text-black text-opacity-60
                   font-medium px-3 py-2 mb-4"
                   value={nim}
                   onChange={(e) => setNIM(e.target.value)}
@@ -107,9 +107,7 @@ export default function Profile() {
                 />
 
                 <div className="font-medium grid grid-cols-2 mt-4 gap-4">
-                  <button 
-                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-start hover:scale-[0.97]"
-                  >
+                  <button className="px-4 py-2 rounded bg-blue-600 text-white justify-self-start hover:scale-[0.97]">
                     Ganti Password
                   </button>
 

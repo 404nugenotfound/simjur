@@ -1,3 +1,6 @@
+// Token duration in minutes (1 hour)
+export const TOKEN_DURATION = 60;
+
 export const TokenManager = {
   getToken: (): string | null => {
     return localStorage.getItem("auth_token");
@@ -18,8 +21,8 @@ export const TokenManager = {
 
   isTokenExpired: (token: string): boolean => {
     try {
-      const playload = JSON.parse(atob(token.split(".")[1]));
-      return Date.now() >= playload.exp * 1000;
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      return Date.now() >= payload.exp * 3000;
     } catch {
       return true;
     }

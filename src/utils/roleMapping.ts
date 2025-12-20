@@ -2,7 +2,7 @@ import { Role } from "./role";
 
 /**
  * Mapping Role ID dari API ke Role types
- * API Roles:
+ * API Roles (sesuai response API):
  * 1: admin
  * 2: administrasi  
  * 3: pengaju

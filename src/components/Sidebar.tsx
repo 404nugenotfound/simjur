@@ -13,6 +13,7 @@ import {
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
+import { useAuth } from "../context/AuthContext";
 
 export default function Sidebar({
   setMode,
@@ -29,8 +30,16 @@ export default function Sidebar({
   const [open, setOpen] = useState(true);
   const [openClick, setOpenClick] = useState(false); // state mental untuk toggle dropdown
   
-  const userData = localStorage.getItem("user_data");
-const role = userData ? JSON.parse(userData).roles_id?.toString() : "4"; 
+  // Simple role checks based on role ID
+  const { roleId } = useAuth();
+  const isAdmin = roleId === 1;
+  const isAdministrasi = roleId === 2;
+  const isPengaju = roleId === 3;
+  const isSekretaris = roleId === 4;
+  const isKetuaJurusan = roleId === 5;
+  
+  const canCreateActivity = roleId === 1 || roleId === 2 || roleId === 3; // admin, administrasi, pengaju
+  const canManageBudget = roleId === 1 || roleId === 2; // admin, administrasi 
 
   const toggleDropdown = (type: "kegiatan" | "kelola") => {
     setDropdown((prev) => ({
@@ -117,8 +126,8 @@ const role = userData ? JSON.parse(userData).roles_id?.toString() : "4";
           {open && <span>Dashboard</span>}
         </a>
 
-        {/* ====================== SEKJUR: KELOLA DASHBOARD ====================== */}
-        {role === "1" && (
+        {/* ====================== ADMIN/ADMINISTRASI: KELOLA DASHBOARD ====================== */}
+        {(isAdmin || isAdministrasi) && (
           <div className="relative" ref={kelolaRef}>
             <button
               onClick={() => {
@@ -161,7 +170,7 @@ const role = userData ? JSON.parse(userData).roles_id?.toString() : "4";
         )}
 
         {/* ====================== PENGAJU: PENGAJUAN KEGIATAN ====================== */}
-        {role === "4" && (
+        {isPengaju && canCreateActivity && (
           <a
             onClick={() => {
               handleMenuClick("/pengajuan");
@@ -175,8 +184,8 @@ const role = userData ? JSON.parse(userData).roles_id?.toString() : "4";
           </a>
         )}
 
-        {/* ====================== ADMIN, KAJUR, SEKJUR: DAFTAR KEGIATAN ====================== */}
-        {(role === "1" || role === "3" || role === "2") && (
+        {/* ====================== ADMIN, ADMINISTRASI, KETUA JURUSAN: DAFTAR KEGIATAN ====================== */}
+        {(isAdmin || isAdministrasi || isKetuaJurusan) && (
           <div className="relative" ref={kegiatanRef}>
             <button
               onClick={() => {

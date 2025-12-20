@@ -1,16 +1,18 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { usePushNotification } from './usePushNotification';
 
 /**
  * Hook untuk mengelola push notification lifecycle
- * Auto-unsubscribe saat logout
+ * Auto-unsubscribe SAAT logout (bukan saat login)
  */
 export const usePushNotificationLifecycle = (token: string | null, isAuthenticated: boolean) => {
   const { unsubscribe } = usePushNotification(token);
+  const wasAuthenticatedRef = useRef(isAuthenticated);
 
-  // Auto-unsubscribe saat logout
+  // Auto-unsubscribe SAAT logout (bukan saat login)
   useEffect(() => {
-    if (!isAuthenticated && token) {
+    // Hanya unsubscribe jika user benar-benar logout (dari authenticated ke not authenticated)
+    if (wasAuthenticatedRef.current && !isAuthenticated && token) {
       // User sudah logout, unsubscribe dari notifications
       const performUnsubscribe = async () => {
         try {
@@ -20,9 +22,12 @@ export const usePushNotificationLifecycle = (token: string | null, isAuthenticat
         }
       };
 
-      // Delay sedikit untuk memastikan proses logout selesai
-      setTimeout(performUnsubscribe, 1000);
+      // Delay untuk memastikan proses logout selesai
+      setTimeout(performUnsubscribe, 500); // Kurangi delay dari 1000ms ke 500ms
     }
+
+    // Update ref untuk next render
+    wasAuthenticatedRef.current = isAuthenticated;
   }, [isAuthenticated, token, unsubscribe]);
 
   return null;

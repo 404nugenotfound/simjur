@@ -4,13 +4,12 @@ import { useNavigate } from "react-router-dom";
 import Layout from "./Layout";
 
 export default function KelolaDana() {
-  const { dana, data, updateDana } =
-    useContext(DashboardContext);
+  const { dana, data, updateDana } = useContext(DashboardContext);
 
   // hitung dana terpakai dari semua kegiatan
   const totalTerpakai = data.reduce(
     (acc, item) => acc + Number(item.nominal || 0),
-    0
+    0,
   );
   // form input untuk dana regular
   const [regular, setRegular] = useState(0);

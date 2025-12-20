@@ -8,10 +8,13 @@ import {
 import { authApi, LoginResponse, User } from "../service/api";
 import { mapRoleIdToRole } from "../utils/roleMapping";
 import { Role } from "../utils/role";
+import { autoRefreshService } from "../services/autoRefreshService";
+import { TokenManager } from "../utils/tokenManager";
 
 interface AuthContextType {
   user: User | null;
   role: Role | null;
+  roleId: number | null;
   token: string | null;
   isAuthenticated: boolean;
   isLoading: boolean;
@@ -27,6 +30,7 @@ const AuthContext = createContext<AuthContextType | null>(null);
 export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null);
   const [role, setRole] = useState<Role | null>(null);
+  const [roleId, setRoleId] = useState<number | null>(null);
   const [token, setToken] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
 
@@ -37,11 +41,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
       if (storedToken) {
         try {
-          // Validate token dengan real API
+          // Cek token expiration locally dulu
+          if (TokenManager.isTokenExpired(storedToken)) {
+            localStorage.removeItem("auth_token");
+            localStorage.removeItem("user_data");
+            setIsLoading(false);
+            return;
+          }
+          
+          // Validate dengan API hanya jika token tidak expired
           const userData = await authApi.getCurrentUser(storedToken);
           setUser(userData);
           setRole(mapRoleIdToRole(userData.roles_id));
+          setRoleId(userData.roles_id);
           setToken(storedToken);
+          
+          // Start auto refresh service
+          autoRefreshService.startAutoRefresh();
         } catch {
           // Token invalid, clear it
           localStorage.removeItem("auth_token");
@@ -69,7 +85,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     // Update state
     setUser(response.user);
     setRole(mapRoleIdToRole(response.user.roles_id));
+    setRoleId(response.user.roles_id);
     setToken(response.token);
+
+    // Start auto refresh service
+    autoRefreshService.startAutoRefresh();
 
     return response;
   };
@@ -78,6 +98,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const logout = async (): Promise<void> => {
     try {
+      // Stop auto refresh service
+      autoRefreshService.stopAutoRefresh();
+      
       if (token) {
         await authApi.logout(token);
       }
@@ -95,14 +118,38 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       localStorage.removeItem("user_role");
       setUser(null);
       setRole(null);
+      setRoleId(null);
       setToken(null);
     }
   };
 
+  // Manage auto refresh service based on auth state
+  useEffect(() => {
+    const isAuth = !!user && !!token;
+    if (isAuth && token) {
+      // Start auto refresh saat login
+      autoRefreshService.startAutoRefresh();
+    } else {
+      // Stop auto refresh saat logout
+      autoRefreshService.stopAutoRefresh();
+    }
+
+    // Cleanup saat unmount
+    return () => {
+      autoRefreshService.stopAutoRefresh();
+    };
+  }, [user, token]);
+
   const refreshToken = async (): Promise<void> => {
-    // Implementation untuk token refresh jika API supports it
-    // For now, just logout
-    await logout();
+    // Gunakan auto refresh service
+    try {
+      await autoRefreshService.performTokenRefresh();
+      console.log('Token refreshed successfully');
+    } catch (error) {
+      console.error('Token refresh failed:', error);
+      // Fallback ke logout jika refresh gagal
+      await logout();
+    }
   };
 
   return (
@@ -110,6 +157,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       value={{
         user,
         role,
+        roleId,
         token,
         isAuthenticated: !!user && !!token,
         isLoading,
