@@ -8,23 +8,6 @@ import { useAuth } from "./context/AuthContext";
 import { ApiError } from "./service/api";
 import { Toaster, toast } from "sonner";
 // Development test credentials info
-const TestCredentialsInfo = () => {
-  if (process.env.NODE_ENV !== "development") return null;
-
-  return (
-    <div className="absolute top-4 right-4 bg-blue-50 border border-blue-200 p-3 rounded-lg text-xs max-w-xs z-50 shadow-lg">
-      <h4 className="font-bold text-blue-800 mb-2">🔐 Test Credentials</h4>
-      <div className="space-y-2">
-        <div className="p-2 bg-blue-100 rounded">
-          <p className="font-semibold text-blue-900">Admin (Real API)</p>
-          <p className="text-gray-700">Identifier: pengaju</p>
-          <p className="text-gray-700">Password: 12345678</p>
-          <p className="text-gray-600 text-xs">Role: Admin (ID: 17)</p>
-        </div>
-      </div>
-    </div>
-  );
-};
 
 function App() {
   const navigate = useNavigate();

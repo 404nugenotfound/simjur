@@ -8,7 +8,6 @@ import {
   Cog6ToothIcon,
   Bars3Icon,
   ChevronDownIcon,
-  CreditCardIcon,
   BanknotesIcon,
 } from "@heroicons/react/24/solid";
 import { useNavigate } from "react-router-dom";
@@ -21,40 +20,52 @@ export default function Sidebar({
   setMode: (m: "list" | "TOR" | "LPJ") => void;
 }) {
   const navigate = useNavigate();
+  const { roleId, isAuthenticated } = useAuth();
+
   const kegiatanRef = useRef<HTMLDivElement | null>(null);
-  const kelolaRef = useRef<HTMLDivElement>(null);
-  const [dropdownState, setDropdown] = useState({
+  const kelolaRef = useRef<HTMLDivElement | null>(null);
+
+  const [dropdown, setDropdown] = useState({
     kelola: false,
     kegiatan: false,
   });
+
   const [open, setOpen] = useState(true);
-  const [openClick, setOpenClick] = useState(false); // state mental untuk toggle dropdown
-  
-  // Simple role checks based on role ID
-  const { roleId } = useAuth();
+
+  /* =========================
+     ROLE CHECK
+  ========================= */
   const isAdmin = roleId === 1;
   const isAdministrasi = roleId === 2;
   const isPengaju = roleId === 3;
   const isSekretaris = roleId === 4;
   const isKetuaJurusan = roleId === 5;
-  
-  const canCreateActivity = roleId === 1 || roleId === 2 || roleId === 3; // admin, administrasi, pengaju
-  const canManageBudget = roleId === 1 || roleId === 2; // admin, administrasi 
 
-  const toggleDropdown = (type: "kegiatan" | "kelola") => {
-    setDropdown((prev) => ({
-      ...prev,
-      [type]: !prev[type],
-    }));
+  const canCreateActivity =
+    isAdmin || isAdministrasi || isPengaju || isSekretaris;
+  const canManageDashboard = isAdmin || isAdministrasi || isSekretaris;
+  const canViewActivities =
+    isAdmin || isAdministrasi || isKetuaJurusan || isSekretaris;
+
+  /* =========================
+     SAFE NAVIGATE (ANTI LOGOUT)
+  ========================= */
+  const go = (path: string) => {
+    if (!isAuthenticated) return;
+    setDropdown({ kelola: false, kegiatan: false });
+    setMode("list");
+    navigate(path);
   };
 
+  /* =========================
+     CLICK OUTSIDE DROPDOWN
+  ========================= */
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       const target = e.target as Node;
-
       if (
-        (!kegiatanRef.current || !kegiatanRef.current.contains(target)) &&
-        (!kelolaRef.current || !kelolaRef.current.contains(target))
+        !kegiatanRef.current?.contains(target) &&
+        !kelolaRef.current?.contains(target)
       ) {
         setDropdown({ kelola: false, kegiatan: false });
       }
@@ -64,10 +75,7 @@ export default function Sidebar({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const handleMenuClick = (path: string) => {
-  navigate(path);
-  setMode("list"); // navigasi aja, tanpa ubah open
-};
+  if (!isAuthenticated) return null;
 
   return (
     <aside
@@ -75,90 +83,59 @@ export default function Sidebar({
         open ? "w-80" : "w-20"
       }`}
     >
-      {/* Header Logo & Toggle */}
-      <div className="flex items-center justify-between mb-16 pr-1 ">
-        <div className="flex items-center gap-[-2.5rem]">
+      {/* ================= HEADER ================= */}
+      <div className="flex items-center justify-between mb-16 pr-1">
+        <div className="flex items-center">
           {open && (
             <>
               <img src={Logo} alt="SIMJUR" className="w-[60px] ml-2" />
-              <h1
-                className="ml-1 text-lg font-orbitron font-extrabold 
-                tracking-[0.5rem] pointer-events-none"
-              >
+              <h1 className="ml-1 text-lg font-orbitron font-extrabold tracking-[0.5rem]">
                 SIMJUR
               </h1>
             </>
           )}
         </div>
 
-        <button
-          onClick={() => setOpen(!open)}
-          className="text-white"
-          aria-label="Zoom Menu"
-        >
+        <button onClick={() => setOpen(!open)}>
           <Bars3Icon className="w-8 h-8" />
         </button>
       </div>
 
-      {/* Menu Title */}
-      <h2
-        className={`text-gray-300 font-bebas uppercase tracking-[0.2rem] 
-            mb-7 mr-[22rem] text-center transition-all pointer-events-none duration-300 pl-1   ${
-              open ? "text-xl opacity-100" : "text-sm opacity-70"
-            }`}
-      >
-        Menu
-      </h2>
-
-      {/* Navigation */}
+      {/* ================= MENU ================= */}
       <nav className="space-y-3 ml-[-1rem] pl-5">
-       {/* Dashboard */}
-       <a
-          onClick={() => {
-            setOpenClick(!openClick);
-            navigate("/dashboard");
-            window.location.reload();
-          }}
-          className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
-          ${!open ? "justify-center" : "justify-start"} hover:bg-black/20`}
+        {/* DASHBOARD */}
+        <button
+          onClick={() => go("/dashboard")}
+          className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
         >
-          <ChartBarIcon className="w-6 h-6 min-w-[24px]" />
+          <ChartBarIcon className="w-6 h-6" />
           {open && <span>Dashboard</span>}
-        </a>
+        </button>
 
-        {/* ====================== ADMIN/ADMINISTRASI: KELOLA DASHBOARD ====================== */}
-        {(isAdmin || isAdministrasi) && (
-          <div className="relative" ref={kelolaRef}>
+        {/* ================= KELOLA DASHBOARD ================= */}
+        {canManageDashboard && (
+          <div ref={kelolaRef}>
             <button
-              onClick={() => {
-                if (!open) {
-                  setOpen(true);
-                  setDropdown({ ...dropdownState, kelola: true });
-                  return;
-                }
-                toggleDropdown("kelola");
-              }}
-              className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
-                ${!open && "justify-center"} hover:bg-black/20 w-full`}
+              onClick={() => setDropdown((d) => ({ ...d, kelola: !d.kelola }))}
+              className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
             >
-              <Cog6ToothIcon className="w-6 h-6 min-w-[24px]" />
+              <Cog6ToothIcon className="w-6 h-6" />
               {open && (
-                <span className="flex items-center gap-[2.4rem]">
-                  Kelola Dashboard
+                <>
+                  <span className="flex-1">Kelola Dashboard</span>
                   <ChevronDownIcon
-                    strokeWidth={2.5}
-                    className={`w-5 h-5 transition-transform ${
-                      dropdownState.kelola ? "rotate-180" : ""
+                    className={`w-5 h-5 transition ${
+                      dropdown.kelola ? "rotate-180" : ""
                     }`}
                   />
-                </span>
+                </>
               )}
             </button>
 
-            {open && dropdownState.kelola && (
-              <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white shadow-lg rounded-md py-2 w-full border border-white/10">
+            {open && dropdown.kelola && (
+              <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2">
                 <button
-                  onClick={() => navigate("/Input")}
+                  onClick={() => go("/input")}
                   className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
                 >
                   <BanknotesIcon className="w-5 h-5" />
@@ -169,57 +146,43 @@ export default function Sidebar({
           </div>
         )}
 
-        {/* ====================== PENGAJU: PENGAJUAN KEGIATAN ====================== */}
-        {isPengaju && canCreateActivity && (
-          <a
-            onClick={() => {
-              handleMenuClick("/pengajuan");
-              window.location.reload();
-            }}
-            className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
-              ${!open && "justify-center"} hover:bg-black/20`}
+        {/* ================= PENGAJUAN ================= */}
+        {canCreateActivity && (
+          <button
+            onClick={() => go("/pengajuan")}
+            className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
           >
-            <DocumentTextIcon className="w-6 h-6 min-w-[24px]" />
+            <DocumentTextIcon className="w-6 h-6" />
             {open && <span>Pengajuan Kegiatan</span>}
-          </a>
+          </button>
         )}
 
-        {/* ====================== ADMIN, ADMINISTRASI, KETUA JURUSAN: DAFTAR KEGIATAN ====================== */}
-        {(isAdmin || isAdministrasi || isKetuaJurusan) && (
-          <div className="relative" ref={kegiatanRef}>
+        {/* ================= DAFTAR KEGIATAN ================= */}
+        {canViewActivities && (
+          <div ref={kegiatanRef}>
             <button
-              onClick={() => {
-                if (!open) {
-                  setOpen(true);
-                  setDropdown({ ...dropdownState, kegiatan: true });
-                  return;
-                }
-                toggleDropdown("kegiatan");
-              }}
-              className={`flex items-center gap-3 text-lg px-4 py-3 rounded-md transition-all cursor-pointer 
-                ${!open && "justify-center"} hover:bg-black/20 w-full`}
+              onClick={() =>
+                setDropdown((d) => ({ ...d, kegiatan: !d.kegiatan }))
+              }
+              className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
             >
-              <ClipboardDocumentListIcon className="w-6 h-6 min-w-[24px]" />
+              <ClipboardDocumentListIcon className="w-6 h-6" />
               {open && (
-                <span className="flex items-center gap-[3.5rem]">
-                  Daftar Kegiatan
+                <>
+                  <span className="flex-1">Daftar Kegiatan</span>
                   <ChevronDownIcon
-                    strokeWidth={2.5}
-                    className={`w-5 h-5 transition-transform ${
-                      dropdownState.kegiatan ? "rotate-180" : ""
+                    className={`w-5 h-5 transition ${
+                      dropdown.kegiatan ? "rotate-180" : ""
                     }`}
                   />
-                </span>
+                </>
               )}
             </button>
 
-            {open && dropdownState.kegiatan && (
-              <div className="absolute left-0 bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] text-white shadow-lg rounded-md py-2 w-full z-50 border border-white/10">
+            {open && dropdown.kegiatan && (
+              <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2">
                 <button
-                  onClick={() =>{ navigate("/daftar");
-                    window.location.reload();
-                  }}
-                  
+                  onClick={() => go("/daftar")}
                   className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
                 >
                   <DocumentArrowUpIcon className="w-5 h-5" />
@@ -227,9 +190,7 @@ export default function Sidebar({
                 </button>
 
                 <button
-                  onClick={() => {navigate("/daftar-LPJ")
-                    window.location.reload();
-                  }}
+                  onClick={() => go("/daftar-LPJ")}
                   className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
                 >
                   <DocumentArrowDownIcon className="w-5 h-5" />
