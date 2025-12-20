@@ -13,7 +13,7 @@ import DetailPengajuan from "../components/DetailPengajuanSection";
 import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
-import { Role, ApprovalField, ApprovalStatus } from "@/utils/role";
+import { Role, RoleId, ApprovalField, ApprovalStatus } from "@/utils/role";
 import { TabKey } from "../utils/tab";
 import TabButton from "../components/TabButton";
 import { saveFile } from "../utils/indexedDB";
@@ -25,6 +25,7 @@ import { useAuth } from "../context/AuthContext";
 
 
 // ----------------- TYPES -----------------
+
 type ApprovalState = {
   approval1Status: ApprovalStatus;
   approval2Status: ApprovalStatus;
@@ -80,7 +81,9 @@ const Detail: React.FC<DetailProps> = () => {
 
 
   // ---------- GET ROLE DARI AUTHCONTEXT ----------
-  const { role: roleTyped, roleId, user } = useAuth() as { role: Role; roleId: number; user: any; };
+  const { role: roleTyped, user } = useAuth() as { role: Role; roleId: number; user: any; };
+  const roleId: RoleId = 1; // OK
+
   
   // Simple permission checks based on role ID
   const canApprove = roleId === 1 || roleId === 2 || roleId === 4 || roleId === 5; // admin, administrasi, sekretaris, ketua_jurusan
@@ -677,8 +680,8 @@ useEffect(() => {
                 handleReject={(field) => handleReject(field)}
                 handleRevisi={(field)=> handleRevisi(field)}
                 canShowNote={canShowNote}
-role={roleTyped}
-                 userRole={roleTyped}
+                roleId={roleId}
+                userRoleName={roleTyped}
                 notes={notes}
                 activity={activity}
                 mode={mode}

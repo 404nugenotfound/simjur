@@ -96,7 +96,7 @@ export default function Sidebar({
           )}
         </div>
 
-        <button onClick={() => setOpen(!open)}>
+        <button aria-label="-" onClick={() => setOpen(!open)}>
           <Bars3Icon className="w-8 h-8" />
         </button>
       </div>

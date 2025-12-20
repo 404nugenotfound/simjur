@@ -52,3 +52,16 @@ export const canAccess = (userRole: Role, requiredRole: Role): boolean => {
 
 // TabKey exports untuk consistency
 export type TabKey = "detail" | "submit" | "approval" | "danasetuju";
+
+// ================= ROLE ID =================
+export type RoleId = 1 | 2 | 3 | 4 | 5;
+
+// mapping string role → roleId
+export const ROLE_ID_MAP: Record<Role, RoleId> = {
+  admin: 1,
+  administrasi: 2,
+  pengaju: 3,
+  sekretaris: 4,
+  ketua_jurusan: 5,
+};
+

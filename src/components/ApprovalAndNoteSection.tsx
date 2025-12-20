@@ -1,7 +1,4 @@
-import { Role, ApprovalField } from "@/utils/role";
-
-/* ===================== ROLE & TYPE ===================== */
-type RoleId = 1 | 2 | 3 | 4 | 5;
+import type { Role, RoleId, ApprovalField } from "@/utils/role";
 
 type UserRoleName =
   | "admin"
