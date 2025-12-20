@@ -13,7 +13,7 @@ import DetailPengajuan from "../components/DetailPengajuanSection";
 import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
-import { Role, RoleId, ApprovalField, ApprovalStatus } from "@/utils/role";
+import { Role, RoleId, ApprovalField, ApprovalStatus, ROLE_ID_MAP } from "../utils/role";
 import { TabKey } from "../utils/tab";
 import TabButton from "../components/TabButton";
 import { saveFile } from "../utils/indexedDB";
@@ -82,7 +82,9 @@ const Detail: React.FC<DetailProps> = () => {
 
   // ---------- GET ROLE DARI AUTHCONTEXT ----------
   const { role: roleTyped, user } = useAuth() as { role: Role; roleId: number; user: any; };
-  const roleId: RoleId = 1; // OK
+  const roleId: RoleId = ROLE_ID_MAP[roleTyped];
+  const level = ROLE_ID_MAP[roleId];
+
 
   
   // Simple permission checks based on role ID
@@ -165,18 +167,9 @@ const Detail: React.FC<DetailProps> = () => {
           approval3: detailData.lpjApproval3Status ?? "Pending",
         };
 
-  const allowedField: ApprovalField =
-    mode === "TOR"
-      ? roleTyped === "admin"
-        ? "torApproval1Status"
-        : roleTyped === "administrasi"
-        ? "torApproval2Status"
-        : "torApproval3Status"
-      : roleTyped === "admin"
-      ? "lpjApproval1Status"
-      : roleTyped === "administrasi"
-      ? "lpjApproval2Status"
-      : "lpjApproval3Status";
+const allowedField: ApprovalField | undefined = level
+  ? (`${mode.toLowerCase()}Approval${level}Status` as ApprovalField)
+  : undefined;
 
 
   const detailInfo = {
@@ -674,7 +667,6 @@ useEffect(() => {
                 activeTab={activeTab}
                 detailInfo={detailInfo}
                 approvalState={approvalState}
-                allowedField={allowedField}
                 hasDownloaded={hasDownloaded}
                 handleApprove={(field) => handleApprove(field)}
                 handleReject={(field) => handleReject(field)}

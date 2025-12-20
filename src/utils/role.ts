@@ -63,5 +63,5 @@ export const ROLE_ID_MAP: Record<Role, RoleId> = {
   pengaju: 3,
   sekretaris: 4,
   ketua_jurusan: 5,
-};
+} as const;
 

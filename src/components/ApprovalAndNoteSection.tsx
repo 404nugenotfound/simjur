@@ -1,4 +1,4 @@
-import type { Role, RoleId, ApprovalField } from "@/utils/role";
+import type { RoleId, ApprovalField } from "@/utils/role";
 
 type UserRoleName =
   | "admin"
@@ -17,7 +17,7 @@ type ApprovalStateUI = {
 const ROLE_APPROVAL_LEVEL: Record<RoleId, 1 | 2 | 3 | null> = {
   1: 1, // admin
   2: 1, // administrasi
-  3: null, // pengaju (no approval)
+  3: null, // pengaju
   4: 2, // sekretaris
   5: 3, // ketua jurusan
 };
@@ -35,7 +35,6 @@ type Props = {
   detailInfo: any;
 
   approvalState: ApprovalStateUI;
-  allowedField: ApprovalField;
   hasDownloaded: boolean;
 
   handleApprove: (field: ApprovalField) => void;
@@ -61,7 +60,6 @@ const ApprovalAndNoteSection = ({
   activeTab,
   detailInfo,
   approvalState,
-  allowedField,
   hasDownloaded,
   handleApprove,
   handleReject,
@@ -78,6 +76,7 @@ const ApprovalAndNoteSection = ({
 }: Props) => {
   if (activeTab !== "approval") return null;
 
+  /* ===================== HELPERS ===================== */
   const getApprovalField = (
     mode: "TOR" | "LPJ",
     level: 1 | 2 | 3,
@@ -85,14 +84,12 @@ const ApprovalAndNoteSection = ({
     `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
 
   const getApprovalStatus = (level: 1 | 2 | 3) =>
-    approvalState[`approval${level}` as keyof ApprovalStateUI];
+    approvalState[`approval${level}`];
 
   const renderStatus = (status: string) => {
     switch (status) {
       case "Approved":
-        return (
-          <span className="text-green-600 font-semibold">Disetujui ✔</span>
-        );
+        return <span className="text-green-600 font-semibold">Disetujui ✔</span>;
       case "Rejected":
         return <span className="text-red-700 font-semibold">Ditolak ✖</span>;
       case "Revisi":
@@ -102,14 +99,12 @@ const ApprovalAndNoteSection = ({
     }
   };
 
-  const canTakeAction = (field: ApprovalField, status: string) => {
-    const level = ROLE_APPROVAL_LEVEL[roleId];
-    if (!level) return false;
+  /* ===================== CORE LOGIC (KUNCI) ===================== */
+  const canTakeAction = (level: 1 | 2 | 3, status: string) => {
+    const myLevel = ROLE_APPROVAL_LEVEL[roleId];
+    if (!myLevel) return false;
 
-    const expectedField = getApprovalField(mode, level);
-    return (
-      status === "Pending" && field === expectedField && allowedField === field
-    );
+    return myLevel === level && status === "Pending";
   };
 
   const renderAction = (field: ApprovalField) => (
@@ -117,16 +112,16 @@ const ApprovalAndNoteSection = ({
       <button
         disabled={!hasDownloaded}
         onClick={() => handleApprove(field)}
-        className="px-3 py-1 text-xs bg-[#4957B5] text-white rounded hover:scale-95
-        disabled:bg-gray-500 disabled:cursor-not-allowed"
+        className="px-3 py-1 text-xs bg-[#4957B5] text-white rounded
+        hover:scale-95 disabled:bg-gray-400"
       >
         Setujui
       </button>
       <button
         disabled={!hasDownloaded}
         onClick={() => handleReject(field)}
-        className="px-3 py-1 text-xs bg-[#9C1818] text-white rounded hover:scale-95
-        disabled:bg-gray-500 disabled:cursor-not-allowed"
+        className="px-3 py-1 text-xs bg-[#9C1818] text-white rounded
+        hover:scale-95 disabled:bg-gray-400"
       >
         Tolak
       </button>
@@ -136,18 +131,17 @@ const ApprovalAndNoteSection = ({
   const handleSaveNoteWithRevisi = () => {
     saveNote(userRoleName, currentNote);
 
-    const level = ROLE_APPROVAL_LEVEL[roleId];
-    if (!level) return;
+    const myLevel = ROLE_APPROVAL_LEVEL[roleId];
+    if (!myLevel) return;
 
-    const field = getApprovalField(mode, level);
-    handleRevisi(field);
+    handleRevisi(getApprovalField(mode, myLevel));
   };
 
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
       <h2 className="font-semibold mb-4 text-lg">Status Persetujuan</h2>
 
-      {/* ================= TABLE APPROVAL ================= */}
+      {/* ================= TABLE ================= */}
       <div className="overflow-hidden rounded-xl border">
         <table className="w-full text-sm">
           <thead>
@@ -183,7 +177,7 @@ const ApprovalAndNoteSection = ({
                   <td className="text-center">
                     {locked
                       ? renderStatus("Pending")
-                      : canTakeAction(field, status)
+                      : canTakeAction(level, status)
                         ? renderAction(field)
                         : renderStatus(status)}
                   </td>
@@ -198,9 +192,9 @@ const ApprovalAndNoteSection = ({
       {canShowNote && (
         <>
           <div className="flex items-center gap-4 my-8">
-            <div className="flex-1 h-[1px] bg-gray-300" />
+            <div className="flex-1 h-px bg-gray-300" />
             <span className="text-gray-400 text-sm">CATATAN</span>
-            <div className="flex-1 h-[1px] bg-gray-300" />
+            <div className="flex-1 h-px bg-gray-300" />
           </div>
 
           {roleId !== 3 ? (
@@ -214,30 +208,28 @@ const ApprovalAndNoteSection = ({
               <button
                 disabled={!hasDownloaded}
                 onClick={handleSaveNoteWithRevisi}
-                className="absolute bottom-4 right-4 px-4 py-1 bg-[#4957B5]
-                text-white rounded hover:scale-95 disabled:bg-gray-500"
+                className="absolute bottom-4 right-4 px-4 py-1
+                bg-[#4957B5] text-white rounded disabled:bg-gray-400"
               >
                 Simpan
               </button>
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-4">
-              {Object.entries(NOTE_KEY_MAP).map(([id, key]) => {
-                const note = notes?.[String(activity?.id)]?.[mode]?.[key] || "";
-
-                return (
-                  <div key={id}>
-                    <p className="text-sm font-semibold mb-1">
-                      Catatan {key.toUpperCase()}
-                    </p>
-                    <textarea
-                      readOnly
-                      className="w-full border rounded-lg p-3 min-h-[10rem]"
-                      value={note}
-                    />
-                  </div>
-                );
-              })}
+              {Object.entries(NOTE_KEY_MAP).map(([id, key]) => (
+                <div key={id}>
+                  <p className="text-sm font-semibold mb-1">
+                    Catatan {key.toUpperCase()}
+                  </p>
+                  <textarea
+                    readOnly
+                    className="w-full border rounded-lg p-3 min-h-[10rem]"
+                    value={
+                      notes?.[String(activity?.id)]?.[mode]?.[key] || ""
+                    }
+                  />
+                </div>
+              ))}
             </div>
           )}
         </>

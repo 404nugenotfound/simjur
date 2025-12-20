@@ -13,6 +13,7 @@ import {
 import { useNavigate } from "react-router-dom";
 import { useState, useRef, useEffect } from "react";
 import { useAuth } from "../context/AuthContext";
+import { ROLE_ID_MAP } from "../utils/role";
 
 export default function Sidebar({
   setMode,
@@ -35,15 +36,18 @@ export default function Sidebar({
   /* =========================
      ROLE CHECK
   ========================= */
-  const isAdmin = roleId === 1;
-  const isAdministrasi = roleId === 2;
-  const isPengaju = roleId === 3;
-  const isSekretaris = roleId === 4;
-  const isKetuaJurusan = roleId === 5;
+  const isAdmin = roleId === ROLE_ID_MAP.admin;
+  const isAdministrasi = roleId === ROLE_ID_MAP.administrasi;
+  const isPengaju = roleId === ROLE_ID_MAP.pengaju;
+  const isSekretaris = roleId === ROLE_ID_MAP.sekretaris;
+  const isKetuaJurusan = roleId === ROLE_ID_MAP.ketua_jurusan;
 
   const canCreateActivity =
-    isAdmin || isAdministrasi || isPengaju || isSekretaris;
-  const canManageDashboard = isAdmin || isAdministrasi || isSekretaris;
+   isAdmin || isPengaju;
+
+  const canManageDashboard = 
+   isAdmin || isAdministrasi;
+
   const canViewActivities =
     isAdmin || isAdministrasi || isKetuaJurusan || isSekretaris;
 
@@ -122,7 +126,7 @@ export default function Sidebar({
               <Cog6ToothIcon className="w-6 h-6" />
               {open && (
                 <>
-                  <span className="flex-1">Kelola Dashboard</span>
+                  <span className="flex">Kelola Dashboard</span>
                   <ChevronDownIcon
                     className={`w-5 h-5 transition ${
                       dropdown.kelola ? "rotate-180" : ""
@@ -169,7 +173,7 @@ export default function Sidebar({
               <ClipboardDocumentListIcon className="w-6 h-6" />
               {open && (
                 <>
-                  <span className="flex-1">Daftar Kegiatan</span>
+                  <span className="flex">Daftar Kegiatan</span>
                   <ChevronDownIcon
                     className={`w-5 h-5 transition ${
                       dropdown.kegiatan ? "rotate-180" : ""
