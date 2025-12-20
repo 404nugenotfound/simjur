@@ -587,7 +587,16 @@ useEffect(() => {
       ? approvalState.approval3
       : null;
 
-  const canShowNote = roleTyped === "pengaju" || roleApprovalStatus === "Pending";
+  const myApprovalStatus =
+  roleId === 1 || roleId === 2 ? approvalState.approval1
+  : roleId === 4 ? approvalState.approval2
+  : roleId === 5 ? approvalState.approval3
+  : null;
+
+  const canShowNote =
+  roleId === 3 || // pengaju selalu lihat
+  myApprovalStatus !== "Approved"; // approver hanya selama belum approved
+
 
   return (
     <Layout>
@@ -622,7 +631,7 @@ useEffect(() => {
             />
             
             <TabButton
-              label={roleTyped === "pengaju" ? "Submit File" : "Unduh File"}
+              label={roleId === 3 ? "Submit File" : "Unduh File"}
               value="submit"
               activeTab={activeTab}
               onClick={() => setActiveTab("submit")}
@@ -635,14 +644,7 @@ useEffect(() => {
               onClick={() => setActiveTab("approval")}
             />
             
-            <TabButton
-              label="Dana Disetujui"
-              value="danasetuju"
-              activeTab={activeTab}
-              onClick={() => setActiveTab("danasetuju")}
-            />
-            
-            {roleTyped === "administrasi" && (
+            {roleTyped === "sekretaris" && (
               <TabButton
                 label="Dana Disetujui"
               value="danasetuju"

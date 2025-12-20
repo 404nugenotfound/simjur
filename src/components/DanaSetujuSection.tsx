@@ -43,7 +43,7 @@ const DanaSetujuSection = ({
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
       <h2 className="font-semibold mb-4 text-lg">
-        Persetujuan Dana (Administrasi)
+        Persetujuan Dana (Sekretaris)
       </h2>
 
       {/* ================= DANA DIAJUKAN ================= */}

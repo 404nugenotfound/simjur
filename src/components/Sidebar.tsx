@@ -110,9 +110,10 @@ export default function Sidebar({
         {/* DASHBOARD */}
         <button
           onClick={() => go("/dashboard")}
-          className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
-        >
-          <ChartBarIcon className="w-6 h-6" />
+         className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
+        ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"}
+      `}>
+          <ChartBarIcon className="w-6 h-6 shrink-0" />
           {open && <span>Dashboard</span>}
         </button>
 
@@ -121,8 +122,9 @@ export default function Sidebar({
           <div ref={kelolaRef}>
             <button
               onClick={() => setDropdown((d) => ({ ...d, kelola: !d.kelola }))}
-              className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
-            >
+              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
+              ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"}
+            `}>
               <Cog6ToothIcon className="w-6 h-6" />
               {open && (
                 <>
@@ -154,7 +156,8 @@ export default function Sidebar({
         {canCreateActivity && (
           <button
             onClick={() => go("/pengajuan")}
-            className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
+           className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
+        ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"}`}
           >
             <DocumentTextIcon className="w-6 h-6" />
             {open && <span>Pengajuan Kegiatan</span>}
@@ -168,7 +171,8 @@ export default function Sidebar({
               onClick={() =>
                 setDropdown((d) => ({ ...d, kegiatan: !d.kegiatan }))
               }
-              className="flex items-center gap-3 text-lg px-4 py-3 rounded-md hover:bg-black/20 w-full"
+              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
+        ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"} `}
             >
               <ClipboardDocumentListIcon className="w-6 h-6" />
               {open && (

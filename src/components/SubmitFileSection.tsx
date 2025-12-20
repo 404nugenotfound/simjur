@@ -81,7 +81,7 @@ const SubmitFileSection = ({
       >
         {/* ================= BELUM ADA FILE ================= */}
         {!currentFile ? (
-          role === "Pengaju" ? (
+          role === "pengaju" ? (
             <div className="flex flex-col items-center gap-4 p-10">
               <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
                 <span className="text-2xl">⬆️</span>
@@ -139,7 +139,7 @@ const SubmitFileSection = ({
                 </button>
 
                 {/* HAPUS */}
-                {role === "Pengaju" && (
+                {role === "pengaju" && (
                   <button
                     aria-label="hapus"
                     disabled={!isValidId}
