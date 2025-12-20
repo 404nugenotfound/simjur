@@ -157,14 +157,6 @@ Membuild aplikasi untuk production ke folder `build`.
 ### `npm run eject`
 Mengeluarkan konfigurasi CRA (one-way operation).
 
----
-
-## 📚 Learn More
-
-- Create React App Documentation  
-  https://facebook.github.io/create-react-app/docs/getting-started
-- React Documentation  
-  https://reactjs.org/
 
 ---
 
