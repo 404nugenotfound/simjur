@@ -1,4 +1,4 @@
-import Profile from "../assets/2X.svg";
+import Profile from "../assets/gustavo.jpg";
 import { useState } from "react";
 import UserDropdown from "./UserDropdown";
 
@@ -9,7 +9,6 @@ const getDataApi = () => {
 
 export default function HeaderBar() {
   const [openDropdown, setOpenDropdown] = useState(false);
-  const [name, setName] = useState(getDataApi()?.name || "");
 
   // Ambil nama dari localStorage
   const userData = localStorage.getItem("user_data");
@@ -35,7 +34,7 @@ export default function HeaderBar() {
 
         {/* Nama */}
         <span className="font-semibold font-poppins text-black max-w-[201px] pl-1 pr-3 truncate">
-          {name}
+          {userName}
         </span>
       </div>
 

@@ -130,7 +130,7 @@ function App() {
                 <input
                   type="text"
                   className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
-                  placeholder="NIM / Email / Username"
+                  placeholder="Email / Username"
                   value={identifier}
                   onChange={handleIdentifierChange}
                   autoComplete="username"

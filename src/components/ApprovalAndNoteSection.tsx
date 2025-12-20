@@ -79,7 +79,7 @@ const ApprovalAndNoteSection = ({
   /* ===================== HELPERS ===================== */
   const getApprovalField = (
     mode: "TOR" | "LPJ",
-    level: 1 | 2 | 3,
+    level: 1 | 2 | 3
   ): ApprovalField =>
     `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
 
@@ -89,7 +89,9 @@ const ApprovalAndNoteSection = ({
   const renderStatus = (status: string) => {
     switch (status) {
       case "Approved":
-        return <span className="text-green-600 font-semibold">Disetujui ✔</span>;
+        return (
+          <span className="text-green-600 font-semibold">Disetujui ✔</span>
+        );
       case "Rejected":
         return <span className="text-red-700 font-semibold">Ditolak ✖</span>;
       case "Revisi":
@@ -137,6 +139,13 @@ const ApprovalAndNoteSection = ({
     handleRevisi(getApprovalField(mode, myLevel));
   };
 
+  const NOTE_PLACEHOLDER_MAP: Record<string, string> = {
+  admin: "Belum ada catatan revisi dari Administrasi",
+  sekjur: "Belum ada catatan revisi dari Sekretaris",
+  kajur: "Belum ada catatan revisi dari Ketua Jurusan",
+};
+
+
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
       <h2 className="font-semibold mb-4 text-lg">Status Persetujuan</h2>
@@ -165,7 +174,7 @@ const ApprovalAndNoteSection = ({
 
               return (
                 <tr key={level} className="odd:bg-gray-50 even:bg-gray-100">
-                  <td className="p-2 text-center font-semibold">
+                  <td className="text-center font-semibold py-3">
                     Persetujuan {level}
                   </td>
                   <td className="text-center">{detailInfo?.tanggal}</td>
@@ -178,8 +187,8 @@ const ApprovalAndNoteSection = ({
                     {locked
                       ? renderStatus("Pending")
                       : canTakeAction(level, status)
-                        ? renderAction(field)
-                        : renderStatus(status)}
+                      ? renderAction(field)
+                      : renderStatus(status)}
                   </td>
                 </tr>
               );
@@ -191,9 +200,9 @@ const ApprovalAndNoteSection = ({
       {/* ================= CATATAN ================= */}
       {canShowNote && (
         <>
-          <div className="flex items-center gap-4 my-8">
+          <div className="flex items-center gap-4 my-12">
             <div className="flex-1 h-px bg-gray-300" />
-            <span className="text-gray-400 text-sm">CATATAN</span>
+            <span className="text-gray-400 text-sm">SEPARATOR PAR CATATAN</span>
             <div className="flex-1 h-px bg-gray-300" />
           </div>
 
@@ -209,7 +218,8 @@ const ApprovalAndNoteSection = ({
                 disabled={!hasDownloaded}
                 onClick={handleSaveNoteWithRevisi}
                 className="absolute bottom-4 right-4 px-4 py-1
-                bg-[#4957B5] text-white rounded disabled:bg-gray-400"
+                bg-[#4957B5] text-white rounded disabled:bg-gray-400
+                hover:scale-[0.97]"
               >
                 Simpan
               </button>
@@ -223,10 +233,13 @@ const ApprovalAndNoteSection = ({
                   </p>
                   <textarea
                     readOnly
-                    className="w-full border rounded-lg p-3 min-h-[10rem]"
-                    value={
-                      notes?.[String(activity?.id)]?.[mode]?.[key] || ""
+                    className="w-full border rounded-lg p-3 min-h-[14rem]"
+                    placeholder={
+                      !notes?.[String(activity?.id)]?.[mode]?.[key]
+                        ? NOTE_PLACEHOLDER_MAP[key]
+                        : ""
                     }
+                    value={notes?.[String(activity?.id)]?.[mode]?.[key] || ""}
                   />
                 </div>
               ))}

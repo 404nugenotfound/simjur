@@ -10,9 +10,20 @@ import { roleToName } from "../utils/roleToName";
 import PushNotificationComponent from "../components/PushNotificationComponent";
 import NotificationPanel from "../components/NotificationPanel";
 import Layout from "./Layout";
+import { useAuth } from "../context/AuthContext";
+import { ROLE_ID_MAP } from "../utils/role";
+import { i } from "framer-motion/dist/types.d-DagZKalS";
 
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
+  const { roleId } = useAuth();
+  /* =========================
+     ROLE CHECK
+  ========================= */
+  const isAdmin = roleId === ROLE_ID_MAP.admin;
+  const isAdministrasi = roleId === ROLE_ID_MAP.administrasi;
+
+  const canManageNotif = isAdmin || isAdministrasi;
 
   const stats = [
     {
@@ -99,16 +110,19 @@ export default function Dashboard() {
 
   return (
     <Layout>
-      <div className="flex-1 p-6 md:p-12 transition-all duration-300 space-y-8 font-poppins">
+      <div className="flex-1 p-6 md:p-12 transition-all duration-300 space-y-14 font-poppins">
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
           DASHBOARD PENGAJUAN KEGIATAN
         </h1>
+        {canManageNotif && (
+          <div>
+            {/* Notification Panel */}
+            <NotificationPanel />
 
-        {/* Notification Panel */}
-        <NotificationPanel />
-
-        {/* Push Notification Component */}
-        <PushNotificationComponent />
+            {/* Push Notification Component */}
+            <PushNotificationComponent />
+          </div>
+        )}
 
         {/* ====== CARD DANA ====== */}
         <div className="border bg-white rounded-xl p-6 shadow-md text-black mt-6">
@@ -205,7 +219,7 @@ export default function Dashboard() {
         </div>
 
         {/* Grid Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
           {stats.map((item, i) => (
             <div
               key={i}
