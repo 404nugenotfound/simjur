@@ -1,4 +1,7 @@
-import type { RoleId, ApprovalField } from "@/utils/role";
+import { ApprovalField } from "@/utils/role";
+
+/* ===================== ROLE & TYPE ===================== */
+type RoleId = 1 | 2 | 3 | 4 | 5;
 
 type UserRoleName =
   | "admin"
@@ -79,7 +82,7 @@ const ApprovalAndNoteSection = ({
   /* ===================== HELPERS ===================== */
   const getApprovalField = (
     mode: "TOR" | "LPJ",
-    level: 1 | 2 | 3
+    level: 1 | 2 | 3,
   ): ApprovalField =>
     `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
 
@@ -140,11 +143,10 @@ const ApprovalAndNoteSection = ({
   };
 
   const NOTE_PLACEHOLDER_MAP: Record<string, string> = {
-  admin: "Belum ada catatan revisi dari Administrasi",
-  sekjur: "Belum ada catatan revisi dari Sekretaris",
-  kajur: "Belum ada catatan revisi dari Ketua Jurusan",
-};
-
+    admin: "Belum ada catatan revisi dari Administrasi",
+    sekjur: "Belum ada catatan revisi dari Sekretaris",
+    kajur: "Belum ada catatan revisi dari Ketua Jurusan",
+  };
 
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
@@ -187,8 +189,8 @@ const ApprovalAndNoteSection = ({
                     {locked
                       ? renderStatus("Pending")
                       : canTakeAction(level, status)
-                      ? renderAction(field)
-                      : renderStatus(status)}
+                        ? renderAction(field)
+                        : renderStatus(status)}
                   </td>
                 </tr>
               );
