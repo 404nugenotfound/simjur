@@ -17,7 +17,6 @@ const apiConfig = {
 };
 
 // CORS SETUP
-//
 
 // ========================================
 // 2. TYPE DEFINITIONS
@@ -87,13 +86,13 @@ class ApiClient {
     this.baseURL = config.baseURL;
     this.defaultHeaders = config.headers;
     this.timeout = config.timeout;
-    
+
     // Log API configuration for debugging
-    if (process.env.REACT_APP_DEBUG === 'true') {
-      console.log('🔧 API Configuration:', {
+    if (process.env.REACT_APP_DEBUG === "true") {
+      console.log("🔧 API Configuration:", {
         baseURL: this.baseURL,
-        mode: process.env.REACT_APP_ENV || 'unknown',
-        timeout: this.timeout
+        mode: process.env.REACT_APP_ENV || "unknown",
+        timeout: this.timeout,
       });
     }
   }
@@ -224,8 +223,6 @@ class ApiClient {
     });
   }
 
-  
-
   public async put<T>(
     endpoint: string,
     data?: any,
@@ -308,26 +305,38 @@ export const authApi = {
     const headers = {
       Authorization: `Bearer ${token}`,
     };
-    
+
     try {
       await apiClient.post<void>("/auth/logout", {}, headers);
-      console.log('✅ Server logout successful');
+      console.log("✅ Server logout successful");
     } catch (error: any) {
       // Log error tapi jangan throw karena logout tidak critical
-      console.warn('Logout API call failed, proceeding with local logout:', error.message);
-      
+      console.warn(
+        "Logout API call failed, proceeding with local logout:",
+        error.message,
+      );
+
       // Jika 405 (Method Not Allowed), 404 (Not Found), atau CORS error, anggap sebagai normal
-      if (error.status === 405 || error.status === 404 || error.code === 'CORS_ERROR') {
-        console.info('Logout endpoint tidak tersedia atau CORS error, proceeding with local logout only');
+      if (
+        error.status === 405 ||
+        error.status === 404 ||
+        error.code === "CORS_ERROR"
+      ) {
+        console.info(
+          "Logout endpoint tidak tersedia atau CORS error, proceeding with local logout only",
+        );
         return;
       }
-      
+
       // Untuk error lain yang critical, tetap throw
       if (error.status >= 500) {
-        console.error('Server error during logout, proceeding with local logout:', error);
+        console.error(
+          "Server error during logout, proceeding with local logout:",
+          error,
+        );
         return;
       }
-      
+
       throw error;
     }
   },
@@ -336,7 +345,7 @@ export const authApi = {
    * Local logout fallback (tanpa API call)
    */
   localLogout: (): void => {
-    console.log('🔄 Performing local logout only');
+    console.log("🔄 Performing local logout only");
   },
 };
 // ========================================

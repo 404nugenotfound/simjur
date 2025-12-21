@@ -123,12 +123,12 @@ const Detail: React.FC<DetailProps> = () => {
 
   const currentFile = files[`file-${mode}-${activity?.id ?? "noid"}`] ?? null;
 
-  console.log(
-    "Detail activity ID:",
-    activity?.id,
-    "Current file:",
-    files[activity?.id || ""],
-  );
+  // console.log(
+  //   "Detail activity ID:",
+  //   activity?.id,
+  //   "Current file:",
+  //   files[activity?.id || ""],
+  // );
 
   // ---------- APPROVED DANA STATE ----------
   const [approvedDana, setApprovedDana] = useState<number | "">("");
