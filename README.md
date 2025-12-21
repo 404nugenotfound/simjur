@@ -1,169 +1,181 @@
-# Sistem Manajemen Pengelolaan Dana Kegiatan Jurusan
+# 📘 **USER MANUAL**
 
-Aplikasi web untuk mengelola pengajuan TOR dan LPJ, proses approval berjenjang, serta monitoring dana kegiatan jurusan secara terstruktur dan transparan.
-
-Project ini dibangun menggunakan **React (Create React App)** dan ditujukan untuk penggunaan internal jurusan.
+## Sistem Manajemen Pengelolaan Dana Kegiatan Jurusan (SIMJUR)
 
 ---
 
-## 📌 Gambaran Umum Sistem
+## 🧩 1. Pendahuluan Sistem Manajemen Pengelolaan Dana Kegiatan Jurusan
 
-Sistem ini digunakan untuk:
-- Pengajuan TOR (Term of Reference)
-- Pengajuan LPJ (Laporan Pertanggungjawaban)
-- Approval paralel dan berjenjang
-- Pengelolaan dana kegiatan jurusan
-- Monitoring kegiatan dan dana melalui dashboard
+SIMJUR (Sistem Manajemen Pengelolaan Dana Kegiatan Jurusan) merupakan aplikasi web yang digunakan untuk mengelola proses pengajuan TOR dan LPJ, persetujuan berjenjang, serta monitoring dana kegiatan jurusan secara terstruktur dan transparan.
 
-Sistem dirancang untuk menggantikan proses manual berbasis spreadsheet dan dokumen terpisah.
+Sistem ini dirancang untuk menggantikan proses manual berbasis spreadsheet dan dokumen terpisah, serta ditujukan untuk penggunaan internal jurusan.
 
 ---
 
-## 👥 Role Pengguna & Hak Akses
+## 📌 2. Gambaran Umum Sistem
 
-### 1. Pengaju (Mahasiswa / Dosen)
-Hak akses:
-- Menambahkan TOR
-- Menambahkan LPJ
-- Generate file TOR & LPJ
-- Upload, download, dan hapus file (sebelum disetujui)
-- Melihat status approval
-- Melihat catatan revisi
+SIMJUR digunakan untuk mendukung kegiatan berikut:
 
-Detail kegiatan di role pengaju terbagi:
-- Detail TOR
-- Detail LPJ
+* Pengajuan TOR (Term of Reference)
+* Pengajuan LPJ (Laporan Pertanggungjawaban)
+* Proses approval paralel dan berjenjang
+* Pengelolaan dan monitoring dana kegiatan jurusan
+* Penyajian rekap data kegiatan melalui dashboard
+
+Seluruh aktivitas pengguna tercatat secara otomatis oleh sistem.
 
 ---
 
-### 2. Administrasi Jurusan (Admin)
-Hak akses:
-- Melihat seluruh kegiatan TOR & LPJ
-- Melakukan Approval 1
-- Memberikan catatan revisi
-- Input dana tahunan jurusan (khusus dashboard)
-- Monitoring seluruh kegiatan melalui dashboard
+## 👥 3. Peran Pengguna dan Hak Akses
+
+### 👤 3.1 Pengaju (Mahasiswa / Dosen)
+
+**Hak Akses:**
+
+* Menambahkan TOR
+* Menambahkan LPJ
+* Generate file TOR dan LPJ
+* Upload, download, dan menghapus file sebelum disetujui
+* Melihat status approval
+* Melihat catatan revisi dari approver
+
+**Struktur Data Kegiatan:**
+
+* Detail TOR
+* Detail LPJ
 
 ---
 
-### 3. Sekretariat Jurusan (Sekjur)
-Hak akses:
-- Melihat seluruh kegiatan TOR & LPJ
-- Melakukan Approval 2
-- Memberikan catatan revisi
-- Mengisi dana yang disetujui jurusan
-- Melihat detail ringkas kegiatan
+### 🗂️ 3.2 Administrasi Jurusan (Admin)
+
+**Hak Akses:**
+
+* Melihat seluruh data TOR dan LPJ
+* Melakukan Approval tahap pertama
+* Memberikan catatan revisi
+* Menginput dana tahunan jurusan (dashboard)
+* Monitoring seluruh kegiatan melalui dashboard
 
 ---
 
-### 4. Ketua Jurusan (Kajur)
-Hak akses:
-- Melihat seluruh kegiatan TOR & LPJ
-- Melakukan Approval 3 (Final)
-- Melihat detail ringkas kegiatan
-- Monitoring melalui dashboard
+### 🧑‍💼 3.3 Sekretariat Jurusan (Sekjur)
+
+**Hak Akses:**
+
+* Melihat seluruh data TOR dan LPJ
+* Melakukan Approval tahap kedua
+* Memberikan catatan revisi
+* Mengisi dana yang disetujui jurusan
+* Melihat ringkasan detail kegiatan
 
 ---
 
-## 🔄 Alur Pengajuan TOR & LPJ
+### 👑 3.4 Ketua Jurusan (Kajur)
 
-### A. Pengajuan TOR
-1. Pengaju klik **Tambah TOR**
-2. Mengisi form TOR
-3. Sistem meng-generate file TOR
-4. Pengaju merapikan file
-5. File diupload ke detail kegiatan
-6. Data masuk ke daftar TOR
+**Hak Akses:**
+
+* Melihat seluruh data TOR dan LPJ
+* Melakukan Approval tahap akhir (final)
+* Melihat ringkasan detail kegiatan
+* Monitoring kegiatan melalui dashboard
 
 ---
 
-### B. Pengajuan LPJ
-1. Pengaju klik **Tambah LPJ**
-2. Mengisi form LPJ
+## 🔄 4. Panduan Penggunaan Sistem
+
+### 📄 4.1 Pengajuan TOR
+
+Langkah-langkah pengajuan TOR:
+
+1. Pengaju memilih menu **Tambah TOR**
+2. Mengisi formulir TOR sesuai data kegiatan
+3. Sistem otomatis meng-generate file TOR
+4. Pengaju melakukan pengecekan dan perapihan file
+5. File TOR diupload ke detail kegiatan
+6. Data TOR masuk ke daftar pengajuan dan siap diproses
+
+---
+
+### 🧾 4.2 Pengajuan LPJ
+
+Langkah-langkah pengajuan LPJ:
+
+1. Pengaju memilih menu **Tambah LPJ**
+2. Mengisi formulir LPJ
 3. Sistem meng-generate file LPJ
-4. Pengaju merapikan file
-5. File diupload ke detail kegiatan
-6. Data masuk ke daftar LPJ
+4. Pengaju melakukan perapihan file
+5. File LPJ diupload ke detail kegiatan
+6. Data LPJ masuk ke daftar LPJ dan siap diproses
 
 ---
 
-## ✅ Mekanisme Approval
+## ✅ 5. Mekanisme Approval
 
-### Skema Approval Paralel
-1. Approval 1 → Administrasi Jurusan  
-2. Approval 2 → Sekretariat Jurusan  
-   - Admin dan Sekjur **tidak harus berurutan**
-   - Selama keduanya approve, proses lanjut
-3. Approval 3 (Final) → Ketua Jurusan
+### 🔀 5.1 Skema Approval Paralel dan Berjenjang
 
-Jika ada revisi:
-- Status kembali ke pengaju
-- Pengaju memperbaiki dan upload ulang file
+Proses approval dilakukan sebagai berikut:
 
----
+1. **Approval 1** oleh Administrasi Jurusan
+2. **Approval 2** oleh Sekretariat Jurusan
 
-## 📂 Manajemen File
-
-| Role | Upload | Download | Hapus |
-|----|----|----|----|
-| Pengaju | ✅ | ✅ | ✅ |
-| Admin | ❌ | ✅ | ❌ |
-| Sekjur | ❌ | ✅ | ❌ |
-| Kajur | ❌ | ✅ | ❌ |
+   * Admin dan Sekjur tidak harus berurutan
+   * Selama keduanya menyetujui, proses dapat dilanjutkan
+3. **Approval 3 (Final)** oleh Ketua Jurusan
 
 ---
 
-## 📊 Dashboard Sistem
+### 🔁 5.2 Mekanisme Revisi dan Upload Ulang Dokumen
 
-Semua role dapat mengakses dashboard.
+Jika salah satu approver memberikan **catatan revisi**:
 
-Dashboard menampilkan:
-- Jumlah TOR & LPJ
-- Total dana diajukan
-- Total dana disetujui
-- Sisa dana jurusan
-- Rekap kegiatan per tahun
+* Status dokumen berubah menjadi **Revisi**
+* Proses approval dihentikan sementara
+* Dokumen dikembalikan ke pengaju
 
-### Fitur Khusus Admin
-- Input dana tahunan jurusan
-- Dana otomatis diakumulasi dan dihitung oleh sistem
+**Langkah yang harus dilakukan pengaju:**
 
----
+1. Menghapus file lama yang berstatus revisi
+2. Mengupload ulang file hasil perbaikan
+3. Sistem secara otomatis mereset status dokumen menjadi **Pending**
+4. Proses approval dapat dilakukan ulang oleh Admin, Sekjur, dan Kajur
 
-## ⚙️ Getting Started (Create React App)
-
-Project ini dibuat menggunakan **Create React App**.
-
-### Prasyarat
-- Node.js (disarankan versi LTS)
-- npm atau yarn
+Mekanisme ini memastikan setiap siklus approval menggunakan versi dokumen terbaru.
 
 ---
 
-## 🚀 Available Scripts
+## 📂 6. Manajemen File
 
-Di direktori project, jalankan:
-
-### `npm start`
-Menjalankan aplikasi dalam mode development.  
-Buka [http://localhost:3000](http://localhost:3000) di browser.
-
-### `npm test`
-Menjalankan test runner dalam mode watch.
-
-### `npm run build`
-Membuild aplikasi untuk production ke folder `build`.
-
-### `npm run eject`
-Mengeluarkan konfigurasi CRA (one-way operation).
-
+| Role    | Upload | Download | Hapus |
+| ------- | ------ | -------- | ----- |
+| Pengaju | Ya     | Ya       | Ya    |
+| Admin   | Tidak  | Ya       | Tidak |
+| Sekjur  | Tidak  | Ya       | Tidak |
+| Kajur   | Tidak  | Ya       | Tidak |
 
 ---
 
-## 📝 Catatan
+## 📊 7. Dashboard Sistem
 
-- Sistem dirancang untuk penggunaan internal jurusan
-- Approval dilakukan sepenuhnya melalui sistem
-- Semua data dan aktivitas tercatat otomatis
-- Dashboard digunakan sebagai alat monitoring dan evaluasi
+Dashboard dapat diakses oleh seluruh role pengguna dan menampilkan:
 
+* Jumlah TOR dan LPJ
+* Total dana yang diajukan
+* Total dana yang disetujui
+* Sisa dana jurusan
+* Rekap kegiatan per tahun
+
+**Fitur Khusus Admin:**
+
+* Input dana tahunan jurusan
+* Sistem otomatis melakukan perhitungan dan akumulasi dana
+
+---
+
+## 📝 8. Catatan Penggunaan
+
+* Sistem digunakan untuk kebutuhan internal jurusan
+* Seluruh proses approval dilakukan melalui sistem
+* Aktivitas pengguna tercatat secara otomatis
+* Dashboard digunakan sebagai alat monitoring dan evaluasi
+
+---
