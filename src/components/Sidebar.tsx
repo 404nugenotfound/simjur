@@ -42,11 +42,9 @@ export default function Sidebar({
   const isSekretaris = roleId === ROLE_ID_MAP.sekretaris;
   const isKetuaJurusan = roleId === ROLE_ID_MAP.ketua_jurusan;
 
-  const canCreateActivity =
-   isAdmin || isPengaju;
+  const canCreateActivity = isAdmin || isPengaju;
 
-  const canManageDashboard = 
-   isAdmin || isAdministrasi;
+  const canManageDashboard = isAdmin || isAdministrasi;
 
   const canViewActivities =
     isAdmin || isAdministrasi || isKetuaJurusan || isSekretaris;
@@ -88,7 +86,7 @@ export default function Sidebar({
       }`}
     >
       {/* ================= HEADER ================= */}
-      <div className="flex items-center justify-between mb-16 pr-1">
+      <div className="flex items-center justify-between mb-20 pr-1">
         <div className="flex items-center">
           {open && (
             <>
@@ -106,13 +104,21 @@ export default function Sidebar({
       </div>
 
       {/* ================= MENU ================= */}
-      <nav className="space-y-3 ml-[-1rem] pl-5">
+      <nav className="space-y-4 ml-[-1rem] pl-5">
+        <h1
+          className={`flex items-center font-bebas tracking-[0.3rem] transition-all
+        ${open ? "ml-4 text-lg" : "justify-center text-xs ml-0"}
+      `}
+        >
+          {open ? "MENU" : "MENU"}
+        </h1>
         {/* DASHBOARD */}
         <button
           onClick={() => go("/dashboard")}
-         className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
-        ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"}
-      `}>
+          className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
+        ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
+      `}
+        >
           <ChartBarIcon className="w-6 h-6 shrink-0" />
           {open && <span>Dashboard</span>}
         </button>
@@ -120,17 +126,19 @@ export default function Sidebar({
         {/* ================= KELOLA DASHBOARD ================= */}
         {canManageDashboard && (
           <div ref={kelolaRef}>
+            <div className="w-[250px]">
             <button
               onClick={() => setDropdown((d) => ({ ...d, kelola: !d.kelola }))}
-              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
-              ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"}
-            `}>
+              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
+              ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
+            `}
+            >
               <Cog6ToothIcon className="w-6 h-6" />
               {open && (
                 <>
                   <span className="flex">Kelola Dashboard</span>
                   <ChevronDownIcon
-                    className={`w-5 h-5 transition ${
+                    className={`w-5 h-5 mt-1 transition ${
                       dropdown.kelola ? "rotate-180" : ""
                     }`}
                   />
@@ -142,44 +150,47 @@ export default function Sidebar({
               <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2">
                 <button
                   onClick={() => go("/input")}
-                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-[250px]"
                 >
                   <BanknotesIcon className="w-5 h-5" />
                   Input Dana
                 </button>
               </div>
             )}
+            </div>
           </div>
         )}
 
         {/* ================= PENGAJUAN ================= */}
+        <div className="w-[250px]">
         {canCreateActivity && (
           <button
             onClick={() => go("/pengajuan")}
-           className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
-        ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"}`}
+            className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
+        ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}`}
           >
             <DocumentTextIcon className="w-6 h-6" />
             {open && <span>Pengajuan Kegiatan</span>}
           </button>
         )}
+      </div>
 
         {/* ================= DAFTAR KEGIATAN ================= */}
         {canViewActivities && (
-          <div ref={kegiatanRef}>
+          <div ref={kegiatanRef} className="w-[250px]">
             <button
               onClick={() =>
                 setDropdown((d) => ({ ...d, kegiatan: !d.kegiatan }))
               }
               className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
-        ${open ? "gap-3 px-4 justify-start" : "justify-center px-0"} `}
+             ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"} `}
             >
               <ClipboardDocumentListIcon className="w-6 h-6" />
               {open && (
                 <>
                   <span className="flex">Daftar Kegiatan</span>
                   <ChevronDownIcon
-                    className={`w-5 h-5 transition ${
+                    className={`w-5 h-5 mt-1 transition ${
                       dropdown.kegiatan ? "rotate-180" : ""
                     }`}
                   />

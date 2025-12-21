@@ -51,6 +51,8 @@ export interface RegisterResponse {
 export interface User {
   id: number;
   name: string;
+  email?: string;
+  nim?: string;
   roles_id: number;
   description?: string;
   password?: string;

@@ -106,6 +106,7 @@ const Detail: React.FC<DetailProps> = () => {
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
 
+
   const [isDragging, setIsDragging] = useState(false);
 
   // ---------- MENUNGGU DATA SIAP ----------
@@ -644,7 +645,7 @@ useEffect(() => {
               onClick={() => setActiveTab("approval")}
             />
             
-            {roleTyped === "sekretaris" && (
+            {mode === "TOR" && roleTyped === "sekretaris" && (
               <TabButton
                 label="Dana Disetujui"
               value="danasetuju"
