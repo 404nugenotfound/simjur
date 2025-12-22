@@ -81,7 +81,7 @@ export default function Sidebar({
 
   return (
     <aside
-      className={`bg-gradient text-white p-4 pr-6 transition-all duration-300 flex flex-col ${
+      className={`bg-gradient text-white p-4 pr-6 transition-all duration-300 flex flex-col overflow-hidden ${
         open ? "w-80" : "w-20"
       }`}
     >
@@ -107,88 +107,83 @@ export default function Sidebar({
       <nav className="space-y-4 ml-[-1rem] pl-5">
         <h1
           className={`flex items-center font-bebas tracking-[0.3rem] transition-all
-        ${open ? "ml-4 text-lg" : "justify-center text-xs ml-0"}
+        ${open ? "ml-1 text-lg" : "justify-center text-xs ml-0"}
       `}
         >
           {open ? "MENU" : "MENU"}
         </h1>
-        {/* DASHBOARD */}
-        <button
-          onClick={() => go("/dashboard")}
-          className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
-        ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
-      `}
-        >
-          <ChartBarIcon className="w-6 h-6 shrink-0" />
-          {open && <span>Dashboard</span>}
-        </button>
-
+       <button
+        onClick={() => go("/dashboard")}
+        className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
+          ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
+        `}
+      >
+        <ChartBarIcon className="w-6 h-6 shrink-0" />
+        {open && <span>Dashboard</span>}
+      </button>
         {/* ================= KELOLA DASHBOARD ================= */}
-        {canManageDashboard && (
-          <div ref={kelolaRef}>
-            <div className="w-[250px]">
-            <button
-              onClick={() => setDropdown((d) => ({ ...d, kelola: !d.kelola }))}
-              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
+       {canManageDashboard && (
+        <div ref={kelolaRef} className={`${open ? "w-[250px]" : "w-full"}`}>
+          <button
+            onClick={() => setDropdown((d) => ({ ...d, kelola: !d.kelola }))}
+            className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
               ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
             `}
-            >
-              <Cog6ToothIcon className="w-6 h-6" />
-              {open && (
-                <>
-                  <span className="flex">Kelola Dashboard</span>
-                  <ChevronDownIcon
-                    className={`w-5 h-5 mt-1 transition ${
-                      dropdown.kelola ? "rotate-180" : ""
-                    }`}
-                  />
-                </>
-              )}
-            </button>
-
-            {open && dropdown.kelola && (
-              <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2">
-                <button
-                  onClick={() => go("/input")}
-                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-[250px]"
-                >
-                  <BanknotesIcon className="w-5 h-5" />
-                  Input Dana
-                </button>
-              </div>
+          >
+            <Cog6ToothIcon className="w-6 h-6 shrink-0" />
+            {open && (
+              <>
+                <span>Kelola Dashboard</span>
+                <ChevronDownIcon
+                  className={`w-5 h-5 mt-1 transition ${
+                    dropdown.kelola ? "rotate-180" : ""
+                  }`}
+                />
+              </>
             )}
+          </button>
+
+          {open && dropdown.kelola && (
+            <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2 w-[250px]">
+              <button
+                onClick={() => go("/input")}
+                className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 rounded-md w-[250px]"
+              >
+                <BanknotesIcon className="w-5 h-5" />
+                Input Dana
+              </button>
             </div>
-          </div>
-        )}
+          )}
+        </div>
+      )}
 
         {/* ================= PENGAJUAN ================= */}
-        <div className="w-[250px]">
         {canCreateActivity && (
           <button
             onClick={() => go("/pengajuan")}
-            className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
-        ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}`}
+            className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
+              ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
+            `}
           >
-            <DocumentTextIcon className="w-6 h-6" />
+            <DocumentTextIcon className="w-6 h-6 shrink-0" />
             {open && <span>Pengajuan Kegiatan</span>}
           </button>
         )}
-      </div>
-
         {/* ================= DAFTAR KEGIATAN ================= */}
         {canViewActivities && (
-          <div ref={kegiatanRef} className="w-[250px]">
+          <div ref={kegiatanRef} className="w-full">
             <button
               onClick={() =>
                 setDropdown((d) => ({ ...d, kegiatan: !d.kegiatan }))
               }
-              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-full
-             ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"} `}
+              className={`flex items-center text-lg py-3 rounded-md hover:bg-black/20 w-[250px]
+                ${open ? "gap-3 px-5 justify-start" : "justify-center px-0"}
+              `}
             >
-              <ClipboardDocumentListIcon className="w-6 h-6" />
+              <ClipboardDocumentListIcon className="w-6 h-6 shrink-0" />
               {open && (
                 <>
-                  <span className="flex">Daftar Kegiatan</span>
+                  <span>Daftar Kegiatan</span>
                   <ChevronDownIcon
                     className={`w-5 h-5 mt-1 transition ${
                       dropdown.kegiatan ? "rotate-180" : ""
@@ -199,10 +194,10 @@ export default function Sidebar({
             </button>
 
             {open && dropdown.kegiatan && (
-              <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2">
+              <div className="bg-gradient-to-b from-[#0F2A4A] to-[#0B614C] rounded-md mt-2 w-[250px]">
                 <button
                   onClick={() => go("/daftar")}
-                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 rounded-md w-[250px]"
                 >
                   <DocumentArrowUpIcon className="w-5 h-5" />
                   Pengajuan TOR
@@ -210,7 +205,7 @@ export default function Sidebar({
 
                 <button
                   onClick={() => go("/daftar-LPJ")}
-                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-full"
+                  className="flex items-center gap-3 px-6 py-3 hover:bg-white/10 w-[250px]"
                 >
                   <DocumentArrowDownIcon className="w-5 h-5" />
                   Pengajuan LPJ

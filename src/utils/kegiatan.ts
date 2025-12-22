@@ -14,6 +14,7 @@ export interface Kegiatan {
   id: number | string;
   judul: string;
   nama: string;
+  nama_pengaju?: string;
   isTorApproved?: boolean;
   dana: string;
   tanggal: string;

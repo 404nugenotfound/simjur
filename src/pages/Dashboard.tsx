@@ -1,5 +1,5 @@
 // Layout dihandle oleh parent route, tidak perlu import di sini
-import { useContext, useEffect, useState } from "react";
+import { useContext, useEffect, useMemo, useState } from "react";
 import { DashboardContext } from "../context/DashboardContext";
 import { ParentSize } from "@visx/responsive";
 import { Pie } from "@visx/shape";
@@ -13,32 +13,35 @@ import Layout from "./Layout";
 import { useAuth } from "../context/AuthContext";
 import { ROLE_ID_MAP } from "../utils/role";
 import { i } from "framer-motion/dist/types.d-DagZKalS";
+import DaftarKegiatan from "./DaftarKegiatan";
+import { mapRoleIdToRole } from "../utils/roleMapping";
 
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
   const { roleId } = useAuth();
+  const { user } = useAuth();
   /* =========================
      ROLE CHECK
   ========================= */
   const isAdmin = roleId === ROLE_ID_MAP.admin;
-  const isAdministrasi = roleId === ROLE_ID_MAP.administrasi;
 
-  const canManageNotif = isAdmin || isAdministrasi;
+  const canManageNotif = isAdmin;
 
-  const stats = [
-    {
-      label: "Total Pengajuan TOR",
-      value: summary?.totalTor ?? 0,
-    },
-    {
-      label: "Total Kegiatan Disetujui",
-      value: summary?.totalLpj ?? 0,
-    },
-    {
-      label: "Kegiatan Selesai Tahun Ini",
-      value: summary?.totalSelesai ?? 0,
-    },
-  ];
+  const stats = useMemo(() => [
+  {
+    label: "Total Pengajuan TOR",
+    value: summary?.totalTor ?? 0,
+  },
+  {
+    label: "Total Kegiatan Disetujui",
+    value: summary?.totalLpj ?? 0,
+  },
+  {
+    label: "Kegiatan Selesai Tahun Ini",
+    value: summary?.totalSelesai ?? 0,
+  },
+], [summary]);
+
 
   // Data Dana dari context
   const { dana, approvedDanaTotal, TotalDanaTerpakai, danaJurusan } =
@@ -86,9 +89,13 @@ export default function Dashboard() {
   const [filter, setFilter] = useState("all");
   const [page, setPage] = useState(1);
   const limit = 5;
-  const navigate = useNavigate();
-  const namaPengaju = roleToName["pengaju"];
 
+
+ const namaPengaju =
+  localStorage.getItem("pengaju_name") ?? "Pengaju";
+
+
+  
   // === FILTER + SORT UTAMA ===
   const filtered = [...data] // clone dulu biar aman
     .reverse() // urutan terbaru paling atas
