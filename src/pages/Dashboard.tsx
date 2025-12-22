@@ -1,4 +1,4 @@
-import Layout from "./Layout";
+// Layout dihandle oleh parent route, tidak perlu import di sini
 import { useContext, useEffect, useState } from "react";
 import { DashboardContext } from "../context/DashboardContext";
 import { ParentSize } from "@visx/responsive";
@@ -7,9 +7,23 @@ import { Group } from "@visx/group";
 import { useActivities } from "../context/ActivitiesContext";
 import { useNavigate } from "react-router-dom";
 import { roleToName } from "../utils/roleToName";
+import PushNotificationComponent from "../components/PushNotificationComponent";
+import NotificationPanel from "../components/NotificationPanel";
+import Layout from "./Layout";
+import { useAuth } from "../context/AuthContext";
+import { ROLE_ID_MAP } from "../utils/role";
+import { i } from "framer-motion/dist/types.d-DagZKalS";
 
 export default function Dashboard() {
   const { summary } = useContext(DashboardContext);
+  const { roleId } = useAuth();
+  /* =========================
+     ROLE CHECK
+  ========================= */
+  const isAdmin = roleId === ROLE_ID_MAP.admin;
+  const isAdministrasi = roleId === ROLE_ID_MAP.administrasi;
+
+  const canManageNotif = isAdmin || isAdministrasi;
 
   const stats = [
     {
@@ -73,37 +87,42 @@ export default function Dashboard() {
   const [page, setPage] = useState(1);
   const limit = 5;
   const navigate = useNavigate();
-  const namaPengaju = roleToName["Pengaju"];
+  const namaPengaju = roleToName["pengaju"];
 
   // === FILTER + SORT UTAMA ===
-  const filtered = [...data]      // clone dulu biar aman
-    .reverse()                    // urutan terbaru paling atas
+  const filtered = [...data] // clone dulu biar aman
+    .reverse() // urutan terbaru paling atas
     .filter((item) => {
       const matching = filter === "all" ? true : item.judul === filter;
-      const searching = item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
+      const searching =
+        item?.judul?.toLowerCase()?.includes(search.toLowerCase()) ?? false;
       return matching && searching;
     });
-  
-  
-    const startIndex = (page - 1) * limit;
-    const endIndex = startIndex + limit;
-  
-    const paginatedData = filtered.slice(startIndex, endIndex);
-  
-     useEffect(() => {
-        setPage(1);
-      }, [search]);
-  
-    {
-      /* Tabel */
-    }
+
+  const startIndex = (page - 1) * limit;
+  const endIndex = startIndex + limit;
+
+  const paginatedData = filtered.slice(startIndex, endIndex);
+
+  useEffect(() => {
+    setPage(1);
+  }, [search]);
 
   return (
     <Layout>
-      <div className="flex-1 p-6 md:p-12 transition-all duration-300 space-y-8 font-poppins">
+      <div className="flex-1 p-6 md:p-12 transition-all duration-300 space-y-14 font-poppins">
         <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
           DASHBOARD PENGAJUAN KEGIATAN
         </h1>
+        {canManageNotif && (
+          <div>
+            {/* Notification Panel */}
+            <NotificationPanel />
+
+            {/* Push Notification Component */}
+            <PushNotificationComponent />
+          </div>
+        )}
 
         {/* ====== CARD DANA ====== */}
         <div className="border bg-white rounded-xl p-6 shadow-md text-black mt-6">
@@ -176,13 +195,13 @@ export default function Dashboard() {
                 <div
                   key={i}
                   className="
-                  grid grid-cols-[1fr_auto]
-                  items-center
-                  bg-gray-50
-                  rounded-2xl
-                  px-6 py-5
-                  border
-                "
+                    grid grid-cols-[1fr_auto]
+                    items-center
+                    bg-gray-50
+                    rounded-2xl
+                    px-6 py-5
+                    border
+                  "
                 >
                   {/* LABEL */}
                   <span className="text-gray-600 font-medium leading-snug">
@@ -200,7 +219,7 @@ export default function Dashboard() {
         </div>
 
         {/* Grid Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-8">
           {stats.map((item, i) => (
             <div
               key={i}

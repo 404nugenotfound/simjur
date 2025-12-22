@@ -4,43 +4,81 @@ import Illustration from "./assets/Illustration.svg";
 import { UserIcon, KeyIcon } from "@heroicons/react/24/solid";
 import "./App.css";
 import { useNavigate } from "react-router-dom";
-import { roleToName } from "./utils/roleToName";
-
+import { useAuth } from "./context/AuthContext";
+import { ApiError } from "./service/api";
+import { Toaster, toast } from "sonner";
+// Development test credentials info
 
 function App() {
   const navigate = useNavigate();
-  const [username, setUsername] = useState("");
+  const { login } = useAuth();
+  const [identifier, setIdentifier] = useState("");
   const [password, setPassword] = useState("");
-  const [role, setRole] = useState("Pengaju");
 
-  // fungsi update role otomatis
-  const handleUsernameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setUsername(value);
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
 
-    // Rules sederhana
-    let newRole = "Pengaju"; // default kalau ga match
-    if (value.toLowerCase() === "admin") newRole = "Admin";
-    else if (value.toLowerCase() === "sekjur") newRole = "Sekjur";
-    else if (value.toLowerCase() === "kajur") newRole = "Kajur";
+    // ⛔ Validasi input
+    if (!identifier.trim() && !password.trim()) {
+      toast.warning("Identifier dan password wajib diisi");
+      return;
+    }
 
-    setRole(newRole);
-    localStorage.setItem("role", newRole); // optional, langsung save
+    if (!identifier.trim()) {
+      toast.warning("Identifier tidak boleh kosong");
+      return;
+    }
+
+    if (!password.trim()) {
+      toast.warning("Password tidak boleh kosong");
+      return;
+    }
+
+    // 🔄 Loading toast
+    const loadingToast = toast.loading("Sedang memverifikasi akun...");
+
+    try {
+      await login(identifier, password);
+
+      // ✅ Success
+      toast.success("Login berhasil", {
+        id: loadingToast,
+      });
+
+      navigate("/dashboard");
+    } catch (err) {
+      toast.dismiss(loadingToast);
+
+      if (err instanceof ApiError) {
+        if (err.status === 400 || err.status === 401) {
+          toast.error("Identifier atau password salah");
+        } else if (err.status === 500) {
+          toast.error(
+            err.message.includes("Database")
+              ? "Server sedang bermasalah. Silakan coba lagi."
+              : "Terjadi kesalahan server",
+          );
+        } else {
+          toast.error(err.message || "Login gagal");
+        }
+      } else {
+        toast.error("Terjadi kesalahan. Silakan coba lagi.");
+      }
+    }
   };
 
-  const handleLogin = () => {
-    const realName = roleToName[role];
+  // Handle input changes
+  const handleIdentifierChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setIdentifier(e.target.value);
+  };
 
-    // Simpan nama dalam uppercase
-    localStorage.setItem("name", realName.toUpperCase());
-
-    // Simpan role juga kalo perlu
-    localStorage.setItem("role", role);
-    navigate("/dashboard");
+  const handlePasswordChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPassword(e.target.value);
   };
 
   return (
     <div className="min-h-screen bg-gray-900 flex items-center justify-center">
+      <Toaster richColors position="bottom-right" />
       <div className="w-full h-screen bg-white overflow-hidden shadow-2xl flex">
         {/* LEFT AREA */}
         <div className="w-1/2 p-2 flex flex-col">
@@ -79,38 +117,56 @@ function App() {
                 <span className="font-semibold pl-[6px]">Jurusan</span>
               </p>
             </div>
-            <div className="mt-16  ml-40 font-poppins space-y-11">
+
+            {/* Login Form */}
+            <form
+              onSubmit={handleLogin}
+              className="mt-16 ml-40 font-poppins space-y-11"
+            >
               <div className="relative w-3/4">
                 <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                  {/* Icon user */}
                   <UserIcon className="h-5 w-5 text-gray-600" />
                 </div>
                 <input
-                  className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
-                  placeholder="NIM / Email"
-                  onChange={handleUsernameChange}
+                  type="text"
+                  className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
+                  placeholder="Email / Username"
+                  value={identifier}
+                  onChange={handleIdentifierChange}
+                  autoComplete="username"
+                  required
                 />
               </div>
+
               <div className="relative w-3/4">
                 <div className="absolute inset-y-0 left-0 pl-6 flex items-center pointer-events-none">
-                  {/* Password user */}
                   <KeyIcon className="h-5 w-5 text-gray-600" />
                 </div>
                 <input
-                  className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none"
+                  type="password"
+                  className="w-full py-3 px-16 rounded-full bg-white text-gray-700 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
                   placeholder="Kata Sandi"
+                  value={password}
+                  onChange={handlePasswordChange}
+                  autoComplete="current-password"
+                  required
                 />
               </div>
+
               <div className="mr-32 flex justify-center">
                 <button
-                  className="w-52 py-3 text-xl rounded-full bg-white text-gray-900 font-semibold 
-                  hover:bg-gray-800 hover:text-white hover:scale-[0.97] transition-colors duration-100 ease-in-out"
-                  onClick={handleLogin}
+                  type="submit"
+                  disabled={!identifier || !password}
+                  className={`w-52 py-3 text-xl rounded-full font-semibold transition-all duration-200 flex items-center justify-center space-x-2 ${
+                    !identifier || !password
+                      ? "bg-gray-400 text-gray-200 cursor-not-allowed"
+                      : "bg-white text-gray-900 hover:bg-gray-800 hover:text-white hover:scale-[0.97] active:scale-[0.95]"
+                  }`}
                 >
-                  Masuk
+                  <span>Masuk</span>
                 </button>
               </div>
-            </div>
+            </form>
 
             <p className="absolute bottom-5 right-10 text-sm text-gray-200 font-semibold">
               © 2025 SIMJUR
@@ -118,6 +174,9 @@ function App() {
           </div>
         </div>
       </div>
+
+      {/* Development Test Credentials */}
+      {/*<TestCredentialsInfo />*/}
     </div>
   );
 }

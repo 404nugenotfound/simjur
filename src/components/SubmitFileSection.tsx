@@ -1,6 +1,6 @@
 import { TrashIcon } from "@heroicons/react/24/solid";
 import { deleteFile, getFile } from "../utils/indexedDB";
-
+import { Toaster, toast } from "sonner";
 type Props = {
   role: string;
   mode: "TOR" | "LPJ";
@@ -29,43 +29,83 @@ const SubmitFileSection = ({
   const isValidId = typeof id === "string" || typeof id === "number";
 
   const handleDownload = async () => {
-    if (!isValidId) return;
+    if (!isValidId) {
+      toast.error("ID tidak valid");
+      return;
+    }
 
     const key = `file-${mode}-${id}`;
     let fileToDownload = currentFile;
 
-    // Kalau placeholder, ambil dari IndexedDB
-    if (!(currentFile instanceof File)) {
-      fileToDownload = await getFile(key);
-    }
+    try {
+      // Kalau placeholder, ambil dari IndexedDB
+      if (!(currentFile instanceof File)) {
+        fileToDownload = await getFile(key);
+      }
 
-    if (fileToDownload instanceof File) {
-      const url = URL.createObjectURL(fileToDownload);
-      const a = document.createElement("a");
-      a.href = url;
-      a.download = fileToDownload.name;
-      a.click();
-      URL.revokeObjectURL(url);
-      setHasDownloaded(true);
-    } else {
-      alert("File asli sudah hilang, silakan upload ulang untuk download.");
+      if (fileToDownload instanceof File) {
+        const url = URL.createObjectURL(fileToDownload);
+        const a = document.createElement("a");
+
+        a.href = url;
+        a.download = fileToDownload.name;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+
+        URL.revokeObjectURL(url);
+
+        setHasDownloaded(true);
+
+        // TOAST BERHASIL
+        toast.success("File berhasil diunduh");
+      } else {
+        // FILE HILANG
+        toast.warning(
+          "File asli sudah hilang. Silakan upload ulang untuk download.",
+        );
+      }
+    } catch (error) {
+      console.error(error);
+
+      // ❌ ERROR SYSTEM
+      toast.error("Terjadi kesalahan saat mengunduh file");
     }
   };
 
   const handleDelete = async () => {
-    if (!isValidId) return;
-    if (!window.confirm("Ose yakin mo hapus par data ini ka seng?")) return;
+    if (!isValidId) {
+      toast.error("ID tidak valid");
+      return;
+    }
 
-    const key = `file-${mode}-${id}`;
-    setFiles((prev) => {
-      const next = { ...prev };
-      delete next[key];
-      return next;
+    toast("Yakin mau hapus file ini?", {
+      description: "File yang sudah dihapus tidak bisa dikembalikan.",
+      action: {
+        label: "Hapus",
+        onClick: async () => {
+          try {
+            const key = `file-${mode}-${id}`;
+
+            setFiles((prev) => {
+              const next = { ...prev };
+              delete next[key];
+              return next;
+            });
+
+            await deleteFile(key);
+            localStorage.removeItem(key);
+            localStorage.removeItem(`file-name-${mode}-${id}`);
+
+            toast.success("File berhasil dihapus");
+          } catch (error) {
+            console.error(error);
+            toast.error("Gagal menghapus file");
+          }
+        },
+      },
+      duration: 8000, // biar user sempat mikir
     });
-
-    await deleteFile(key);
-    localStorage.removeItem(key);
-    localStorage.removeItem(`file-name-${mode}-${id}`);
   };
 
   return (
@@ -75,13 +115,13 @@ const SubmitFileSection = ({
           currentFile
             ? "border-none bg-transparent p-0"
             : isDragging
-            ? "border-2 border-indigo-500 border-dashed bg-indigo-50"
-            : "border-2 border-green-300 border-dashed bg-green-100/70"
+              ? "border-2 border-indigo-500 border-dashed bg-indigo-50"
+              : "border-2 border-green-300 border-dashed bg-green-100/70"
         }`}
       >
         {/* ================= BELUM ADA FILE ================= */}
         {!currentFile ? (
-          role === "Pengaju" ? (
+          role === "pengaju" ? (
             <div className="flex flex-col items-center gap-4 p-10">
               <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow">
                 <span className="text-2xl">⬆️</span>
@@ -139,7 +179,7 @@ const SubmitFileSection = ({
                 </button>
 
                 {/* HAPUS */}
-                {role === "Pengaju" && (
+                {role === "pengaju" && (
                   <button
                     aria-label="hapus"
                     disabled={!isValidId}

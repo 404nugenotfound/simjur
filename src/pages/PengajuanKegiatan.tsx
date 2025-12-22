@@ -3,13 +3,15 @@ import FormPengajuan from "./FormPengajuan";
 import FormPengajuanLPJ from "./FormPengajuanLPJ";
 import { MagnifyingGlassIcon } from "@heroicons/react/24/outline";
 import { Navigate, useNavigate } from "react-router-dom";
-import { useParams, useLocation } from "react-router-dom";
+import { useLocation } from "react-router-dom";
 import { useActivities } from "../context/ActivitiesContext";
 import {
   ChevronDownIcon,
   DocumentIcon,
   DocumentChartBarIcon,
 } from "@heroicons/react/24/solid";
+import { useAuth } from "../context/AuthContext";
+
 
 type Mode = "list" | "TOR" | "LPJ";
 
@@ -45,6 +47,10 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
   const [page, setPage] = useState(1);
   const limit = 5;
   const navigate = useNavigate();
+  
+  // Simple permission check based on role ID
+  const { roleId } = useAuth();
+  const canCreate = roleId === 1 || roleId === 2 || roleId === 3; // admin, administrasi, pengaju
 
   // get data TOR
   const [torItems, setTorItems] = useState<Tor[]>([]);
@@ -62,7 +68,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
 
       // Buat terbaru paling atas
       const sorted = [...kegiatanFiltered].sort(
-        (a, b) => Number(b.id) - Number(a.id)
+        (a, b) => Number(b.id) - Number(a.id),
       );
 
       setTorItems(sorted);
@@ -93,7 +99,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
 
   const handleApprove = (
     activityId: number,
-    field: "approval1Status" | "approval2Status" | "approval3Status"
+    field: "approval1Status" | "approval2Status" | "approval3Status",
   ) => {
     const updated = {
       ...approvalStatus,
@@ -133,19 +139,19 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
 
     const updated = data.filter((item) => item.id !== id);
     setData(updated);
-
     localStorage.setItem("kegiatan", JSON.stringify(updated));
   };
 
-  {
-    /* Form View */
-  }
+
+
+  /* Form View - dengan permission check */
+  
   if (mode === "TOR") {
     return (
       <div className="p-6">
         <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
           <button
-            className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
+            className="border border-black px-5 py-1 bg-gray-700 rounded-lg
           text-white font-bold pointer-events-none tracking-[0.05em]"
           >
             Form TOR
@@ -167,7 +173,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
       <div className="p-6">
         <div className="flex items-center justify-between w-full mt-[7.5rem] px-20">
           <button
-            className="border border-black px-5 py-1 bg-gray-700 rounded-lg 
+            className="border border-black px-5 py-1 bg-gray-700 rounded-lg
           text-white font-bold pointer-events-none tracking-[0.05em]"
           >
             Form LPJ
@@ -185,9 +191,8 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
     );
   }
 
-  {
-    /* Tabel */
-  }
+  /* Tabel */
+
   return (
     <div className="p-12">
       <h1 className="text-3xl text-black font-bebas tracking-[0.4rem] ml-[-1rem] mt-3 mb-12">
@@ -279,7 +284,7 @@ const PengajuanKegiatan: React.FC<PengajuanProps> = ({ mode, setMode }) => {
                 (() => {
                   // Parse approval sekali DI SINI, bukan di dalam map
                   const approvalStore = JSON.parse(
-                    localStorage.getItem("approvalStatus") || "{}"
+                    localStorage.getItem("approvalStatus") || "{}",
                   );
 
                   return paginatedData.map((item, index) => {

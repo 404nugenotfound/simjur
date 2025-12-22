@@ -18,16 +18,14 @@ const parseNumber = (value: number | string): number => {
   if (typeof value === "number") return value;
 
   return Number(
-    value.replace(/[^0-9]/g, "") // 🔥 buang Rp, titik, koma, spasi, dll
+    value.replace(/[^0-9]/g, ""), // 🔥 buang Rp, titik, koma, spasi, dll
   );
 };
-
 
 const formatRupiah = (value: number | ""): string => {
   if (value === "") return "";
   return `Rp ${value.toLocaleString("id-ID")}`;
 };
-
 
 const DanaSetujuSection = ({
   dana,
@@ -44,7 +42,9 @@ const DanaSetujuSection = ({
 
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
-      <h2 className="font-semibold mb-4 text-lg">Persetujuan Dana (Sekjur)</h2>
+      <h2 className="font-semibold mb-4 text-lg">
+        Persetujuan Dana (Sekretaris)
+      </h2>
 
       {/* ================= DANA DIAJUKAN ================= */}
       <div className="bg-white p-4 rounded-lg border mb-4">
@@ -86,7 +86,7 @@ const DanaSetujuSection = ({
                   setError("Dana harus lebih dari 0");
                 } else if (numericValue > mdana) {
                   setError(
-                    "Dana disetujui tidak boleh melebihi dana yang diajukan"
+                    "Dana disetujui tidak boleh melebihi dana yang diajukan",
                   );
                 } else {
                   setError("");
@@ -105,7 +105,7 @@ const DanaSetujuSection = ({
 
                 if (value > mdana) {
                   setError(
-                    "Dana disetujui tidak boleh melebihi dana yang diajukan"
+                    "Dana disetujui tidak boleh melebihi dana yang diajukan",
                   );
                   return; // ⛔ STOP TOTAL
                 }

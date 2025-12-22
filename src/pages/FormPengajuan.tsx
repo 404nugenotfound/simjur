@@ -3,6 +3,9 @@ import PizZip from "pizzip";
 import Docxtemplater from "docxtemplater";
 import { saveAs } from "file-saver";
 import InfoButton from "../components/ButtonInfo/InfoButton";
+import { toast } from "sonner";
+
+const API_URL = "https://simjur-api.vercel.app/api/pengajuan/tor";
 
 export default function FormPengajuan({ addData, setMode }) {
   const [namaKegiatan, setNamaKegiatan] = useState("");
@@ -13,6 +16,7 @@ export default function FormPengajuan({ addData, setMode }) {
   const [dana, setDana] = useState("");
   // const [selectedActivity, setSelectedActivity] = useState<Kegiatan | null>(null);
 
+  // Util Format Currency
   const formatCurrency = (value: string) => {
     const numbersOnly = value.replace(/\D/g, "");
     return new Intl.NumberFormat("id-ID", {
@@ -24,6 +28,10 @@ export default function FormPengajuan({ addData, setMode }) {
 
   const handleDanaChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setDana(formatCurrency(e.target.value));
+  };
+
+  const parseCurrencyToNumber = (value: string) => {
+    return Number(value.replace(/\D/g, ""));
   };
 
   const generateWord = async (data: any) => {
@@ -98,7 +106,7 @@ export default function FormPengajuan({ addData, setMode }) {
         console.log(
           "Snippet Error XML:\n\n",
           docXml.substring(start, end),
-          "\n---------------------"
+          "\n---------------------",
         );
       }
 
@@ -113,7 +121,7 @@ export default function FormPengajuan({ addData, setMode }) {
     });
 
     const filename = `TOR-${new Date().getFullYear()}-${Math.floor(
-      Math.random() * 1000
+      Math.random() * 1000,
     )}_${data.judul_kegiatan.replace(/\s+/g, "_")}.docx`;
     saveAs(blob, filename);
   };
@@ -128,65 +136,104 @@ export default function FormPengajuan({ addData, setMode }) {
   };
 
   const handleSubmit = async () => {
-    const nomorTor =
-      "TOR-" +
-      new Date().getFullYear() +
-      "-" +
-      Math.floor(Math.random() * 1000);
+    if (
+      !namaKegiatan ||
+      !tanggalMulai ||
+      !tanggalBerakhir ||
+      !penanggungJawab ||
+      !dana ||
+      !deskripsi
+    ) {
+      toast.error("Lengkapi semua field");
+      return;
+    }
 
-    // 🔥 Data lengkap untuk Word
-    const formData = {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      toast.error("Anda harus login");
+      return;
+    }
+
+    const nomorTor = `TOR-${new Date().getFullYear()}-${Date.now()}`;
+
+    /* ======================
+           DATA WORD
+        ====================== */
+    const wordData = {
       nomor_tor: nomorTor,
       tahun: new Date().getFullYear(),
       tanggal_generate: new Date().toLocaleDateString("id-ID"),
-
       judul_kegiatan: namaKegiatan,
       tanggal_mulai: tanggalMulai,
       tanggal_berakhir: tanggalBerakhir,
       penanggung_jawab: penanggungJawab,
       dana_diajukan: dana,
       deskripsi_kegiatan: deskripsi,
-
-      tujuan: "( Diisi Manual )",
-      latar_belakang: "( Diisi Manual )",
-
+      tujuan: "(Diisi Manual)",
+      latar_belakang: deskripsi,
       nama_kajur: "Dr. Anita Hidayati, S.Kom., M.Kom.",
       nip_kajur: "197908032003122003",
-      nip_penanggung_jawab: "( Diisi Manual )",
     };
 
-    // 🔥 Generate Word dulu
-    await generateWord(formData);
+    await generateWord(wordData);
+    toast.success("Dokumen TOR berhasil dibuat");
 
-    // 🔥 Data yg disimpan ke context (fix struktur)
-    const tableItem = {
-      id: Math.floor(Math.random() * 10000000), // now matches type string
-      judul: namaKegiatan,
-      tanggal: new Date().toLocaleDateString("id-ID"),
-      penanggung_jawab: penanggungJawab,
-      dana: dana,
-      deskripsi: deskripsi,
+    /* ======================
+           PAYLOAD API
+        ====================== */
 
-      tor: {
-        nomor_tor: nomorTor,
-        tahun: new Date().getFullYear(),
-        dana: dana,
-        tanggal_mulai: tanggalMulai,
-        tanggal_berakhir: tanggalBerakhir,
-        tujuan: "( Diisi Manual )",
-        latar_belakang: "( Diisi Manual )",
-        created_at: new Date().toISOString(),
-      },
+    const tokenPayLoad = JSON.parse(atob(token.split(".")[1]));
+    const payload = {
+      nomor_surat: Date.now(),
+      nama_kegiatan: namaKegiatan,
+      tujuan: "(Diisi Manual)",
+      latar_belakang: deskripsi,
+      tanggal_pengajuan: new Date().toISOString(),
+      nominal_pengajuan: parseCurrencyToNumber(dana),
+      peserta: 0,
+      jadwal_awal: new Date(tanggalMulai).toISOString(),
+      jadwal_akhir: new Date(tanggalBerakhir).toISOString(),
+      anggaran: parseCurrencyToNumber(dana),
+      pic: penanggungJawab,
+      pengaju_id: tokenPayLoad.id,
+      upload_file: "TOR_GENERATED.docx",
     };
 
-    // 🔥 Simpan
-    addData(tableItem);
+    try {
+      const res = await fetch(API_URL, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify(payload),
+      });
 
-    // 🔥 Reset form
-    resetForm();
+      const result = await res.json();
 
-    // 🔥 Balik ke list
-    setMode("list");
+      if (!res.ok) {
+        console.error("API ERROR :", result);
+        toast.error(result.error || "Gagal menyimpan TOR");
+        return;
+      }
+
+      addData({
+        id: result.tor.id,
+        judul: namaKegiatan,
+        tanggal: new Date().toLocaleDateString("id-ID"),
+        penanggung_jawab: penanggungJawab,
+        dana,
+        deskripsi,
+        tor: result.tor,
+      });
+
+      toast.success("Pengajuan TOR berhasil");
+      resetForm();
+      setMode("list");
+    } catch (err) {
+      console.error(err);
+      toast.error("Koneksi ke server gagal");
+    }
   };
 
   return (
@@ -306,5 +353,3 @@ export default function FormPengajuan({ addData, setMode }) {
     </div>
   );
 }
-
-

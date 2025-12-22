@@ -1,11 +1,5 @@
 // src/pages/Detail.tsx
-import React, {
-  useState,
-  DragEvent,
-  ChangeEvent,
-  useMemo,
-  useEffect,
-} from "react";
+import React, { useState, useMemo, useEffect } from "react";
 import Layout from "./Layout";
 import { useParams, useLocation } from "react-router-dom";
 import { TrashIcon } from "@heroicons/react/24/solid";
@@ -15,15 +9,27 @@ import DetailPengajuan from "../components/DetailPengajuanSection";
 import SubmitFileSection from "../components/SubmitFileSection";
 import DanaSetujuSection from "../components/DanaSetujuSection";
 import ApprovalAndNoteSection from "../components/ApprovalAndNoteSection";
+import {
+  Role,
+  RoleId,
+  ApprovalField,
+  ApprovalStatus,
+  ROLE_ID_MAP,
+} from "../utils/role";
+import { TabKey } from "../utils/tab";
 import TabButton from "../components/TabButton";
-import { Role, UserRole, ApprovalField, ApprovalStatus } from "@/utils/role";
-import { TabKey } from "@/utils/tab";
 import { saveFile } from "../utils/indexedDB";
 import { useContext } from "react";
 import { DashboardContext } from "../context/DashboardContext";
 
+import {
+  createApprovalNotification,
+  createRejectionNotification,
+} from "../services/notificationService";
+import { useAuth } from "../context/AuthContext";
 
 // ----------------- TYPES -----------------
+
 type ApprovalState = {
   approval1Status: ApprovalStatus;
   approval2Status: ApprovalStatus;
@@ -63,11 +69,9 @@ interface DetailProps {
   mode?: "TOR" | "LPJ";
 }
 
-
 const Detail: React.FC<DetailProps> = () => {
   const { id } = useParams<{ id: string }>();
-  const { data, setData, approvalStatus, setApprovalStatus } =
-    useActivities();
+  const { data, setData, approvalStatus, setApprovalStatus } = useActivities();
   const [files, setFiles] = useState<Record<string, File | null>>({});
 
   const [currentNote, setCurrentNote] = useState("");
@@ -76,24 +80,36 @@ const Detail: React.FC<DetailProps> = () => {
   const [hasSubmitted, setHasSubmitted] = useState(false);
   const [hasFile, setHasFile] = useState<boolean>(false);
 
+  // ---------- GET ROLE DARI AUTHCONTEXT ----------
+  const { role: roleTyped, user } = useAuth() as {
+    role: Role;
+    roleId: number;
+    user: any;
+  };
+  const roleId: RoleId = ROLE_ID_MAP[roleTyped];
+  const level = ROLE_ID_MAP[roleId];
 
+  // Simple permission checks based on role ID
+  const canApprove =
+    roleId === 1 || roleId === 2 || roleId === 4 || roleId === 5; // admin, administrasi, sekretaris, ketua_jurusan
+  const canManage = roleId === 1; // admin only
+  const hasPermission = (permission: string) => {
+    const permissionMap = {
+      1: ["view_activities", "approve_activity", "manage_activities"], // admin
+      2: ["view_activities", "approve_activity"], // administrasi
+      3: ["view_activities"], // pengaju
+      4: ["view_activities", "approve_activity"], // sekretaris
+      5: ["view_activities", "approve_activity"], // ketua_jurusan
+    };
+    return (
+      permissionMap[roleId as keyof typeof permissionMap]?.includes(
+        permission,
+      ) || false
+    );
+  };
 
-  // ---------- INI PART ROLE YA TUANGALA ----------
-  const rawRole = localStorage.getItem("role");
-
-  const roleTyped: Role =
-    rawRole === "Admin" || rawRole === "Sekjur" || rawRole === "Kajur"
-      ? rawRole
-      : "Pengaju";
-
-  const userRole: UserRole =
-    rawRole === "Admin"
-      ? "admin"
-      : rawRole === "Sekjur"
-      ? "sekjur"
-      : rawRole === "Kajur"
-      ? "kajur"
-      : "admin"; // fallback aman
+  const userData = localStorage.getItem("user_data");
+  const rawRole = userData ? JSON.parse(userData).roles_id?.toString() : "3";
 
   const mode: "TOR" | "LPJ" = location.state?.type || "TOR";
 
@@ -105,43 +121,39 @@ const Detail: React.FC<DetailProps> = () => {
     return data.find((x) => String(x.id) === id) || null;
   }, [id, data]);
 
- const currentFile =
-  files[`file-${mode}-${activity?.id ?? "noid"}`] ?? null;
+  const currentFile = files[`file-${mode}-${activity?.id ?? "noid"}`] ?? null;
 
-  console.log(
-    "Detail activity ID:",
-    activity?.id,
-    "Current file:",
-    files[activity?.id || ""]
-  );
+  // console.log(
+  //   "Detail activity ID:",
+  //   activity?.id,
+  //   "Current file:",
+  //   files[activity?.id || ""],
+  // );
 
   // ---------- APPROVED DANA STATE ----------
   const [approvedDana, setApprovedDana] = useState<number | "">("");
   const [isDanaSaved, setIsDanaSaved] = useState(false);
   const { addDanaDisetujui } = useContext(DashboardContext);
 
-
   const parseRupiah = (value: string | number) => {
-  if (typeof value === "number") return value;
-  return Number(value.replace(/[^\d]/g, ""));
-};
+    if (typeof value === "number") return value;
+    return Number(value.replace(/[^\d]/g, ""));
+  };
 
+  const handleSaveDana = () => {
+    const mdana = parseRupiah(activity?.dana ?? 0);
+    if (!approvedDana || approvedDana <= 0) return;
+    if (approvedDana > mdana) return; // ⛔ STOP TOTAL
 
- const handleSaveDana = () => {
-  const mdana = parseRupiah(activity?.dana ?? 0);
-  if (!approvedDana || approvedDana <= 0) return;
-  if (approvedDana > mdana) return; // ⛔ STOP TOTAL
+    // simpan ke localStorage per kegiatan
+    const key = `approved-dana-${activity?.id}`;
+    localStorage.setItem(key, approvedDana.toString());
 
-  // simpan ke localStorage per kegiatan
-  const key = `approved-dana-${activity?.id}`;
-  localStorage.setItem(key, approvedDana.toString());
+    // update context
+    addDanaDisetujui(approvedDana);
 
-  // update context
-  addDanaDisetujui(approvedDana);
-
-  setIsDanaSaved(true);
-};
-
+    setIsDanaSaved(true);
+  };
 
   const [detailData, setDetailData] = useState<DetailApprovalData>({});
 
@@ -158,240 +170,245 @@ const Detail: React.FC<DetailProps> = () => {
           approval3: detailData.lpjApproval3Status ?? "Pending",
         };
 
-  const allowedField: ApprovalField =
-  mode === "TOR"
-    ? roleTyped === "Admin"
-      ? "torApproval1Status"
-      : roleTyped === "Sekjur"
-      ? "torApproval2Status"
-      : "torApproval3Status"
-    : roleTyped === "Admin"
-    ? "lpjApproval1Status"
-    : roleTyped === "Sekjur"
-    ? "lpjApproval2Status"
-    : "lpjApproval3Status";
-
+  const allowedField: ApprovalField | undefined = level
+    ? (`${mode.toLowerCase()}Approval${level}Status` as ApprovalField)
+    : undefined;
 
   const detailInfo = {
     nama: activity?.judul ?? "–",
     tanggal: activity?.tanggal ?? "–",
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
     dana:
-    activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
-    penanggung_jawab: activity?.penanggung_jawab ?? "-",
+      activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
+    penanggung_jawab: user?.name ?? "-",
     sisaDana: activity?.lpj?.sisa_dana ?? "-",
     metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",
     total_peserta: activity?.lpj?.total_peserta ?? "[ Belum Ada Data ]",
   };
 
   const mapFieldToKey = (field: ApprovalField, mode: "TOR" | "LPJ") => {
-  if (mode === "TOR") {
-    if (field === "torApproval1Status") return "torApproval1Status";
-    if (field === "torApproval2Status") return "torApproval2Status";
-    return "torApproval3Status";
-  } else {
-    if (field === "lpjApproval1Status") return "lpjApproval1Status";
-    if (field === "lpjApproval2Status") return "lpjApproval2Status";
-    return "lpjApproval3Status";
-  }
-};
-
-const updateAll = (
-  field: ApprovalField,
-  status: "Approved" | "Rejected" | "Revisi" | "Pending"
-) => {
-  if (!activity) return;
-
-  const mappedField = mapFieldToKey(field, mode);
-  const key = `approval-${activity.id}`;
-
-  const approvalStore = JSON.parse(
-    localStorage.getItem("approvalStatus") || "{}"
-  );
-
-  const currentModeData =
-    approvalStore[key]?.[mode] ??
-    (mode === "TOR"
-      ? {
-          torApproval1Status: "Pending",
-          torApproval2Status: "Pending",
-          torApproval3Status: "Pending",
-        }
-      : {
-          lpjApproval1Status: "Pending",
-          lpjApproval2Status: "Pending",
-          lpjApproval3Status: "Pending",
-        });
-
-  const updatedModeData = {
-    ...currentModeData,
-    [mappedField]: status, // ✅ DINAMIS
+    if (mode === "TOR") {
+      if (field === "torApproval1Status") return "torApproval1Status";
+      if (field === "torApproval2Status") return "torApproval2Status";
+      return "torApproval3Status";
+    } else {
+      if (field === "lpjApproval1Status") return "lpjApproval1Status";
+      if (field === "lpjApproval2Status") return "lpjApproval2Status";
+      return "lpjApproval3Status";
+    }
   };
 
-  const updatedAll = {
-    ...approvalStore,
-    [key]: {
-      ...approvalStore[key],
-      [mode]: updatedModeData,
-    },
-  };
+  const updateAll = (
+    field: ApprovalField,
+    status: "Approved" | "Rejected" | "Revisi" | "Pending",
+  ) => {
+    if (!activity) return;
 
-  setApprovalStatus(updatedAll);
-  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+    const mappedField = mapFieldToKey(field, mode);
+    const key = `approval-${activity.id}`;
 
-  setDetailData((prev) => ({
-    ...prev,
-    ...updatedModeData,
-  }));
-
-  setData((prev) => {
-    const updated = prev.map((d) =>
-      d.id !== activity.id ? d : { ...d, ...updatedModeData }
+    const approvalStore = JSON.parse(
+      localStorage.getItem("approvalStatus") || "{}",
     );
 
-    localStorage.setItem("kegiatan", JSON.stringify(updated));
-    return updated;
-  });
-};
+    const currentModeData =
+      approvalStore[key]?.[mode] ??
+      (mode === "TOR"
+        ? {
+            torApproval1Status: "Pending",
+            torApproval2Status: "Pending",
+            torApproval3Status: "Pending",
+          }
+        : {
+            lpjApproval1Status: "Pending",
+            lpjApproval2Status: "Pending",
+            lpjApproval3Status: "Pending",
+          });
 
-const removeFile = (
-  id: number,
-  mode: "TOR" | "LPJ"
-) => {
-  const key = `file-${id}-${mode}`;
+    const updatedModeData = {
+      ...currentModeData,
+      [mappedField]: status, // ✅ DINAMIS
+    };
 
-  localStorage.removeItem(key);
-};
+    const updatedAll = {
+      ...approvalStore,
+      [key]: {
+        ...approvalStore[key],
+        [mode]: updatedModeData,
+      },
+    };
 
-const resetApprovalToPending = (field: ApprovalField) => {
-  if (!activity) return;
+    setApprovalStatus(updatedAll);
+    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
 
-  const mappedField = mapFieldToKey(field, mode);
-  const key = `approval-${activity.id}`;
+    setDetailData((prev) => ({
+      ...prev,
+      ...updatedModeData,
+    }));
 
-  const approvalStore = JSON.parse(
-    localStorage.getItem("approvalStatus") || "{}"
-  );
+    setData((prev) => {
+      const updated = prev.map((d) =>
+        d.id !== activity.id ? d : { ...d, ...updatedModeData },
+      );
 
-  const updatedModeData = {
-    ...(approvalStore[key]?.[mode] ?? {}),
-    [mappedField]: "Pending",
+      localStorage.setItem("kegiatan", JSON.stringify(updated));
+      return updated;
+    });
   };
 
-  const updatedAll = {
-    ...approvalStore,
-    [key]: {
-      ...approvalStore[key],
-      [mode]: updatedModeData,
-    },
+  const removeFile = (id: number, mode: "TOR" | "LPJ") => {
+    const key = `file-${id}-${mode}`;
+
+    localStorage.removeItem(key);
   };
 
-  setApprovalStatus(updatedAll);
-  localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
+  const resetApprovalToPending = (field: ApprovalField) => {
+    if (!activity) return;
 
-  setDetailData((prev) => ({
-    ...prev,
-    ...updatedModeData,
-  }));
+    const mappedField = mapFieldToKey(field, mode);
+    const key = `approval-${activity.id}`;
 
-  setData((prev) => {
-    const updated = prev.map((d) =>
-      d.id === activity.id ? { ...d, ...updatedModeData } : d
+    const approvalStore = JSON.parse(
+      localStorage.getItem("approvalStatus") || "{}",
     );
-    localStorage.setItem("kegiatan", JSON.stringify(updated));
-    return updated;
-  });
-};
 
-const getApprovalField = (
-  mode: "TOR" | "LPJ",
-  level: 1 | 2 | 3
-): ApprovalField => {
-  return `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
-};
+    const updatedModeData = {
+      ...(approvalStore[key]?.[mode] ?? {}),
+      [mappedField]: "Pending",
+    };
 
+    const updatedAll = {
+      ...approvalStore,
+      [key]: {
+        ...approvalStore[key],
+        [mode]: updatedModeData,
+      },
+    };
 
+    setApprovalStatus(updatedAll);
+    localStorage.setItem("approvalStatus", JSON.stringify(updatedAll));
 
-const handleApprove = (field: ApprovalField) =>
-  updateAll(field, "Approved");
+    setDetailData((prev) => ({
+      ...prev,
+      ...updatedModeData,
+    }));
 
-const handleReject = (field: ApprovalField) =>
-  updateAll(field, "Rejected");
+    setData((prev) => {
+      const updated = prev.map((d) =>
+        d.id === activity.id ? { ...d, ...updatedModeData } : d,
+      );
+      localStorage.setItem("kegiatan", JSON.stringify(updated));
+      return updated;
+    });
+  };
 
-const handleRevisi = async (field: ApprovalField) => {
-  if (!activity || typeof activity.id !== "number") return;
+  const getApprovalField = (
+    mode: "TOR" | "LPJ",
+    level: 1 | 2 | 3,
+  ): ApprovalField => {
+    return `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
+  };
 
-   // 1. ubah status ke Revisi
-  await updateAll(field, "Revisi");
+  const handleApprove = (field: ApprovalField) => {
+    updateAll(field, "Approved");
 
-  // 2. hapus file biar wajib upload ulang
-  removeFile(activity.id, mode);
+    // Trigger notification
+    if (activity) {
+      const approverName = userData ? JSON.parse(userData).name : "System";
+      createApprovalNotification(
+        activity.judul || "Pengajuan Kegiatan",
+        mode,
+        approverName,
+        1, // Approval level (simplify untuk demo)
+        "approved",
+      );
+    }
+  };
 
-  // 3. reset flag file
-  setHasFile(false);
-};
+  const handleReject = (field: ApprovalField) => {
+    updateAll(field, "Rejected");
 
+    // Trigger notification
+    if (activity) {
+      const approverName = userData ? JSON.parse(userData).name : "System";
+      createRejectionNotification(
+        activity.judul || "Pengajuan Kegiatan",
+        mode,
+        approverName,
+        1, // Rejection level
+      );
+    }
+  };
 
-const handleUploadSuccess = async () => {
-  if (!activity || typeof activity.id !== "number") return;
+  const handleRevisi = async (field: ApprovalField) => {
+    if (!activity || typeof activity.id !== "number") return;
 
-  setHasFile(true);
+    // 1. ubah status ke Revisi
+    await updateAll(field, "Revisi");
 
-  for (const level of [1, 2, 3] as const) {
-    const field = getApprovalField(mode, level);
-    resetApprovalToPending(field); // ✅ BUKAN updateAll
-  }
-};
+    // 2. hapus file biar wajib upload ulang
+    removeFile(activity.id, mode);
 
-const handleFileChange = async (
-  e: React.ChangeEvent<HTMLInputElement>
-) => {
-  const file = e.target.files?.[0];
-  if (!file || !activity || typeof activity.id !== "number") return;
+    // 3. reset flag file
+    setHasFile(false);
+  };
 
-  const key = `file-${mode}-${activity.id}`;
-  const nameKey = `file-name-${mode}-${activity.id}`;
+  const handleUploadSuccess = async () => {
+    if (!activity || typeof activity.id !== "number") return;
 
-  setFiles((prev) => ({
-    ...prev,
-    [key]: file,
-  }));
+    setHasFile(true);
 
-  // simpan file
-  await saveFile(key, file);
+    for (const level of [1, 2, 3] as const) {
+      const field = getApprovalField(mode, level);
+      resetApprovalToPending(field); // ✅ BUKAN updateAll
+    }
+  };
 
-  localStorage.setItem(nameKey, file.name);
-  localStorage.setItem(`submitted-${mode}-${activity.id}`, "true");
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !activity || typeof activity.id !== "number") return;
 
-  setHasDownloaded(false);
+    const key = `file-${mode}-${activity.id}`;
+    const nameKey = `file-name-${mode}-${activity.id}`;
 
-  // 🔥 RESET APPROVAL KALAU HABIS REVISI
-  // 🔥 RESET SEMUA KARENA UPLOAD ULANG
-  resetNotes(activity.id, mode);
-  await handleUploadSuccess();
-};
-
-
-useEffect(() => {
-  if (!activity?.id) return;
-
-  const key = `file-${mode}-${activity?.id}`;
-  const nameKey = `file-name-${mode}-${activity?.id}`;
-
-  // Restore status submitted
-  const submitted = localStorage.getItem(`submitted-${mode}-${activity?.id}`);
-  if (submitted === "true") setHasSubmitted(true);
-
-  // Restore nama file untuk tampilan
-  const savedName = localStorage.getItem(nameKey);
-  if (savedName) {
     setFiles((prev) => ({
       ...prev,
-      [key]: { name: savedName } as any, // placeholder untuk tampilan
+      [key]: file,
     }));
-  }
-}, [activity?.id, mode]);
 
+    // simpan file
+    await saveFile(key, file);
+
+    localStorage.setItem(nameKey, file.name);
+    localStorage.setItem(`submitted-${mode}-${activity.id}`, "true");
+
+    setHasDownloaded(false);
+
+    // 🔥 RESET APPROVAL KALAU HABIS REVISI
+    // 🔥 RESET SEMUA KARENA UPLOAD ULANG
+    resetNotes(activity.id, mode);
+    await handleUploadSuccess();
+  };
+
+  useEffect(() => {
+    if (!activity?.id) return;
+
+    const key = `file-${mode}-${activity?.id}`;
+    const nameKey = `file-name-${mode}-${activity?.id}`;
+
+    // Restore status submitted
+    const submitted = localStorage.getItem(`submitted-${mode}-${activity?.id}`);
+    if (submitted === "true") setHasSubmitted(true);
+
+    // Restore nama file untuk tampilan
+    const savedName = localStorage.getItem(nameKey) || "";
+    if (savedName) {
+      setFiles((prev) => ({
+        ...prev,
+        [key]: { name: savedName } as any, // placeholder untuk tampilan
+      }));
+    }
+  }, [activity?.id, mode]);
 
   // ---------- MIGRATE DATA ONCE (safe) ----------
   useEffect(() => {
@@ -425,48 +442,45 @@ useEffect(() => {
 
   // ---------- SYNC detailData FROM approvalStatus (mode-aware, guarded) ----------
   useEffect(() => {
-  if (!activity) return;
+    if (!activity) return;
 
-  const key = `approval-${activity.id}`;
-  const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
-  const saved = store[key]?.[mode] as DetailApprovalData | undefined;
+    const key = `approval-${activity.id}`;
+    const store = JSON.parse(localStorage.getItem("approvalStatus") || "{}");
+    const saved = store[key]?.[mode] as DetailApprovalData | undefined;
 
-  if (saved) {
-    setDetailData((prev) =>
-      JSON.stringify(prev) === JSON.stringify(saved) ? prev : saved
-    );
-    return;
-  }
+    if (saved) {
+      setDetailData((prev) =>
+        JSON.stringify(prev) === JSON.stringify(saved) ? prev : saved,
+      );
+      return;
+    }
 
-  const defaultData: DetailApprovalData =
-    mode === "TOR"
-      ? {
-          torApproval1Status: "Pending",
-          torApproval2Status: "Pending",
-          torApproval3Status: "Pending",
-        }
-      : {
-          lpjApproval1Status: "Pending",
-          lpjApproval2Status: "Pending",
-          lpjApproval3Status: "Pending",
-        };
+    const defaultData: DetailApprovalData =
+      mode === "TOR"
+        ? {
+            torApproval1Status: "Pending",
+            torApproval2Status: "Pending",
+            torApproval3Status: "Pending",
+          }
+        : {
+            lpjApproval1Status: "Pending",
+            lpjApproval2Status: "Pending",
+            lpjApproval3Status: "Pending",
+          };
 
-  setDetailData((prev) => {
-    const merged = { ...prev, ...defaultData };
-    return JSON.stringify(prev) === JSON.stringify(merged) ? prev : merged;
-  });
-}, [activity, mode]);
-
-
+    setDetailData((prev) => {
+      const merged = { ...prev, ...defaultData };
+      return JSON.stringify(prev) === JSON.stringify(merged) ? prev : merged;
+    });
+  }, [activity, mode]);
 
   const kegiatanStore = JSON.parse(localStorage.getItem("kegiatan") || "[]");
 
   const currentKegiatan = kegiatanStore.find(
-    (k: any) => String(k.id) === String(activity?.id)
+    (k: any) => String(k.id) === String(activity?.id),
   );
 
   const danaDiajukan = currentKegiatan?.dana || detailInfo.dana || 0;
-
 
   // ===================== STATE CATATAN PER ID =====================
   const [notes, setNotes] = useState(() => {
@@ -482,25 +496,25 @@ useEffect(() => {
     }
   }, []);
 
-useEffect(() => {
-  if (!activity?.id) return;
+  useEffect(() => {
+    if (!activity?.id) return;
 
-  const key = `approved-dana-${String(activity.id)}`;
-  const saved = localStorage.getItem(key);
-  if (!saved) return;
+    const key = `approved-dana-${String(activity.id)}`;
+    const saved = localStorage.getItem(key);
+    if (!saved) return;
 
-  const savedDana = Number(saved);
-  const mdana = parseRupiah(activity.dana ?? 0);
+    const savedDana = Number(saved);
+    const mdana = parseRupiah(activity.dana ?? 0);
 
-  if (savedDana > 0 && savedDana <= mdana) {
-    setApprovedDana(savedDana);
-    setIsDanaSaved(true);
-  } else {
-    localStorage.removeItem(key);
-    setApprovedDana("");
-    setIsDanaSaved(false);
-  }
-}, [activity?.id]);
+    if (savedDana > 0 && savedDana <= mdana) {
+      setApprovedDana(savedDana);
+      setIsDanaSaved(true);
+    } else {
+      localStorage.removeItem(key);
+      setApprovedDana("");
+      setIsDanaSaved(false);
+    }
+  }, [activity?.id]);
 
   // ===================== SIMPAN CATATAN PER-ID & PER-ROLE =====================
   const saveNote = (roleType: string, note: string) => {
@@ -528,28 +542,27 @@ useEffect(() => {
   };
 
   const resetNotes = (activityId: number, mode: "TOR" | "LPJ") => {
-  const stored = JSON.parse(localStorage.getItem("notes") || "{}");
+    const stored = JSON.parse(localStorage.getItem("notes") || "{}");
 
-  if (!stored[activityId]) return;
+    if (!stored[activityId]) return;
 
-  const updated = {
-    ...stored,
-    [activityId]: {
-      ...stored[activityId],
-      [mode]: {
-        admin: "",
-        sekjur: "",
-        kajur: "",
+    const updated = {
+      ...stored,
+      [activityId]: {
+        ...stored[activityId],
+        [mode]: {
+          admin: "",
+          sekjur: "",
+          kajur: "",
+        },
       },
-    },
+    };
+
+    localStorage.setItem("notes", JSON.stringify(updated));
+
+    // kalau lu punya state notes
+    setNotes(updated);
   };
-
-  localStorage.setItem("notes", JSON.stringify(updated));
-
-  // kalau lu punya state notes
-  setNotes(updated);
-};
-
 
   const [hasDownloaded, setHasDownloaded] = useState(false);
 
@@ -557,12 +570,23 @@ useEffect(() => {
     rawRole === "Admin"
       ? approvalState.approval1
       : rawRole === "Sekjur"
-      ? approvalState.approval2
-      : rawRole === "Kajur"
-      ? approvalState.approval3
-      : null;
+        ? approvalState.approval2
+        : rawRole === "Kajur"
+          ? approvalState.approval3
+          : null;
 
-  const canShowNote = rawRole === "Pengaju" || roleApprovalStatus === "Pending";
+  const myApprovalStatus =
+    roleId === 1 || roleId === 2
+      ? approvalState.approval1
+      : roleId === 4
+        ? approvalState.approval2
+        : roleId === 5
+          ? approvalState.approval3
+          : null;
+
+  const canShowNote =
+    roleId === 3 || // pengaju selalu lihat
+    myApprovalStatus !== "Approved"; // approver hanya selama belum approved
 
   return (
     <Layout>
@@ -576,8 +600,8 @@ useEffect(() => {
             <button
               type="button"
               onClick={() => window.history.back()}
-              className=" 
-              px-4 py-[0.35rem]  mr-[-3.2rem] bg-[#4957B5] 
+              className="
+              px-4 py-[0.35rem]  mr-[-3.2rem] bg-[#4957B5]
               text-white rounded font-poppins font-medium tracking-[0.05em]
               hover:bg-[#3e4b99] transition-colors duration-300 ease-in-out"
             >
@@ -593,29 +617,29 @@ useEffect(() => {
               label="Detail"
               value="detail"
               activeTab={activeTab}
-              onClick={setActiveTab}
+              onClick={() => setActiveTab("detail")}
             />
 
             <TabButton
-              label={roleTyped === "Pengaju" ? "Submit File" : "Unduh File"}
+              label={roleId === 3 ? "Submit File" : "Unduh File"}
               value="submit"
               activeTab={activeTab}
-              onClick={setActiveTab}
+              onClick={() => setActiveTab("submit")}
             />
 
             <TabButton
               label="Status"
               value="approval"
               activeTab={activeTab}
-              onClick={setActiveTab}
+              onClick={() => setActiveTab("approval")}
             />
 
-            {roleTyped === "Sekjur" && (
+            {mode === "TOR" && roleTyped === "sekretaris" && (
               <TabButton
                 label="Dana Disetujui"
                 value="danasetuju"
                 activeTab={activeTab}
-                onClick={setActiveTab}
+                onClick={() => setActiveTab("danasetuju")}
               />
             )}
           </div>
@@ -635,14 +659,13 @@ useEffect(() => {
                 activeTab={activeTab}
                 detailInfo={detailInfo}
                 approvalState={approvalState}
-                allowedField={allowedField}
                 hasDownloaded={hasDownloaded}
                 handleApprove={(field) => handleApprove(field)}
                 handleReject={(field) => handleReject(field)}
-                handleRevisi={(field)=> handleRevisi(field)}
+                handleRevisi={(field) => handleRevisi(field)}
                 canShowNote={canShowNote}
-                role={roleTyped}
-                userRole={userRole}
+                roleId={roleId}
+                userRoleName={roleTyped}
                 notes={notes}
                 activity={activity}
                 mode={mode}
