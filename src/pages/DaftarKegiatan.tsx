@@ -12,7 +12,8 @@ const DaftarKegiatan: React.FC = () => {
   const [page, setPage] = useState(1);
   const limit = 5;
   const navigate = useNavigate();
-  const namaPengaju = roleToName["pengaju"];
+   const namaPengaju =
+  localStorage.getItem("pengaju_name") ?? "Pengaju";
 
 // === FILTER + SORT UTAMA ===
   const filtered = [...data]      // clone dulu biar aman

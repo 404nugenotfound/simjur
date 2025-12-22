@@ -77,13 +77,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
    */
   const login = async (
     identifier: string,
-    password: string,
+    password: string
   ): Promise<LoginResponse> => {
     const response = await authApi.login(identifier, password);
 
     // 🔥 SIMPAN TOKEN YANG BENAR
     localStorage.setItem("token", response.token);
     localStorage.setItem("user_data", JSON.stringify(response.user));
+
+    // ✅ SIMPAN NAMA PENGAJU HANYA JIKA ROLE = PENGAJU
+    if (mapRoleIdToRole(response.user.roles_id) === "pengaju") {
+      localStorage.setItem("pengaju_name", response.user.name);
+    }
 
     setUser(response.user);
     setRole(mapRoleIdToRole(response.user.roles_id));

@@ -12,7 +12,7 @@ export default function HeaderBar() {
 
   // Ambil nama dari localStorage
   const userData = localStorage.getItem("user_data");
-  const userName = userData ? JSON.parse(userData).name : "USER";
+  const userName = userData ? JSON.parse(userData).name.toUpperCase() : "USER";
 
   return (
     <header className="flex items-center justify-end bg-white shadow relative">

@@ -4,6 +4,7 @@ import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "../context/AuthContext";
 import { generalApi } from "../service/api";
+import { toast } from "sonner";
 
 export default function Profile() {
   const { user } = useAuth();
@@ -19,47 +20,59 @@ export default function Profile() {
     }
   }, [user]);
 
+  useEffect(() => {
+    const parsed = JSON.parse(user ? JSON.stringify(user) : "{}");
+    setName(
+      parsed.name?.replace(/\b\w/g, (c: string) => c.toUpperCase()) || ""
+    );
+  }, [user]);
+
   const { token, logout } = useAuth();
 
   const [oldPass, setOldPass] = useState("");
   const [newPass, setNewPass] = useState("");
 
   const handleChangePassword = async () => {
+    if (!user?.id || !token) return;
+
+    const res = await fetch(
+      `https://simjur-api.vercel.app/api/user/${user.id}`,
+      {
+        method: "PATCH",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          password: newPass,
+        }),
+      },
+    );
+
     if (!oldPass || !newPass) {
-      alert("Password lama dan baru wajib diisi");
+      toast.error("Password lama dan baru wajib diisi");
       return;
     }
 
     if (newPass.length < 8) {
-      alert("Password baru minimal 8 karakter");
+      toast.error("Password baru minimal 8 karakter");
       return;
     }
 
     if (!token) {
-      alert("Sesi login tidak valid");
+      toast.error("Sesi login tidak valid");
       return;
     }
 
-    try {
-      await generalApi.putAuthenticated(
-        "/user/change-password",
-        {
-          oldPassword: oldPass,
-          newPassword: newPass,
-        },
-        token
-      );
+    const data = await res.json();
 
-      alert("Password berhasil diganti, silakan login ulang");
-
-      setOldPass("");
-      setNewPass("");
-
-      await logout(); // keamanan 👍
-    } catch (error: any) {
-      console.error(error);
-      alert(error?.message || "Password lama salah atau terjadi kesalahan");
+    if (!res.ok) {
+      toast.error(data.error || "Gagal mengganti password");
+      return;
     }
+
+    toast.success("Password berhasil diganti");
+    logout();
   };
 
   const navigate = useNavigate();
@@ -157,14 +170,14 @@ export default function Profile() {
 
                 <div className="font-medium grid grid-cols-2 mt-4 gap-4">
                   <button
-                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-start hover:scale-[0.97]"
+                    className="px-4 py-2 rounded bg-[#6B7EF4] text-white justify-self-start hover:scale-[0.97]"
                     onClick={handleChangePassword}
                   >
                     Ganti Password
                   </button>
 
                   <button
-                    className="px-4 py-2 rounded bg-blue-600 text-white justify-self-end hover:scale-[0.97]"
+                    className="px-4 py-2 rounded bg-[#6B7EF4] text-white justify-self-end hover:scale-[0.97]"
                     onClick={() => {
                       navigate("/user");
                     }}

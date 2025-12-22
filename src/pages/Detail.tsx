@@ -15,6 +15,7 @@ import {
   ApprovalField,
   ApprovalStatus,
   ROLE_ID_MAP,
+  ApprovalStateUI,
 } from "../utils/role";
 import { TabKey } from "../utils/tab";
 import TabButton from "../components/TabButton";
@@ -103,7 +104,7 @@ const Detail: React.FC<DetailProps> = () => {
     };
     return (
       permissionMap[roleId as keyof typeof permissionMap]?.includes(
-        permission,
+        permission
       ) || false
     );
   };
@@ -157,18 +158,19 @@ const Detail: React.FC<DetailProps> = () => {
 
   const [detailData, setDetailData] = useState<DetailApprovalData>({});
 
-  const approvalState =
-    mode === "TOR"
-      ? {
-          approval1: detailData.torApproval1Status ?? "Pending",
-          approval2: detailData.torApproval2Status ?? "Pending",
-          approval3: detailData.torApproval3Status ?? "Pending",
-        }
-      : {
-          approval1: detailData.lpjApproval1Status ?? "Pending",
-          approval2: detailData.lpjApproval2Status ?? "Pending",
-          approval3: detailData.lpjApproval3Status ?? "Pending",
-        };
+  const approvalState: ApprovalStateUI = {
+  TOR: {
+    approval1: detailData.torApproval1Status ?? "Pending",
+    approval2: detailData.torApproval2Status ?? "Pending",
+    approval3: detailData.torApproval3Status ?? "Pending",
+  },
+  LPJ: {
+    approval1: detailData.lpjApproval1Status ?? "Pending",
+    approval2: detailData.lpjApproval2Status ?? "Pending",
+    approval3: detailData.lpjApproval3Status ?? "Pending",
+  },
+};
+
 
   const allowedField: ApprovalField | undefined = level
     ? (`${mode.toLowerCase()}Approval${level}Status` as ApprovalField)
@@ -178,9 +180,8 @@ const Detail: React.FC<DetailProps> = () => {
     nama: activity?.judul ?? "–",
     tanggal: activity?.tanggal ?? "–",
     deskripsi: activity?.deskripsi ?? "Belum ada deskripsi.",
-    dana:
-      activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
-    penanggung_jawab: user?.name ?? "-",
+    dana: activity?.full?.dana_diajukan ?? activity?.dana ?? "Belum Dilampirkan.",
+    penanggung_jawab: activity?.penanggung_jawab ?? "-",
     sisaDana: activity?.lpj?.sisa_dana ?? "-",
     metode_pelaksanaan: activity?.lpj?.metode_pelaksanaan ?? "-",
     total_peserta: activity?.lpj?.total_peserta ?? "[ Belum Ada Data ]",
@@ -200,7 +201,7 @@ const Detail: React.FC<DetailProps> = () => {
 
   const updateAll = (
     field: ApprovalField,
-    status: "Approved" | "Rejected" | "Revisi" | "Pending",
+    status: "Approved" | "Rejected" | "Revisi" | "Pending"
   ) => {
     if (!activity) return;
 
@@ -208,7 +209,7 @@ const Detail: React.FC<DetailProps> = () => {
     const key = `approval-${activity.id}`;
 
     const approvalStore = JSON.parse(
-      localStorage.getItem("approvalStatus") || "{}",
+      localStorage.getItem("approvalStatus") || "{}"
     );
 
     const currentModeData =
@@ -248,7 +249,7 @@ const Detail: React.FC<DetailProps> = () => {
 
     setData((prev) => {
       const updated = prev.map((d) =>
-        d.id !== activity.id ? d : { ...d, ...updatedModeData },
+        d.id !== activity.id ? d : { ...d, ...updatedModeData }
       );
 
       localStorage.setItem("kegiatan", JSON.stringify(updated));
@@ -269,7 +270,7 @@ const Detail: React.FC<DetailProps> = () => {
     const key = `approval-${activity.id}`;
 
     const approvalStore = JSON.parse(
-      localStorage.getItem("approvalStatus") || "{}",
+      localStorage.getItem("approvalStatus") || "{}"
     );
 
     const updatedModeData = {
@@ -295,7 +296,7 @@ const Detail: React.FC<DetailProps> = () => {
 
     setData((prev) => {
       const updated = prev.map((d) =>
-        d.id === activity.id ? { ...d, ...updatedModeData } : d,
+        d.id === activity.id ? { ...d, ...updatedModeData } : d
       );
       localStorage.setItem("kegiatan", JSON.stringify(updated));
       return updated;
@@ -304,7 +305,7 @@ const Detail: React.FC<DetailProps> = () => {
 
   const getApprovalField = (
     mode: "TOR" | "LPJ",
-    level: 1 | 2 | 3,
+    level: 1 | 2 | 3
   ): ApprovalField => {
     return `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
   };
@@ -320,7 +321,7 @@ const Detail: React.FC<DetailProps> = () => {
         mode,
         approverName,
         1, // Approval level (simplify untuk demo)
-        "approved",
+        "approved"
       );
     }
   };
@@ -335,7 +336,7 @@ const Detail: React.FC<DetailProps> = () => {
         activity.judul || "Pengajuan Kegiatan",
         mode,
         approverName,
-        1, // Rejection level
+        1 // Rejection level
       );
     }
   };
@@ -385,8 +386,6 @@ const Detail: React.FC<DetailProps> = () => {
     setHasDownloaded(false);
 
     // 🔥 RESET APPROVAL KALAU HABIS REVISI
-    // 🔥 RESET SEMUA KARENA UPLOAD ULANG
-    resetNotes(activity.id, mode);
     await handleUploadSuccess();
   };
 
@@ -450,7 +449,7 @@ const Detail: React.FC<DetailProps> = () => {
 
     if (saved) {
       setDetailData((prev) =>
-        JSON.stringify(prev) === JSON.stringify(saved) ? prev : saved,
+        JSON.stringify(prev) === JSON.stringify(saved) ? prev : saved
       );
       return;
     }
@@ -477,7 +476,7 @@ const Detail: React.FC<DetailProps> = () => {
   const kegiatanStore = JSON.parse(localStorage.getItem("kegiatan") || "[]");
 
   const currentKegiatan = kegiatanStore.find(
-    (k: any) => String(k.id) === String(activity?.id),
+    (k: any) => String(k.id) === String(activity?.id)
   );
 
   const danaDiajukan = currentKegiatan?.dana || detailInfo.dana || 0;
@@ -523,22 +522,19 @@ const Detail: React.FC<DetailProps> = () => {
     const activityId = String(activity.id);
     const modeKey = mode;
 
-    // ===== UPDATE CATATAN =====
     const updatedNotes = {
       ...notes,
       [activityId]: {
-        ...notes[activityId],
+        ...(notes[activityId] || {}),
         [modeKey]: {
-          ...notes[activityId]?.[modeKey],
-          [roleType]: note,
+          ...(notes[activityId]?.[modeKey] || {}),
+          [roleType]: note, // 🔥 ROLE-BASED
         },
       },
     };
 
     setNotes(updatedNotes);
     localStorage.setItem("notes", JSON.stringify(updatedNotes));
-
-    alert("Catatan revisi dikirim!");
   };
 
   const resetNotes = (activityId: number, mode: "TOR" | "LPJ") => {
@@ -566,27 +562,33 @@ const Detail: React.FC<DetailProps> = () => {
 
   const [hasDownloaded, setHasDownloaded] = useState(false);
 
-  const roleApprovalStatus =
-    rawRole === "Admin"
-      ? approvalState.approval1
-      : rawRole === "Sekjur"
-        ? approvalState.approval2
-        : rawRole === "Kajur"
-          ? approvalState.approval3
-          : null;
+  const currentApproval = approvalState[mode];
+
+const roleApprovalStatus =
+  rawRole === "Admin"
+    ? currentApproval.approval1
+    : rawRole === "Sekjur"
+    ? currentApproval.approval2
+    : rawRole === "Kajur"
+    ? currentApproval.approval3
+    : null;
+
 
   const myApprovalStatus =
-    roleId === 1 || roleId === 2
-      ? approvalState.approval1
-      : roleId === 4
-        ? approvalState.approval2
-        : roleId === 5
-          ? approvalState.approval3
-          : null;
+  roleId === 1 || roleId === 2
+    ? currentApproval.approval1
+    : roleId === 4
+    ? currentApproval.approval2
+    : roleId === 5
+    ? currentApproval.approval3
+    : null;
+
+  const isFinalStatus = (status: string) =>
+    status === "Approved" || status === "Rejected" || status === "Revisi";
 
   const canShowNote =
     roleId === 3 || // pengaju selalu lihat
-    myApprovalStatus !== "Approved"; // approver hanya selama belum approved
+    (myApprovalStatus !== null && !isFinalStatus(myApprovalStatus)); // approver hanya selama belum approved
 
   return (
     <Layout>

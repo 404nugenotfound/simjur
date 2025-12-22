@@ -1,11 +1,13 @@
 // src/context/DashboardContext.tsx
-import { createContext, useState, useEffect, ReactNode } from "react";
+import { createContext, useState, useEffect, ReactNode, useMemo } from "react";
 import { Kegiatan } from "../utils/kegiatan";
 import { v4 as uuid } from "uuid";
 
 interface DashboardContextType {
   data: Kegiatan[];
   addKegiatan: (item: Omit<Kegiatan, "id">) => void;
+
+  value: any;
 
   summary: {
     totalTor: number;
@@ -126,36 +128,44 @@ export const DashboardProvider = ({ children }: { children: ReactNode }) => {
 }, 0);
 
    const TotalDanaTerpakai = data.reduce((acc, kegiatan) => {
-  const danaStr = kegiatan.lpj?.dana_terpakai;
-  if (!danaStr) return acc;
+  const raw = kegiatan.lpj?.dana_terpakai;
+  if (raw == null) return acc;
 
-  const dana = Number(danaStr.replace(/[^0-9]/g, ""));
+  const cleaned = String(raw).replace(/[^0-9]/g, "");
+  const dana = cleaned ? Number(cleaned) : 0;
+
   return acc + dana;
 }, 0);
+
 
 const danaJurusan = dana.danaRegular - TotalDanaTerpakai;
 
   // ====== SUMMARY ======
-  const summary = {
-    // TOR masuk saat kegiatan dibuat
+ const summary = useMemo(() => {
+  return {
     totalTor: data.length,
 
-  // LPJ dihitung saat masuk tahap LPJ
-   totalLpj: data.filter(
-    (d) =>
-      d.torApproval1Status === "Approved" &&
-      d.torApproval2Status === "Approved" &&
-      d.torApproval3Status === "Approved"
-  ).length,
+    totalLpj: data.filter(
+      (d) =>
+        d.torApproval1Status === "Approved" &&
+        d.torApproval2Status === "Approved" &&
+        d.torApproval3Status === "Approved"
+    ).length,
 
-  // SELESAI = LPJ APPROVE 3
-  totalSelesai: data.filter(
-    (d) =>
-      d.lpjApproval1Status === "Approved" &&
-      d.lpjApproval2Status === "Approved" &&
-      d.lpjApproval3Status === "Approved"
-  ).length,
-};
+    totalSelesai: data.filter(
+      (d) =>
+        d.lpjApproval1Status === "Approved" &&
+        d.lpjApproval2Status === "Approved" &&
+        d.lpjApproval3Status === "Approved"
+    ).length,
+  };
+}, [data]);
+
+
+
+const value = useMemo(() => {
+  return { data, summary };
+}, [data, summary]);
 
   return (
     <DashboardContext.Provider
@@ -169,6 +179,7 @@ const danaJurusan = dana.danaRegular - TotalDanaTerpakai;
         addDanaDisetujui,
         TotalDanaTerpakai,
         danaJurusan,
+        value,
       }}
     >
       {children}

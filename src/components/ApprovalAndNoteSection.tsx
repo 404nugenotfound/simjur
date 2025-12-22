@@ -7,10 +7,19 @@ type UserRoleName =
   | "sekretaris"
   | "ketua_jurusan";
 
+type Status = "Pending" | "Approved" | "Rejected" | "Revisi";
+
 type ApprovalStateUI = {
-  approval1: "Pending" | "Approved" | "Rejected" | "Revisi";
-  approval2: "Pending" | "Approved" | "Rejected" | "Revisi";
-  approval3: "Pending" | "Approved" | "Rejected" | "Revisi";
+  TOR: {
+    approval1: Status;
+    approval2: Status;
+    approval3: Status;
+  };
+  LPJ: {
+    approval1: Status;
+    approval2: Status;
+    approval3: Status;
+  };
 };
 
 /* ===================== ROLE → APPROVAL LEVEL ===================== */
@@ -23,8 +32,10 @@ const ROLE_APPROVAL_LEVEL: Record<RoleId, 1 | 2 | 3 | null> = {
 };
 
 /* ===================== NOTE KEY MAP ===================== */
-const NOTE_KEY_MAP: Record<number, string> = {
-  1: "admin",
+type NoteRoleKey = "administrasi" | "sekjur" | "kajur";
+
+const NOTE_KEY_MAP: Record<number, NoteRoleKey | null> = {
+  2: "administrasi",
   4: "sekjur",
   5: "kajur",
 };
@@ -52,7 +63,7 @@ type Props = {
 
   currentNote: string;
   setCurrentNote: (val: string) => void;
-  saveNote: (role: UserRoleName, note: string) => void;
+  saveNote: (role: NoteRoleKey, note: string) => void;
 };
 
 /* ===================== COMPONENT ===================== */
@@ -79,12 +90,12 @@ const ApprovalAndNoteSection = ({
   /* ===================== HELPERS ===================== */
   const getApprovalField = (
     mode: "TOR" | "LPJ",
-    level: 1 | 2 | 3,
+    level: 1 | 2 | 3
   ): ApprovalField =>
     `${mode.toLowerCase()}Approval${level}Status` as ApprovalField;
 
   const getApprovalStatus = (level: 1 | 2 | 3) =>
-    approvalState[`approval${level}`];
+    approvalState[mode][`approval${level}`];
 
   const renderStatus = (status: string) => {
     switch (status) {
@@ -102,6 +113,7 @@ const ApprovalAndNoteSection = ({
   };
 
   /* ===================== CORE LOGIC (KUNCI) ===================== */
+
   const canTakeAction = (level: 1 | 2 | 3, status: string) => {
     const myLevel = ROLE_APPROVAL_LEVEL[roleId];
     if (!myLevel) return false;
@@ -131,19 +143,42 @@ const ApprovalAndNoteSection = ({
   );
 
   const handleSaveNoteWithRevisi = () => {
-    saveNote(userRoleName, currentNote);
+    if (!currentNote.trim()) return;
 
     const myLevel = ROLE_APPROVAL_LEVEL[roleId];
     if (!myLevel) return;
 
+    // 1️⃣ simpan catatan dulu
+    const noteKey = NOTE_KEY_MAP[roleId];
+    if (!noteKey) return;
+
+    saveNote(noteKey, currentNote);
+
+    // 2️⃣ baru ubah status
     handleRevisi(getApprovalField(mode, myLevel));
   };
 
-  const NOTE_PLACEHOLDER_MAP: Record<string, string> = {
-    admin: "Belum ada catatan revisi dari Administrasi",
-    sekjur: "Belum ada catatan revisi dari Sekretaris",
-    kajur: "Belum ada catatan revisi dari Ketua Jurusan",
-  };
+  const NOTE_ROLE_CONFIG = [
+    {
+      key: "administrasi",
+      label: "ADMIN",
+      placeholder: "Belum ada catatan revisi dari Administrasi",
+    },
+    {
+      key: "sekjur",
+      label: "SEKJUR",
+      placeholder: "Belum ada catatan revisi dari Sekretaris",
+    },
+    {
+      key: "kajur",
+      label: "KAJUR",
+      placeholder: "Belum ada catatan revisi dari Ketua Jurusan",
+    },
+  ] as const;
+
+  const currentApproval = approvalState[mode];
+
+
 
   return (
     <div className="bg-gray-50 rounded-xl p-6 shadow-inner">
@@ -168,8 +203,8 @@ const ApprovalAndNoteSection = ({
 
               const locked =
                 level === 3 &&
-                (approvalState.approval1 !== "Approved" ||
-                  approvalState.approval2 !== "Approved");
+                (currentApproval.approval1 !== "Approved" ||
+                  currentApproval.approval2 !== "Approved");
 
               return (
                 <tr key={level} className="odd:bg-gray-50 even:bg-gray-100">
@@ -178,16 +213,16 @@ const ApprovalAndNoteSection = ({
                   </td>
                   <td className="text-center">{detailInfo?.tanggal}</td>
                   <td className="text-center">
-                    {level === 1 && "Administrasi"}
-                    {level === 2 && "Sekretaris"}
-                    {level === 3 && "Ketua Jurusan"}
+                    {level === 1 && "Dari Administrasi"}
+                    {level === 2 && "Dari Sekretaris"}
+                    {level === 3 && "Dari Ketua Jurusan"}
                   </td>
                   <td className="text-center">
                     {locked
                       ? renderStatus("Pending")
                       : canTakeAction(level, status)
-                        ? renderAction(field)
-                        : renderStatus(status)}
+                      ? renderAction(field)
+                      : renderStatus(status)}
                   </td>
                 </tr>
               );
@@ -225,17 +260,16 @@ const ApprovalAndNoteSection = ({
             </div>
           ) : (
             <div className="grid md:grid-cols-3 gap-4">
-              {Object.entries(NOTE_KEY_MAP).map(([id, key]) => (
-                <div key={id}>
-                  <p className="text-sm font-semibold mb-1">
-                    Catatan {key.toUpperCase()}
-                  </p>
+              {NOTE_ROLE_CONFIG.map(({ key, label, placeholder }) => (
+                <div key={key}>
+                  <p className="text-sm font-semibold mb-1">Catatan {label}</p>
+
                   <textarea
                     readOnly
                     className="w-full border rounded-lg p-3 min-h-[14rem]"
                     placeholder={
                       !notes?.[String(activity?.id)]?.[mode]?.[key]
-                        ? NOTE_PLACEHOLDER_MAP[key]
+                        ? placeholder
                         : ""
                     }
                     value={notes?.[String(activity?.id)]?.[mode]?.[key] || ""}

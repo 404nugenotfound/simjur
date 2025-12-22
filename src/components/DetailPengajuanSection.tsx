@@ -48,7 +48,7 @@ const DetailPengajuan = ({ activity, detailInfo }: Props) => {
 
         <div>
           <p className="text-gray-500">Penanggung Jawab</p>
-          <p className="font-medium">{detailInfo.penanggung_jawab}</p>
+          <p className="font-medium uppercase">{detailInfo.penanggung_jawab}</p>
         </div>
 
         <div>

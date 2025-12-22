@@ -64,3 +64,18 @@ export const ROLE_ID_MAP: Record<Role, RoleId> = {
   sekretaris: 4,
   ketua_jurusan: 5,
 } as const;
+
+export type Status = "Pending" | "Approved" | "Rejected" | "Revisi";
+
+export type ApprovalStateUI = {
+  TOR: {
+    approval1: Status;
+    approval2: Status;
+    approval3: Status;
+  };
+  LPJ: {
+    approval1: Status;
+    approval2: Status;
+    approval3: Status;
+  };
+};

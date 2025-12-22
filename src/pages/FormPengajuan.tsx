@@ -236,6 +236,36 @@ export default function FormPengajuan({ addData, setMode }) {
     }
   };
 
+// CONST HANDLE ConChange Input Type date
+  const hariIni = new Date().toDateString().split("T")[0];
+
+  const handleTanggalMulai = (value: string) => {
+    // tetap SET state dulu
+    setTanggalMulai(value);
+
+    if (value < hariIni) {
+      toast.error("Tanggal mulai tidak boleh lebih kecil dari hari ini!");
+      return;
+    }
+
+    if (tanggalBerakhir && value > tanggalBerakhir) {
+      toast.error("Tanggal berakhir harus setelah tanggal mulai!");
+      return;
+    }
+  };
+
+  const handleTanggalBerakhir = (value: string) => {
+    setTanggalBerakhir(value);
+
+    if (tanggalMulai && value < tanggalMulai) {
+      toast.error("Tanggal berakhir harus sama atau setelah tanggal mulai");
+      return;
+    }
+  };
+
+
+  
+
   return (
     <div className="px-12 pt-8 pb-8">
       <h2 className="text-3xl font-bebas mb-24 tracking-[0.4rem] ml-[-1rem] mt-[-9.7rem] text-black">
@@ -260,7 +290,7 @@ export default function FormPengajuan({ addData, setMode }) {
               />
             </div>
 
-            {/* Tanggal mulai & berakhir */}
+           {/* Tanggal mulai & berakhir */}
             <div className="grid grid-cols-2 gap-4">
               <div>
                 <label className="flex items-center gap-2 text-black font-semibold mb-1">
@@ -269,9 +299,10 @@ export default function FormPengajuan({ addData, setMode }) {
                 </label>
                 <input
                   type="date"
+                  min={hariIni}
                   className="appearance-none border border-black rounded-lg w-full p-2 text-gray-400 uppercase font-medium"
                   value={tanggalMulai}
-                  onChange={(e) => setTanggalMulai(e.target.value)}
+                  onChange={(e) => handleTanggalMulai(e.target.value)}
                   aria-label="-"
                 />
               </div>
@@ -283,9 +314,10 @@ export default function FormPengajuan({ addData, setMode }) {
                 </label>
                 <input
                   type="date"
+                  min={tanggalMulai || hariIni}
                   className="appearance-none border border-black rounded-lg w-full p-2 text-gray-400 uppercase font-medium"
                   value={tanggalBerakhir}
-                  onChange={(e) => setTanggalBerakhir(e.target.value)}
+                  onChange={(e) => handleTanggalBerakhir(e.target.value)}
                   aria-label="-"
                 />
               </div>
